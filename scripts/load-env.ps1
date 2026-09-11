@@ -29,6 +29,12 @@ if (-not $env:POSTGRES_DB -or -not $env:POSTGRES_USER -or -not $env:POSTGRES_PAS
 
 $env:DB_USERNAME = $env:POSTGRES_USER
 $env:DB_PASSWORD = $env:POSTGRES_PASSWORD
+
+$env:DB_HOST = "localhost"
+$env:DB_PORT = $env:POSTGRES_PORT
+$env:DB_NAME = $env:POSTGRES_DB
+
+# Se conserva por compatibilidad con scripts o herramientas anteriores.
 $env:DB_JDBC_URL = "jdbc:postgresql://localhost:$($env:POSTGRES_PORT)/$($env:POSTGRES_DB)"
 
 $required = @(
@@ -62,5 +68,5 @@ $env:JWT_VERIFY_JWK = [Convert]::ToBase64String($jwkBytes)
 $env:JWT_VERIFY_JWK = $env:JWT_VERIFY_JWK.TrimEnd('=').Replace('+', '-').Replace('/', '_')
 
 Write-Host "Variables locales cargadas para esta terminal."
-Write-Host "DB_USERNAME, DB_JDBC_URL, JWT_SECRET, JWT_VERIFY_JWK y variables BOOTSTRAP_* disponibles."
+Write-Host "DB_HOST, DB_PORT, DB_NAME, DB_USERNAME, DB_JDBC_URL, JWT_SECRET, JWT_VERIFY_JWK y variables BOOTSTRAP_* disponibles."
 Write-Host "Los valores secretos no se muestran en pantalla."

@@ -8,10 +8,18 @@ services:
     dockerContext: .
     healthCheckPath: /api/management/status
     envVars:
-      - key: DATABASE_URL
+      - key: DB_HOST
         fromDatabase:
           name: tfi-auditnet-db
-          property: connectionString
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: tfi-auditnet-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: tfi-auditnet-db
+          property: database
       - key: DB_USERNAME
         fromDatabase:
           name: tfi-auditnet-db
@@ -49,10 +57,18 @@ services:
     dockerContext: .
     healthCheckPath: /api/audit-core/status
     envVars:
-      - key: DATABASE_URL
+      - key: DB_HOST
         fromDatabase:
           name: tfi-auditnet-db
-          property: connectionString
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: tfi-auditnet-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: tfi-auditnet-db
+          property: database
       - key: DB_USERNAME
         fromDatabase:
           name: tfi-auditnet-db
