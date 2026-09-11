@@ -1,0 +1,560 @@
+---
+import MasterLayout from '../layouts/MasterLayout.astro';
+---
+
+<MasterLayout
+  title="Auditorías"
+  section="Motor de auditoría"
+  description="Carga de configuraciones y ejecución del control automático contra la baseline aplicable."
+>
+  <div id="audit-success" class="alert alert-success is-hidden"></div>
+  <div id="audit-error" class="alert alert-error is-hidden"></div>
+
+  <section class="panel compact-panel audit-toolbar">
+    <div class="device-toolbar-copy">
+      <span class="eyebrow">Audit pipeline</span>
+      <div>
+        <strong id="configuration-count">0 configuraciones</strong>
+        <span>versiones auditables disponibles</span>
+      </div>
+    </div>
+    <div class="device-toolbar-actions">
+      <div class="terminal-search">
+        <span>&gt;</span>
+        <input id="audit-search" type="search" placeholder="buscar dispositivo, versión o usuario..." />
+      </div>
+      <button id="open-config-dialog" class="button button-primary device-create-action" type="button">
+        + cargar configuración
+      </button>
+    </div>
+  </section>
+
+  <section class="audit-workspace">
+    <div class="audit-main-column">
+      <article class="panel audit-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="eyebrow">Input repository</span>
+            <h2>Configuraciones auditables</h2>
+          </div>
+          <span class="technical-hint">GET /api/configurations/auditable</span>
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table audit-table">
+            <thead>
+              <tr>
+                <th>CONFIG</th>
+                <th>DISPOSITIVO</th>
+                <th>VERSIÓN</th>
+                <th>FORMATO</th>
+                <th>IMPORTADA POR</th>
+                <th>FECHA</th>
+              </tr>
+            </thead>
+            <tbody id="configuration-table-body"></tbody>
+          </table>
+          <div id="configuration-empty" class="empty-state compact-empty">
+            <div>
+              <code>config.count = 0</code>
+              <p>Todavía no hay configuraciones importadas para auditar.</p>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="panel audit-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="eyebrow">Execution history</span>
+            <h2>Auditorías ejecutadas</h2>
+          </div>
+          <span class="technical-hint">GET /api/audits/history</span>
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table audit-table">
+            <thead>
+              <tr>
+                <th>AUDIT</th>
+                <th>DISPOSITIVO</th>
+                <th>BASELINE</th>
+                <th>REGLAS</th>
+                <th>CUMPLE</th>
+                <th>HALLAZGOS</th>
+                <th>RESULTADO</th>
+              </tr>
+            </thead>
+            <tbody id="audit-table-body"></tbody>
+          </table>
+          <div id="audit-empty" class="empty-state compact-empty">
+            <div>
+              <code>audit.count = 0</code>
+              <p>No hay auditorías ejecutadas todavía.</p>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <aside class="panel audit-inspector">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Execution inspector</span>
+          <h2>Contexto de auditoría</h2>
+        </div>
+        <span class="inspector-led"></span>
+      </div>
+
+      <div id="audit-inspector-empty" class="inspector-empty">
+        <code>select config | audit;</code>
+        <p>Seleccioná una configuración para revisar su contexto o una auditoría para ver resultados.</p>
+      </div>
+
+      <div id="audit-inspector-content" class="inspector-content is-hidden"></div>
+    </aside>
+  </section>
+
+  <dialog id="config-dialog" class="technical-dialog">
+    <form id="config-form" class="device-form">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">{'// POST /api/devices/{id}/configurations'}</span>
+          <h2>Cargar configuración</h2>
+          <p>Importá un running-config mediante texto pegado o archivo TXT/CFG.</p>
+        </div>
+        <button id="close-config-dialog" class="dialog-close" type="button" aria-label="Cerrar">×</button>
+      </div>
+
+      <div class="device-form-grid">
+        <label class="field field-span-2">
+          <span>device *</span>
+          <select id="config-device" class="form-select" required>
+            <option value="">Seleccionar dispositivo...</option>
+          </select>
+        </label>
+
+        <label class="field field-span-2">
+          <span>source_file</span>
+          <input id="config-file" type="file" accept=".txt,.cfg,text/plain" />
+        </label>
+
+        <label class="field field-span-2">
+          <span>running_config *</span>
+          <textarea
+            id="config-content"
+            class="mono-input config-editor"
+            rows="14"
+            placeholder="hostname RTR-CORE-01&#10;ip ssh version 2&#10;line vty 0 4&#10; transport input telnet ssh"
+            required
+          ></textarea>
+        </label>
+      </div>
+
+      <div class="rule-help">
+        <code>evidence.original</code>
+        <span>Se conserva exactamente el contenido recibido.</span>
+        <code>evidence.normalized</code>
+        <span>Se genera una copia normalizada para comparar reglas sin alterar el original.</span>
+      </div>
+
+      <div class="dialog-actions">
+        <button id="cancel-config" class="button button-ghost" type="button">Cancelar</button>
+        <button class="button button-primary" type="submit">Importar configuración</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    import { auditFetch, getStoredUser, hasRole } from '../lib/auth';
+    import { readApiError } from '../lib/api';
+    import type {
+      AuditDetail,
+      AuditSummary,
+      BaselineRule,
+      ConfigurationBaseline,
+      DeviceConfiguration,
+      NetworkDevice,
+    } from '../lib/api';
+
+    let devices: NetworkDevice[] = [];
+    let baselines: ConfigurationBaseline[] = [];
+    let rules: BaselineRule[] = [];
+    let configurations: DeviceConfiguration[] = [];
+    let audits: AuditSummary[] = [];
+    let selectedConfigurationId: number | null = null;
+    let selectedAuditId: number | null = null;
+
+    const canOperate =
+      hasRole('ADMINISTRADOR_SISTEMA') ||
+      hasRole('ANALISTA_RED') ||
+      hasRole('AUDITOR_TECNICO');
+
+    const openConfigButton = document.querySelector<HTMLButtonElement>('#open-config-dialog');
+    if (!canOperate) openConfigButton?.setAttribute('hidden', '');
+
+    const configDialog = document.querySelector<HTMLDialogElement>('#config-dialog');
+    const configForm = document.querySelector<HTMLFormElement>('#config-form');
+    const configDevice = document.querySelector<HTMLSelectElement>('#config-device');
+    const configFile = document.querySelector<HTMLInputElement>('#config-file');
+    const configContent = document.querySelector<HTMLTextAreaElement>('#config-content');
+    const searchInput = document.querySelector<HTMLInputElement>('#audit-search');
+
+    const showMessage = (kind: 'success' | 'error', message: string) => {
+      const success = document.querySelector<HTMLElement>('#audit-success');
+      const error = document.querySelector<HTMLElement>('#audit-error');
+      success?.classList.add('is-hidden');
+      error?.classList.add('is-hidden');
+      const target = kind === 'success' ? success : error;
+      if (target) {
+        target.textContent = message;
+        target.classList.remove('is-hidden');
+      }
+    };
+
+    const escapeHtml = (value: unknown) =>
+      String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+
+    const formatDate = (value: string) => {
+      try {
+        return new Intl.DateTimeFormat('es-AR', {
+          dateStyle: 'short',
+          timeStyle: 'short',
+        }).format(new Date(value));
+      } catch {
+        return value;
+      }
+    };
+
+    const deviceById = (id: number) => devices.find((item) => item.id === id);
+    const baselineById = (id: number) => baselines.find((item) => item.id === id);
+
+    const applicableBaseline = (configuration: DeviceConfiguration) => {
+      const device = deviceById(configuration.dispositivoId);
+      if (!device) return undefined;
+      return baselines
+        .filter((b) =>
+          b.organizacionId === configuration.organizacionId &&
+          b.tipoDispositivoId === device.tipoDispositivoId &&
+          b.estado === 'ACTIVO'
+        )
+        .sort((a, b) => b.version - a.version || b.id - a.id)[0];
+    };
+
+    const refreshAll = async () => {
+      const [deviceResponse, baselineResponse, rulesResponse, configResponse, auditResponse] = await Promise.all([
+        auditFetch('/api/devices'),
+        auditFetch('/api/baselines'),
+        auditFetch('/api/rules'),
+        auditFetch('/api/configurations/auditable'),
+        auditFetch('/api/audits/history'),
+      ]);
+
+      for (const response of [deviceResponse, baselineResponse, rulesResponse, configResponse, auditResponse]) {
+        if (!response.ok) throw new Error(await readApiError(response));
+      }
+
+      devices = await deviceResponse.json() as NetworkDevice[];
+      baselines = await baselineResponse.json() as ConfigurationBaseline[];
+      rules = await rulesResponse.json() as BaselineRule[];
+      configurations = await configResponse.json() as DeviceConfiguration[];
+      audits = await auditResponse.json() as AuditSummary[];
+
+      renderDeviceOptions();
+      renderConfigurations();
+      renderAudits();
+    };
+
+    const renderDeviceOptions = () => {
+      if (!configDevice) return;
+      configDevice.innerHTML = '<option value="">Seleccionar dispositivo...</option>' +
+        devices
+          .filter((device) => device.estado === 'ACTIVO')
+          .map((device) => `<option value="${device.id}">${escapeHtml(device.identificador)} · ${escapeHtml(device.nombre)}</option>`)
+          .join('');
+    };
+
+    const renderConfigurations = () => {
+      const body = document.querySelector<HTMLTableSectionElement>('#configuration-table-body');
+      const empty = document.querySelector<HTMLElement>('#configuration-empty');
+      const count = document.querySelector<HTMLElement>('#configuration-count');
+      if (!body) return;
+
+      const term = searchInput?.value.trim().toLowerCase() ?? '';
+      const filtered = configurations.filter((configuration) => {
+        const device = deviceById(configuration.dispositivoId);
+        const haystack = [
+          `CFG-${String(configuration.id).padStart(3, '0')}`,
+          device?.identificador,
+          device?.nombre,
+          configuration.version,
+          configuration.usuarioResponsable,
+          configuration.nombreFuente,
+        ].join(' ').toLowerCase();
+        return !term || haystack.includes(term);
+      });
+
+      if (count) {
+        count.textContent = `${configurations.length} ${configurations.length === 1 ? 'configuración' : 'configuraciones'}`;
+      }
+
+      body.innerHTML = filtered.map((configuration) => {
+        const device = deviceById(configuration.dispositivoId);
+        const selected = configuration.id === selectedConfigurationId ? 'is-selected' : '';
+        return `
+          <tr class="audit-row ${selected}" data-config-id="${configuration.id}" tabindex="0">
+            <td><code>CFG-${String(configuration.id).padStart(3, '0')}</code></td>
+            <td>
+              <strong>${escapeHtml(device?.identificador ?? `#${configuration.dispositivoId}`)}</strong>
+              <small>${escapeHtml(device?.nombre ?? '')}</small>
+            </td>
+            <td><code>v${configuration.version}</code></td>
+            <td>${escapeHtml(configuration.formato)}</td>
+            <td>${escapeHtml(configuration.usuarioResponsable)}</td>
+            <td>${escapeHtml(formatDate(configuration.fechaImportacion))}</td>
+          </tr>`;
+      }).join('');
+
+      empty?.classList.toggle('is-hidden', filtered.length > 0);
+      body.querySelectorAll<HTMLElement>('[data-config-id]').forEach((row) => {
+        const select = () => selectConfiguration(Number(row.dataset.configId));
+        row.addEventListener('click', select);
+        row.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' || event.key === ' ') select();
+        });
+      });
+    };
+
+    const renderAudits = () => {
+      const body = document.querySelector<HTMLTableSectionElement>('#audit-table-body');
+      const empty = document.querySelector<HTMLElement>('#audit-empty');
+      if (!body) return;
+
+      body.innerHTML = audits.map((audit) => {
+        const device = deviceById(audit.dispositivoId);
+        const baseline = baselineById(audit.baselineId);
+        const selected = audit.id === selectedAuditId ? 'is-selected' : '';
+        const resultClass = audit.resultado === 'CUMPLE' ? 'status-ready' : 'status-strong';
+        return `
+          <tr class="audit-row ${selected}" data-audit-id="${audit.id}" tabindex="0">
+            <td><code>AUD-${String(audit.id).padStart(3, '0')}</code></td>
+            <td>${escapeHtml(device?.identificador ?? `#${audit.dispositivoId}`)}</td>
+            <td>${escapeHtml(baseline?.nombre ?? `#${audit.baselineId}`)}</td>
+            <td>${audit.totalReglas}</td>
+            <td>${audit.reglasCumplidas}</td>
+            <td><strong>${audit.totalHallazgos}</strong></td>
+            <td><span class="status-badge ${resultClass}">${escapeHtml(audit.resultado)}</span></td>
+          </tr>`;
+      }).join('');
+
+      empty?.classList.toggle('is-hidden', audits.length > 0);
+      body.querySelectorAll<HTMLElement>('[data-audit-id]').forEach((row) => {
+        const select = () => selectAudit(Number(row.dataset.auditId));
+        row.addEventListener('click', select);
+        row.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' || event.key === ' ') select();
+        });
+      });
+    };
+
+    const showInspector = (html: string) => {
+      document.querySelector('#audit-inspector-empty')?.classList.add('is-hidden');
+      const content = document.querySelector<HTMLElement>('#audit-inspector-content');
+      if (content) {
+        content.innerHTML = html;
+        content.classList.remove('is-hidden');
+      }
+    };
+
+    const selectConfiguration = (id: number) => {
+      selectedConfigurationId = id;
+      selectedAuditId = null;
+      renderConfigurations();
+      renderAudits();
+
+      const configuration = configurations.find((item) => item.id === id);
+      if (!configuration) return;
+      const device = deviceById(configuration.dispositivoId);
+      const baseline = applicableBaseline(configuration);
+      const ruleCount = baseline ? rules.filter((rule) => rule.baselineId === baseline.id && rule.estado === 'ACTIVA').length : 0;
+      const preview = configuration.contenidoNormalizado.slice(0, 900);
+
+      showInspector(`
+        <div class="inspector-identity">
+          <span class="inspector-code">CFG-${String(configuration.id).padStart(3, '0')} · v${configuration.version}</span>
+          <h3>${escapeHtml(device?.identificador ?? `Dispositivo #${configuration.dispositivoId}`)}</h3>
+          <span class="status-badge status-ready">AUDITABLE</span>
+        </div>
+        <dl class="technical-definition-list">
+          <div><dt>device</dt><dd>${escapeHtml(device?.nombre ?? '—')}</dd></div>
+          <div><dt>source</dt><dd>${escapeHtml(configuration.nombreFuente)}</dd></div>
+          <div><dt>format</dt><dd>${escapeHtml(configuration.formato)}</dd></div>
+          <div><dt>version</dt><dd>v${configuration.version}</dd></div>
+          <div><dt>imported.by</dt><dd>${escapeHtml(configuration.usuarioResponsable)}</dd></div>
+          <div><dt>baseline</dt><dd>${escapeHtml(baseline?.nombre ?? 'Sin baseline aplicable')}</dd></div>
+          <div><dt>rules.active</dt><dd>${ruleCount}</dd></div>
+        </dl>
+        <div class="config-preview">
+          <span>normalized.preview</span>
+          <pre>${escapeHtml(preview)}</pre>
+        </div>
+        ${canOperate ? `
+          <button id="execute-selected-audit" class="button button-primary button-full" type="button"
+            ${!baseline || ruleCount === 0 ? 'disabled' : ''}>
+            ▶ ejecutar auditoría
+          </button>` : ''}
+        ${!baseline ? '<div class="alert alert-error">No existe una baseline activa aplicable.</div>' : ''}
+      `);
+
+      document.querySelector<HTMLButtonElement>('#execute-selected-audit')?.addEventListener('click', () => executeAudit(configuration.id));
+    };
+
+    const selectAudit = async (id: number) => {
+      selectedAuditId = id;
+      selectedConfigurationId = null;
+      renderConfigurations();
+      renderAudits();
+
+      const response = await auditFetch(`/api/audits/${id}`);
+      if (!response.ok) {
+        showMessage('error', await readApiError(response));
+        return;
+      }
+
+      const detail = await response.json() as AuditDetail;
+      renderAuditDetail(detail);
+    };
+
+    const renderAuditDetail = (detail: AuditDetail) => {
+      const audit = detail.auditoria;
+      const device = deviceById(audit.dispositivoId);
+      const baseline = baselineById(audit.baselineId);
+      const evaluations = detail.evaluaciones.map((evaluation) => `
+        <div class="evaluation-item ${evaluation.cumple ? 'is-pass' : 'is-fail'}">
+          <div>
+            <code>${escapeHtml(evaluation.codigoRegla)}</code>
+            <strong>${escapeHtml(evaluation.nombreRegla)}</strong>
+          </div>
+          <span class="status-badge ${evaluation.cumple ? 'status-ready' : 'status-strong'}">
+            ${evaluation.cumple ? 'CUMPLE' : 'HALLAZGO'}
+          </span>
+          <small>${escapeHtml(evaluation.evidencia)}</small>
+        </div>
+      `).join('');
+
+      showInspector(`
+        <div class="inspector-identity">
+          <span class="inspector-code">AUD-${String(audit.id).padStart(3, '0')}</span>
+          <h3>${escapeHtml(device?.identificador ?? `Dispositivo #${audit.dispositivoId}`)}</h3>
+          <span class="status-badge ${audit.resultado === 'CUMPLE' ? 'status-ready' : 'status-strong'}">${escapeHtml(audit.resultado)}</span>
+        </div>
+        <dl class="technical-definition-list">
+          <div><dt>baseline</dt><dd>${escapeHtml(baseline?.nombre ?? `#${audit.baselineId}`)}</dd></div>
+          <div><dt>config</dt><dd>CFG-${String(audit.configuracionId).padStart(3, '0')}</dd></div>
+          <div><dt>rules.total</dt><dd>${audit.totalReglas}</dd></div>
+          <div><dt>rules.pass</dt><dd>${audit.reglasCumplidas}</dd></div>
+          <div><dt>findings</dt><dd>${audit.totalHallazgos}</dd></div>
+          <div><dt>severity.max</dt><dd>${escapeHtml(audit.severidadMaxima)}</dd></div>
+          <div><dt>executed.by</dt><dd>${escapeHtml(audit.ejecutadoPor)}</dd></div>
+          <div><dt>executed.at</dt><dd>${escapeHtml(formatDate(audit.fechaEjecucion))}</dd></div>
+        </dl>
+        <div class="evaluation-list">
+          <span class="eyebrow">Rule evaluation</span>
+          ${evaluations}
+        </div>
+        ${audit.totalHallazgos > 0 ? '<a class="button button-ghost button-full" href="/results">Ver hallazgos →</a>' : ''}
+      `);
+    };
+
+    const executeAudit = async (configurationId: number) => {
+      const button = document.querySelector<HTMLButtonElement>('#execute-selected-audit');
+      if (button) button.disabled = true;
+
+      try {
+        const response = await auditFetch('/api/audits', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ configuracionId: configurationId }),
+        });
+
+        if (!response.ok) throw new Error(await readApiError(response));
+
+        const detail = await response.json() as AuditDetail;
+        showMessage(
+          'success',
+          `Auditoría AUD-${String(detail.auditoria.id).padStart(3, '0')} finalizada: ${detail.auditoria.totalHallazgos} hallazgo(s).`
+        );
+        await refreshAll();
+        selectedAuditId = detail.auditoria.id;
+        selectedConfigurationId = null;
+        renderConfigurations();
+        renderAudits();
+        renderAuditDetail(detail);
+      } catch (error) {
+        showMessage('error', error instanceof Error ? error.message : 'No se pudo ejecutar la auditoría.');
+      } finally {
+        if (button) button.disabled = false;
+      }
+    };
+
+    const openDialog = () => {
+      configForm?.reset();
+      configDialog?.showModal();
+    };
+
+    const closeDialog = () => configDialog?.close();
+
+    openConfigButton?.addEventListener('click', openDialog);
+    document.querySelector('#close-config-dialog')?.addEventListener('click', closeDialog);
+    document.querySelector('#cancel-config')?.addEventListener('click', closeDialog);
+
+    configFile?.addEventListener('change', async () => {
+      const file = configFile.files?.[0];
+      if (!file || !configContent) return;
+      configContent.value = await file.text();
+    });
+
+    configForm?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const deviceId = Number(configDevice?.value);
+      const content = configContent?.value ?? '';
+      const file = configFile?.files?.[0];
+      const extension = file?.name.split('.').pop()?.toLowerCase();
+      const formato = extension === 'cfg' ? 'CFG' : extension === 'txt' ? 'TXT' : 'TEXTO';
+      const nombreFuente = file?.name ?? 'entrada-manual';
+
+      try {
+        const response = await auditFetch(`/api/devices/${deviceId}/configurations`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contenido: content,
+            formato,
+            nombreFuente,
+          }),
+        });
+
+        if (!response.ok) throw new Error(await readApiError(response));
+
+        const created = await response.json() as DeviceConfiguration;
+        closeDialog();
+        showMessage('success', `Configuración CFG-${String(created.id).padStart(3, '0')} importada como versión ${created.version}.`);
+        await refreshAll();
+        selectConfiguration(created.id);
+      } catch (error) {
+        showMessage('error', error instanceof Error ? error.message : 'No se pudo importar la configuración.');
+      }
+    });
+
+    searchInput?.addEventListener('input', renderConfigurations);
+
+    refreshAll().catch((error) => {
+      showMessage('error', error instanceof Error ? error.message : 'No se pudieron cargar los datos de auditoría.');
+    });
+  </script>
+</MasterLayout>

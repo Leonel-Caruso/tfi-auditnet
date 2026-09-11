@@ -1,0 +1,110 @@
+---
+import MasterLayout from '../layouts/MasterLayout.astro';
+---
+
+<MasterLayout
+  title="Usuarios"
+  section="Control de acceso"
+  description="Usuarios habilitados, organización asociada y perfil de acceso dentro de la plataforma."
+>
+  <section id="users-error" class="alert alert-error is-hidden"></section>
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <span class="eyebrow">Accesos</span>
+        <h2>Usuarios y perfiles</h2>
+      </div>
+      <span id="users-count" class="counter-chip">—</span>
+    </div>
+
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Correo</th>
+            <th>Organización</th>
+            <th>Perfil</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="users-body">
+          <tr><td colspan="5"><div class="skeleton-row"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <script>
+    import { authFetch } from '../lib/auth';
+    import { readApiError, type Organization, type User } from '../lib/api';
+
+    function cell(text: string): HTMLTableCellElement {
+      const td = document.createElement('td');
+      td.textContent = text;
+      return td;
+    }
+
+    function buildUserRow(user: User, organizations: Map<number, string>): HTMLTableRowElement {
+      const row = document.createElement('tr');
+
+      const identity = document.createElement('td');
+      const name = document.createElement('strong');
+      name.textContent = user.nombre;
+      const username = document.createElement('small');
+      username.textContent = `@${user.nombreUsuario}`;
+      identity.append(name, username);
+
+      const roles = document.createElement('td');
+      user.roles.forEach((role) => {
+        const chip = document.createElement('span');
+        chip.className = 'role-chip';
+        chip.textContent = role.toLowerCase();
+        roles.appendChild(chip);
+      });
+
+      const status = document.createElement('td');
+      const badge = document.createElement('span');
+      badge.className = 'status-badge status-ready';
+      badge.textContent = user.estado.toLowerCase();
+      status.appendChild(badge);
+
+      const organizationName = organizations.get(user.organizationId) ?? `org#${user.organizationId}`;
+      row.append(identity, cell(user.email), cell(organizationName), roles, status);
+      return row;
+    }
+
+    async function loadUsers(): Promise<void> {
+      const [usersResponse, organizationsResponse] = await Promise.all([
+        authFetch('/api/users'),
+        authFetch('/api/client-organizations'),
+      ]);
+
+      const body = document.querySelector<HTMLTableSectionElement>('#users-body');
+      const error = document.querySelector<HTMLElement>('#users-error');
+
+      if (!usersResponse.ok) {
+        body?.replaceChildren();
+        if (error) {
+          error.textContent = await readApiError(usersResponse);
+          error.classList.remove('is-hidden');
+        }
+        return;
+      }
+
+      const users = await usersResponse.json() as User[];
+      const organizations = organizationsResponse.ok
+        ? await organizationsResponse.json() as Organization[]
+        : [];
+      const organizationNames = new Map(organizations.map((organization) => [organization.id, organization.razonSocial]));
+
+      const count = document.querySelector<HTMLSpanElement>('#users-count');
+      if (count) count.textContent = String(users.length);
+      if (!body) return;
+
+      body.replaceChildren(...users.map((user) => buildUserRow(user, organizationNames)));
+    }
+
+    loadUsers().catch(() => {});
+  </script>
+</MasterLayout>

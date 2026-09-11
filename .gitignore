@@ -1,0 +1,25 @@
+# Entorno local / secretos
+.env
+**/.env
+!**/.env.example
+
+# Java / Maven
+**/target/
+**/effective-pom.xml
+
+# Node / Astro
+**/node_modules/
+**/dist/
+**/.astro/
+
+# IDE / sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Herramientas generadas
+.github/modernize/
+
+# Render / deploy local
+.render/

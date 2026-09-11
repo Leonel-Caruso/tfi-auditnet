@@ -1,0 +1,141 @@
+---
+import Sidebar from '../components/Sidebar.astro';
+import Topbar from '../components/Topbar.astro';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  section?: string;
+}
+
+const {
+  title,
+  description = 'Plataforma de auditoría y control de configuraciones de red.',
+  section = 'Consola',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="description" content={description} />
+    <title>{title} · AuditConfig</title>
+  </head>
+  <body class="app-body">
+    <div id="session-loading" class="session-loading">
+      <div class="spinner"></div>
+      <span>validando_sesion...</span>
+    </div>
+
+    <div id="protected-shell" class="app-shell is-hidden">
+      <Sidebar />
+      <div class="app-content">
+        <Topbar />
+        <main class="page-content">
+          <div class="page-heading">
+            <div>
+              <span class="eyebrow">{section}</span>
+              <h1>{title}</h1>
+              <p>{description}</p>
+            </div>
+          </div>
+          <slot />
+        </main>
+      </div>
+    </div>
+
+    <script>
+      import { getStoredUser, logout, verifySession } from '../lib/auth';
+
+      async function initializeShell() {
+        try {
+          const current = await verifySession();
+          const stored = getStoredUser();
+          const roles = current.roles ?? stored?.roles ?? [];
+          const isAdmin = roles.includes('ADMINISTRADOR_SISTEMA');
+
+          document.querySelectorAll('[data-admin-only="true"]').forEach((element) => {
+            if (!isAdmin) element.setAttribute('hidden', '');
+          });
+
+          document.querySelectorAll<HTMLElement>('[data-roles]').forEach((element) => {
+            const allowed = (element.dataset.roles ?? '')
+              .split(',')
+              .map((role) => role.trim())
+              .filter(Boolean);
+            if (!allowed.some((role) => roles.includes(role))) {
+              element.setAttribute('hidden', '');
+            }
+          });
+
+          const displayName = stored?.nombre || current.username;
+          const nameNode = document.querySelector('#user-name');
+          const roleNode = document.querySelector('#user-role');
+          const avatarNode = document.querySelector('#user-avatar');
+          const handleNode = document.querySelector('#user-handle');
+          const connectionNode = document.querySelector('#topbar-connection');
+
+          if (nameNode) nameNode.textContent = displayName;
+          if (roleNode) roleNode.textContent = roles[0]?.toLowerCase() ?? 'sin_rol';
+          if (avatarNode) avatarNode.textContent = `${displayName.slice(0, 1).toUpperCase()}_`;
+          if (handleNode) handleNode.textContent = stored?.username ?? current.username;
+          if (connectionNode) {
+            connectionNode.textContent = 'api';
+            connectionNode.classList.add('is-online');
+          }
+
+          document.querySelector('#session-loading')?.classList.add('is-hidden');
+          document.querySelector('#protected-shell')?.classList.remove('is-hidden');
+        } catch {
+          // authFetch/verifySession redirige a /login cuando corresponde.
+        }
+      }
+
+      const userMenuButton = document.querySelector<HTMLButtonElement>('#user-menu-button');
+      const userPopover = document.querySelector<HTMLElement>('#user-popover');
+
+      userMenuButton?.addEventListener('click', () => {
+        const willOpen = userPopover?.classList.contains('is-hidden') ?? true;
+        userPopover?.classList.toggle('is-hidden', !willOpen);
+        userMenuButton.setAttribute('aria-expanded', String(willOpen));
+      });
+
+      document.addEventListener('click', (event) => {
+        const target = event.target as Node;
+        if (!userMenuButton?.contains(target) && !userPopover?.contains(target)) {
+          userPopover?.classList.add('is-hidden');
+          userMenuButton?.setAttribute('aria-expanded', 'false');
+        }
+      });
+
+      const commandPalette = document.querySelector<HTMLInputElement>('#command-palette');
+      const commandRoutes: Record<string, string> = {
+        inicio: '/dashboard', home: '/dashboard', dashboard: '/dashboard',
+        organizaciones: '/organizations', organizacion: '/organizations', org: '/organizations', sedes: '/organizations',
+        usuarios: '/users', usuario: '/users', usr: '/users',
+        dispositivos: '/devices', dispositivo: '/devices', dev: '/devices', devices: '/devices',
+        baselines: '/baselines', baseline: '/baselines', bl: '/baselines',
+        reglas: '/rules', regla: '/rules', rul: '/rules', rules: '/rules',
+        auditorias: '/audits', auditoria: '/audits', run: '/audits', audits: '/audits',
+        hallazgos: '/results', hallazgo: '/results', resultados: '/results', log: '/results', findings: '/results'
+      };
+
+      commandPalette?.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter') return;
+        const command = commandPalette.value.trim().toLowerCase();
+        const route = commandRoutes[command];
+        if (route) window.location.assign(route);
+        else {
+          commandPalette.classList.add('is-invalid');
+          window.setTimeout(() => commandPalette.classList.remove('is-invalid'), 450);
+        }
+      });
+
+      document.querySelector('#logout-button')?.addEventListener('click', logout);
+      initializeShell();
+    </script>
+  </body>
+</html>

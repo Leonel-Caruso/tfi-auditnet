@@ -1,0 +1,19 @@
+---
+import '../styles/global.css';
+---
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>AuditConfig</title>
+  </head>
+  <body class="redirect-page">
+    <div class="spinner"></div>
+    <p>booting_console...</p>
+    <script>
+      const hasToken = Boolean(sessionStorage.getItem('tfi.auth.token'));
+      window.location.replace(hasToken ? '/dashboard' : '/login');
+    </script>
+  </body>
+</html>

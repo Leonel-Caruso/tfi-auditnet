@@ -1,0 +1,187 @@
+---
+import MasterLayout from '../layouts/MasterLayout.astro';
+---
+
+<MasterLayout
+  title="Inicio"
+  section="Consola"
+  description="Resumen operativo de la plataforma de auditoría y control de configuraciones de red."
+>
+  <section class="hero-card">
+    <div>
+      <span class="status-badge status-ready">system.status = READY</span>
+      <h2>Consola central de auditoría y configuración</h2>
+      <p>
+        Gestión de acceso, organizaciones y sedes sobre una base preparada para inventario técnico,
+        baselines, reglas, ejecución de auditorías y generación de hallazgos.
+      </p>
+    </div>
+    <div class="hero-terminal" aria-label="Estado del flujo técnico">
+      <span>frontend: <strong>astro</strong></span>
+      <span>api.management: <strong>8081</strong></span>
+      <span>api.audit-core: <strong>8082</strong></span>
+      <span>database: <strong>postgresql</strong></span>
+      <span>security: <strong>jwt + bcrypt</strong></span>
+    </div>
+  </section>
+
+  <section class="metric-grid">
+    <article class="metric-card">
+      <span class="metric-label">session.user</span>
+      <strong id="metric-user">Validando...</strong>
+      <small id="metric-role">—</small>
+    </article>
+    <article class="metric-card" data-admin-section>
+      <span class="metric-label">organizations.count</span>
+      <strong id="metric-organizations">—</strong>
+      <small>Clientes registrados</small>
+    </article>
+    <article class="metric-card" data-admin-section>
+      <span class="metric-label">sites.count</span>
+      <strong id="metric-sites">—</strong>
+      <small>Sedes operativas registradas</small>
+    </article>
+    <article class="metric-card" data-admin-section>
+      <span class="metric-label">users.count</span>
+      <strong id="metric-users">—</strong>
+      <small>Accesos administrados por rol</small>
+    </article>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <span class="eyebrow">Operación técnica</span>
+        <h2>Módulos principales</h2>
+      </div>
+    </div>
+    <div class="use-case-grid">
+      <article class="use-case-card">
+        <span class="step-number">01</span>
+        <div>
+          <h3>Dispositivos</h3>
+          <p>Inventario técnico de routers y switches asociados a cada organización y sede.</p>
+          <span id="module-device-count" class="status-badge status-ready">inventario operativo</span>
+        </div>
+      </article>
+      <article class="use-case-card featured">
+        <span class="step-number">02</span>
+        <div>
+          <h3>Baselines y reglas</h3>
+          <p>Definición del estado esperado y de las condiciones que determinan cumplimiento o desvío.</p>
+          <span id="module-policy-count" class="status-badge status-ready">policy engine operativo</span>
+        </div>
+      </article>
+      <article class="use-case-card featured">
+        <span class="step-number">03</span>
+        <div>
+          <h3>Auditorías y hallazgos</h3>
+          <p>Comparación de configuraciones contra una baseline para producir evidencia técnica trazable.</p>
+          <span id="module-audit-count" class="status-badge status-ready">audit engine operativo</span>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="two-column">
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Pipeline</span>
+          <h2>Flujo funcional principal</h2>
+        </div>
+      </div>
+      <div class="flow-line">
+        <span>device</span><b>→</b><span>baseline</span><b>→</b><span>rules</span><b>→</b><span>audit</span><b>→</b><span>findings</span>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Stack activo</span>
+          <h2>Arquitectura operativa</h2>
+        </div>
+      </div>
+      <div class="architecture-stack">
+        <span>frontend / Astro</span>
+        <i>REST + Authorization: Bearer JWT</i>
+        <span>backend / Quarkus · management-service</span>
+        <i>acceso, organizaciones, sedes y usuarios</i>
+        <span>backend / Quarkus · audit-core-service</span>
+        <i>inventario técnico y núcleo de auditoría</i>
+        <span>storage / PostgreSQL</span>
+      </div>
+    </article>
+  </section>
+
+  <script>
+    import { auditFetch, authFetch, getStoredUser, hasRole } from '../lib/auth';
+    import type { AuditFinding, AuditSummary, BaselineRule, ConfigurationBaseline, NetworkDevice, Organization, Site, User } from '../lib/api';
+
+    const stored = getStoredUser();
+    const userNode = document.querySelector('#metric-user');
+    const roleNode = document.querySelector('#metric-role');
+    if (userNode) userNode.textContent = stored?.nombre ?? stored?.username ?? 'Usuario';
+    if (roleNode) roleNode.textContent = stored?.roles?.join(', ').toLowerCase() ?? 'sin_rol';
+
+
+    auditFetch('/api/devices').then(async (response) => {
+      if (!response.ok) return;
+      const devices = await response.json() as NetworkDevice[];
+      const node = document.querySelector('#module-device-count');
+      if (node) node.textContent = `inventory.count = ${devices.length}`;
+    }).catch(() => {});
+
+    Promise.all([auditFetch('/api/baselines'), auditFetch('/api/rules')]).then(async ([baselineResponse, rulesResponse]) => {
+      if (!baselineResponse.ok || !rulesResponse.ok) return;
+      const baselines = await baselineResponse.json() as ConfigurationBaseline[];
+      const rules = await rulesResponse.json() as BaselineRule[];
+      const node = document.querySelector('#module-policy-count');
+      if (node) node.textContent = `baseline.count = ${baselines.length} · rules.count = ${rules.length}`;
+    }).catch(() => {});
+
+
+    Promise.all([auditFetch('/api/audits/history'), auditFetch('/api/findings')]).then(async ([auditResponse, findingResponse]) => {
+      if (!auditResponse.ok || !findingResponse.ok) return;
+      const audits = await auditResponse.json() as AuditSummary[];
+      const findings = await findingResponse.json() as AuditFinding[];
+      const node = document.querySelector('#module-audit-count');
+      if (node) node.textContent = `audit.count = ${audits.length} · findings.count = ${findings.length}`;
+    }).catch(() => {});
+
+    const isAdmin = hasRole('ADMINISTRADOR_SISTEMA');
+    if (!isAdmin) {
+      document.querySelectorAll('[data-admin-section]').forEach((node) => node.setAttribute('hidden', ''));
+    } else {
+      Promise.all([
+        authFetch('/api/client-organizations'),
+        authFetch('/api/users'),
+      ]).then(async ([orgResponse, userResponse]) => {
+        if (orgResponse.ok) {
+          const organizations = await orgResponse.json() as Organization[];
+          const orgNode = document.querySelector('#metric-organizations');
+          if (orgNode) orgNode.textContent = String(organizations.length);
+
+          const siteResponses = await Promise.all(
+            organizations.map((organization) => authFetch(`/api/client-organizations/${organization.id}/sites`))
+          );
+          let siteCount = 0;
+          for (const response of siteResponses) {
+            if (!response.ok) continue;
+            const sites = await response.json() as Site[];
+            siteCount += sites.length;
+          }
+          const siteNode = document.querySelector('#metric-sites');
+          if (siteNode) siteNode.textContent = String(siteCount);
+        }
+
+        if (userResponse.ok) {
+          const users = await userResponse.json() as User[];
+          const node = document.querySelector('#metric-users');
+          if (node) node.textContent = String(users.length);
+        }
+      }).catch(() => {});
+    }
+  </script>
+</MasterLayout>

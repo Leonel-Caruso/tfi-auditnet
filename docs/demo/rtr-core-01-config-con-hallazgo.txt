@@ -1,0 +1,12 @@
+hostname RTR-CORE-01
+!
+ip domain-name cliente-demo.local
+ip ssh version 2
+!
+service timestamps log datetime msec
+!
+line vty 0 4
+ login local
+ transport input telnet ssh
+!
+end

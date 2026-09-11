@@ -1,0 +1,100 @@
+services:
+  - type: web
+    name: tfi-auditnet-management
+    runtime: docker
+    plan: free
+    rootDir: backend/management-service
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/management/status
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: tfi-auditnet-db
+          property: connectionString
+      - key: DB_USERNAME
+        fromDatabase:
+          name: tfi-auditnet-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: tfi-auditnet-db
+          property: password
+      - key: DB_SCHEMA_STRATEGY
+        value: update
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_ORIGIN
+        fromService:
+          name: tfi-auditnet-web
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: BOOTSTRAP_ADMIN_EMAIL
+        value: admin@auditnet.local
+      - key: BOOTSTRAP_ADMIN_USERNAME
+        value: admin
+      - key: BOOTSTRAP_ADMIN_PASSWORD
+        sync: false
+      - key: BOOTSTRAP_ORG_IDENTIFIER
+        value: TFI-DEMO
+      - key: BOOTSTRAP_ORG_NAME
+        value: Organizacion Demo TFI
+
+  - type: web
+    name: tfi-auditnet-core
+    runtime: docker
+    plan: free
+    rootDir: backend/audit-core-service
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/audit-core/status
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: tfi-auditnet-db
+          property: connectionString
+      - key: DB_USERNAME
+        fromDatabase:
+          name: tfi-auditnet-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: tfi-auditnet-db
+          property: password
+      - key: DB_SCHEMA_STRATEGY
+        value: update
+      - key: JWT_SECRET
+        fromService:
+          name: tfi-auditnet-management
+          type: web
+          envVarKey: JWT_SECRET
+      - key: FRONTEND_ORIGIN
+        fromService:
+          name: tfi-auditnet-web
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
+
+  - type: web
+    name: tfi-auditnet-web
+    runtime: static
+    rootDir: frontend/web-app
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: PUBLIC_MANAGEMENT_API_URL
+        fromService:
+          name: tfi-auditnet-management
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: PUBLIC_AUDIT_CORE_API_URL
+        fromService:
+          name: tfi-auditnet-core
+          type: web
+          envVarKey: RENDER_EXTERNAL_URL
+
+databases:
+  - name: tfi-auditnet-db
+    plan: free
+    postgresMajorVersion: "17"
+    databaseName: tfi_auditnet
+    user: tfi_auditnet

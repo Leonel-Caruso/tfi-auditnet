@@ -1,0 +1,114 @@
+---
+import PublicLayout from '../layouts/PublicLayout.astro';
+---
+
+<PublicLayout title="Acceso a consola">
+  <main class="login-screen">
+    <section class="login-brand-panel">
+      <div class="login-brand-content">
+        <div class="hero-mark">A_</div>
+        <span class="eyebrow eyebrow-light">TFI · Ingeniería en Sistemas Informáticos</span>
+        <h1>Control y auditoría de configuraciones de red</h1>
+        <p>
+          Una consola única para administrar acceso, organizar infraestructura y construir un flujo
+          de auditoría técnica sobre configuraciones Cisco IOS/IOS-XE.
+        </p>
+
+        <div class="login-terminal" aria-label="Flujo técnico principal">
+          <div class="terminal-bar">
+            <span class="terminal-dot is-accent"></span>
+            <span class="terminal-dot"></span>
+            <span class="terminal-dot"></span>
+            <span>auditconfig://pipeline</span>
+          </div>
+          <div class="terminal-lines">
+            <span>source = <b>running-config</b></span>
+            <span>policy = <b>baseline + rules</b></span>
+            <span>engine = <b>audit</b></span>
+            <span>output = <b>findings / trace</b></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="login-form-panel">
+      <form id="login-form" class="login-card">
+        <div class="login-card-heading">
+          <span class="eyebrow">Acceso a consola</span>
+          <h2>Iniciar sesión</h2>
+          <p>Ingresá con tus credenciales para operar la plataforma.</p>
+        </div>
+
+        <label class="field">
+          <span>identity</span>
+          <input id="identity" name="identity" type="text" autocomplete="username" placeholder="usuario o correo" required autofocus />
+        </label>
+
+        <label class="field">
+          <span>password</span>
+          <input id="password" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required />
+        </label>
+
+        <div id="login-error" class="alert alert-error is-hidden" role="alert"></div>
+
+        <button id="login-button" class="button button-primary button-full" type="submit">
+          Ingresar
+        </button>
+
+        <div class="login-security-note">
+          <span class="security-dot"></span>
+          secure_session / protected_access
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    import { getToken, isSessionExpired, login } from '../lib/auth';
+
+    if (getToken() && !isSessionExpired()) {
+      window.location.replace('/dashboard');
+    }
+
+    const form = document.querySelector<HTMLFormElement>('#login-form');
+    const errorBox = document.querySelector<HTMLDivElement>('#login-error');
+    const button = document.querySelector<HTMLButtonElement>('#login-button');
+
+    const reason = new URLSearchParams(window.location.search).get('reason');
+    if (reason === 'expired' && errorBox) {
+      errorBox.textContent = 'Tu sesión expiró. Volvé a iniciar sesión para continuar.';
+      errorBox.classList.remove('is-hidden');
+      window.history.replaceState({}, '', '/login');
+    }
+
+    form?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      errorBox?.classList.add('is-hidden');
+
+      const identity = document.querySelector<HTMLInputElement>('#identity')?.value.trim();
+      const password = document.querySelector<HTMLInputElement>('#password')?.value;
+
+      if (!identity || !password) return;
+
+      if (button) {
+        button.disabled = true;
+        button.textContent = 'Validando...';
+      }
+
+      try {
+        await login(identity, password);
+        window.location.assign('/dashboard');
+      } catch (error) {
+        if (errorBox) {
+          errorBox.textContent = error instanceof Error ? error.message : 'No se pudo iniciar sesión.';
+          errorBox.classList.remove('is-hidden');
+        }
+      } finally {
+        if (button) {
+          button.disabled = false;
+          button.textContent = 'Ingresar';
+        }
+      }
+    });
+  </script>
+</PublicLayout>

@@ -1,0 +1,44 @@
+---
+const currentPath = Astro.url.pathname;
+
+const railItems = [
+  { href: '/dashboard', label: 'Inicio', code: '~/' },
+  { separator: true },
+  { href: '/organizations', label: 'Organizaciones y sedes', code: 'ORG', adminOnly: true },
+  { href: '/users', label: 'Usuarios', code: 'USR', adminOnly: true },
+  { separator: true },
+  { href: '/devices', label: 'Dispositivos', code: 'DEV' },
+  { href: '/baselines', label: 'Baselines', code: 'BL' },
+  { href: '/rules', label: 'Reglas', code: 'RUL' },
+  { href: '/audits', label: 'Auditorías', code: 'RUN' },
+  { href: '/results', label: 'Hallazgos', code: 'LOG' },
+];
+---
+
+<aside class="command-rail" aria-label="Navegación principal">
+  <a class="rail-brand" href="/dashboard" aria-label="AuditConfig · Inicio" title="AuditConfig">
+    <span>A_</span>
+  </a>
+
+  <nav class="rail-nav">
+    {railItems.map((item) => item.separator ? (
+      <div class="rail-separator" aria-hidden="true"></div>
+    ) : (
+      <a
+        href={item.href}
+        class:list={["rail-link", currentPath === item.href && "is-active"]}
+        data-label={item.label}
+        data-admin-only={item.adminOnly ? "true" : undefined}
+        aria-label={item.label}
+        title={item.label}
+      >
+        <span>{item.code}</span>
+      </a>
+    ))}
+  </nav>
+
+  <div class="rail-runtime" aria-label="Estado local">
+    <span class="rail-status-dot is-online" title="API disponible"></span>
+    <span class="rail-runtime-label">LOC</span>
+  </div>
+</aside>

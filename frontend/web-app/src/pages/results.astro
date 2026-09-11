@@ -1,0 +1,310 @@
+---
+import MasterLayout from '../layouts/MasterLayout.astro';
+---
+
+<MasterLayout
+  title="Hallazgos"
+  section="Resultados y trazabilidad"
+  description="Desvíos detectados por el motor de auditoría, priorizados por severidad y asociados a evidencia técnica."
+>
+  <div id="finding-error" class="alert alert-error is-hidden"></div>
+
+  <section class="panel compact-panel finding-toolbar">
+    <div class="device-toolbar-copy">
+      <span class="eyebrow">Finding registry</span>
+      <div>
+        <strong id="finding-count">0 hallazgos</strong>
+        <span>desvíos técnicos persistidos</span>
+      </div>
+    </div>
+    <div class="device-toolbar-actions">
+      <div class="terminal-search">
+        <span>&gt;</span>
+        <input id="finding-search" type="search" placeholder="buscar regla, dispositivo o evidencia..." />
+      </div>
+      <select id="finding-severity" class="technical-select">
+        <option value="">severidad: todas</option>
+        <option value="CRITICA">CRITICA</option>
+        <option value="ALTA">ALTA</option>
+        <option value="MEDIA">MEDIA</option>
+        <option value="BAJA">BAJA</option>
+      </select>
+    </div>
+  </section>
+
+  <section class="finding-summary-grid">
+    <article class="metric-card">
+      <span class="metric-label">findings.total</span>
+      <strong id="metric-findings-total">0</strong>
+      <small>Hallazgos visibles</small>
+    </article>
+    <article class="metric-card">
+      <span class="metric-label">severity.critical</span>
+      <strong id="metric-findings-critical">0</strong>
+      <small>Requieren máxima prioridad</small>
+    </article>
+    <article class="metric-card">
+      <span class="metric-label">severity.high</span>
+      <strong id="metric-findings-high">0</strong>
+      <small>Desvíos de severidad alta</small>
+    </article>
+    <article class="metric-card">
+      <span class="metric-label">status.open</span>
+      <strong id="metric-findings-open">0</strong>
+      <small>Seguimiento pendiente</small>
+    </article>
+  </section>
+
+  <section class="finding-workspace">
+    <article class="panel finding-list-panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Audit evidence</span>
+          <h2>Hallazgos priorizados</h2>
+        </div>
+        <span class="technical-hint">GET /api/findings</span>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table finding-table">
+          <thead>
+            <tr>
+              <th>FINDING</th>
+              <th>REGLA</th>
+              <th>DISPOSITIVO</th>
+              <th>BASELINE</th>
+              <th>SEVERIDAD</th>
+              <th>ESTADO</th>
+              <th>FECHA</th>
+            </tr>
+          </thead>
+          <tbody id="finding-table-body"></tbody>
+        </table>
+        <div id="finding-empty" class="empty-state compact-empty">
+          <div>
+            <code>findings.count = 0</code>
+            <p>No hay hallazgos para los filtros actuales.</p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <aside class="panel finding-inspector">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Finding inspector</span>
+          <h2>Detalle del hallazgo</h2>
+        </div>
+        <span class="inspector-led"></span>
+      </div>
+
+      <div id="finding-inspector-empty" class="inspector-empty">
+        <code>select finding;</code>
+        <p>Seleccioná un hallazgo para revisar evidencia, regla y recomendación.</p>
+      </div>
+
+      <div id="finding-inspector-content" class="inspector-content is-hidden"></div>
+    </aside>
+  </section>
+
+  <script>
+    import { auditFetch } from '../lib/auth';
+    import { readApiError } from '../lib/api';
+    import type { AuditFinding, ConfigurationBaseline, NetworkDevice } from '../lib/api';
+
+    let findings: AuditFinding[] = [];
+    let devices: NetworkDevice[] = [];
+    let baselines: ConfigurationBaseline[] = [];
+    let selectedFindingId: number | null = null;
+
+    const search = document.querySelector<HTMLInputElement>('#finding-search');
+    const severity = document.querySelector<HTMLSelectElement>('#finding-severity');
+
+    const escapeHtml = (value: unknown) =>
+      String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+
+    const formatDate = (value: string) => {
+      try {
+        return new Intl.DateTimeFormat('es-AR', {
+          dateStyle: 'short',
+          timeStyle: 'short',
+        }).format(new Date(value));
+      } catch {
+        return value;
+      }
+    };
+
+    const severityClass = (value: string) => ({
+      CRITICA: 'severity-critical',
+      ALTA: 'severity-high',
+      MEDIA: 'severity-medium',
+      BAJA: 'severity-low',
+    }[value] ?? 'severity-medium');
+
+    const deviceById = (id: number) => devices.find((item) => item.id === id);
+    const baselineById = (id: number) => baselines.find((item) => item.id === id);
+
+    const showError = (message: string) => {
+      const node = document.querySelector<HTMLElement>('#finding-error');
+      if (node) {
+        node.textContent = message;
+        node.classList.remove('is-hidden');
+      }
+    };
+
+    const renderMetrics = () => {
+      const set = (selector: string, value: number) => {
+        const node = document.querySelector<HTMLElement>(selector);
+        if (node) node.textContent = String(value);
+      };
+      set('#metric-findings-total', findings.length);
+      set('#metric-findings-critical', findings.filter((f) => f.severidad === 'CRITICA').length);
+      set('#metric-findings-high', findings.filter((f) => f.severidad === 'ALTA').length);
+      set('#metric-findings-open', findings.filter((f) => f.estado === 'ABIERTO').length);
+
+      const count = document.querySelector<HTMLElement>('#finding-count');
+      if (count) count.textContent = `${findings.length} ${findings.length === 1 ? 'hallazgo' : 'hallazgos'}`;
+    };
+
+    const render = () => {
+      const body = document.querySelector<HTMLTableSectionElement>('#finding-table-body');
+      const empty = document.querySelector<HTMLElement>('#finding-empty');
+      if (!body) return;
+
+      const term = search?.value.trim().toLowerCase() ?? '';
+      const severityFilter = severity?.value ?? '';
+
+      const filtered = findings.filter((finding) => {
+        const device = deviceById(finding.dispositivoId);
+        const baseline = baselineById(finding.baselineId);
+        const haystack = [
+          finding.codigoRegla,
+          finding.nombreRegla,
+          finding.evidencia,
+          device?.identificador,
+          device?.nombre,
+          baseline?.nombre,
+        ].join(' ').toLowerCase();
+
+        return (!term || haystack.includes(term)) &&
+          (!severityFilter || finding.severidad === severityFilter);
+      });
+
+      body.innerHTML = filtered.map((finding) => {
+        const device = deviceById(finding.dispositivoId);
+        const baseline = baselineById(finding.baselineId);
+        const selected = finding.id === selectedFindingId ? 'is-selected' : '';
+
+        return `
+          <tr class="finding-row ${selected}" data-finding-id="${finding.id}" tabindex="0">
+            <td><code>FND-${String(finding.id).padStart(3, '0')}</code></td>
+            <td>
+              <strong>${escapeHtml(finding.codigoRegla)}</strong>
+              <small>${escapeHtml(finding.nombreRegla)}</small>
+            </td>
+            <td>${escapeHtml(device?.identificador ?? `#${finding.dispositivoId}`)}</td>
+            <td>${escapeHtml(baseline?.nombre ?? `#${finding.baselineId}`)}</td>
+            <td><span class="severity-badge ${severityClass(finding.severidad)}">${escapeHtml(finding.severidad)}</span></td>
+            <td><span class="status-badge status-strong">${escapeHtml(finding.estado)}</span></td>
+            <td>${escapeHtml(formatDate(finding.fechaDeteccion))}</td>
+          </tr>`;
+      }).join('');
+
+      empty?.classList.toggle('is-hidden', filtered.length > 0);
+
+      body.querySelectorAll<HTMLElement>('[data-finding-id]').forEach((row) => {
+        const select = () => selectFinding(Number(row.dataset.findingId));
+        row.addEventListener('click', select);
+        row.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' || event.key === ' ') select();
+        });
+      });
+    };
+
+    const selectFinding = async (id: number) => {
+      selectedFindingId = id;
+      render();
+
+      const response = await auditFetch(`/api/findings/${id}`);
+      if (!response.ok) {
+        showError(await readApiError(response));
+        return;
+      }
+
+      const finding = await response.json() as AuditFinding;
+      const device = deviceById(finding.dispositivoId);
+      const baseline = baselineById(finding.baselineId);
+      document.querySelector('#finding-inspector-empty')?.classList.add('is-hidden');
+
+      const content = document.querySelector<HTMLElement>('#finding-inspector-content');
+      if (!content) return;
+
+      content.innerHTML = `
+        <div class="inspector-identity">
+          <span class="inspector-code">FND-${String(finding.id).padStart(3, '0')}</span>
+          <h3>${escapeHtml(finding.nombreRegla)}</h3>
+          <span class="severity-badge ${severityClass(finding.severidad)}">${escapeHtml(finding.severidad)}</span>
+        </div>
+
+        <dl class="technical-definition-list">
+          <div><dt>rule.code</dt><dd>${escapeHtml(finding.codigoRegla)}</dd></div>
+          <div><dt>condition</dt><dd>${escapeHtml(finding.tipoRegla)}</dd></div>
+          <div><dt>device</dt><dd>${escapeHtml(device?.identificador ?? `#${finding.dispositivoId}`)}</dd></div>
+          <div><dt>baseline</dt><dd>${escapeHtml(baseline?.nombre ?? `#${finding.baselineId}`)}</dd></div>
+          <div><dt>audit.id</dt><dd>AUD-${String(finding.auditoriaId).padStart(3, '0')}</dd></div>
+          <div><dt>status</dt><dd>${escapeHtml(finding.estado)}</dd></div>
+          <div><dt>detected.at</dt><dd>${escapeHtml(formatDate(finding.fechaDeteccion))}</dd></div>
+        </dl>
+
+        <div class="rule-expression-block">
+          <span>pattern</span>
+          <code>${escapeHtml(finding.patron)}</code>
+        </div>
+
+        <div class="finding-evidence-block">
+          <span>evidence</span>
+          <p>${escapeHtml(finding.evidencia)}</p>
+        </div>
+
+        <div class="rule-recommendation">
+          <span>recomendación</span>
+          <p>${escapeHtml(finding.recomendacion)}</p>
+        </div>
+
+        <a class="button button-ghost button-full" href="/audits">Ver auditoría →</a>
+      `;
+      content.classList.remove('is-hidden');
+    };
+
+    const load = async () => {
+      const [findingResponse, deviceResponse, baselineResponse] = await Promise.all([
+        auditFetch('/api/findings'),
+        auditFetch('/api/devices'),
+        auditFetch('/api/baselines'),
+      ]);
+
+      for (const response of [findingResponse, deviceResponse, baselineResponse]) {
+        if (!response.ok) throw new Error(await readApiError(response));
+      }
+
+      findings = await findingResponse.json() as AuditFinding[];
+      devices = await deviceResponse.json() as NetworkDevice[];
+      baselines = await baselineResponse.json() as ConfigurationBaseline[];
+
+      renderMetrics();
+      render();
+    };
+
+    search?.addEventListener('input', render);
+    severity?.addEventListener('change', render);
+
+    load().catch((error) => {
+      showError(error instanceof Error ? error.message : 'No se pudieron cargar los hallazgos.');
+    });
+  </script>
+</MasterLayout>

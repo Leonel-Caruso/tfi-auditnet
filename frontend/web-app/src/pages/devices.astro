@@ -1,0 +1,523 @@
+---
+import MasterLayout from '../layouts/MasterLayout.astro';
+---
+
+<MasterLayout
+  title="Dispositivos"
+  section="Operación técnica"
+  description="Inventario de activos de red incorporados al universo auditable de la plataforma."
+>
+  <section id="device-message" class="alert is-hidden" role="status"></section>
+
+  <section class="device-toolbar panel compact-panel">
+    <div class="device-toolbar-copy">
+      <span class="eyebrow">// inventario</span>
+      <div>
+        <strong id="device-count">0 activos</strong>
+        <span>routers y switches registrados</span>
+      </div>
+    </div>
+
+    <div class="device-toolbar-actions">
+      <label class="terminal-search">
+        <span>&gt;</span>
+        <input id="device-search" type="search" placeholder="buscar identificador, nombre o fabricante..." />
+      </label>
+
+      <select id="device-criticality-filter" class="technical-select" aria-label="Filtrar por criticidad">
+        <option value="">criticidad: todas</option>
+        <option value="CRITICA">criticidad: crítica</option>
+        <option value="ALTA">criticidad: alta</option>
+        <option value="MEDIA">criticidad: media</option>
+        <option value="BAJA">criticidad: baja</option>
+      </select>
+
+      <button id="open-device-dialog" class="button button-primary device-create-action" type="button" data-admin-only="true">
+        + registrar activo
+      </button>
+    </div>
+  </section>
+
+  <section class="device-workspace">
+    <article class="panel device-inventory-panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">// activos de red</span>
+          <h2>Inventario técnico</h2>
+        </div>
+        <span class="technical-hint">GET /api/devices</span>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table device-table">
+          <thead>
+            <tr>
+              <th>Identificador</th>
+              <th>Nombre</th>
+              <th>Tipo</th>
+              <th>Ubicación</th>
+              <th>Criticidad</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="devices-body">
+            <tr><td colspan="6"><div class="skeleton-row"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="devices-empty" class="empty-state compact-empty is-hidden">
+        <div>
+          <code>inventory.count = 0</code>
+          <p>Todavía no hay dispositivos registrados con los filtros actuales.</p>
+        </div>
+      </div>
+    </article>
+
+    <aside class="panel device-inspector" aria-label="Detalle del dispositivo">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">// inspector</span>
+          <h2>Detalle del activo</h2>
+        </div>
+        <span class="inspector-led"></span>
+      </div>
+
+      <div id="device-inspector-empty" class="inspector-empty">
+        <code>select device;</code>
+        <p>Seleccioná un activo del inventario para consultar su detalle.</p>
+      </div>
+
+      <div id="device-inspector-content" class="inspector-content is-hidden">
+        <div class="inspector-identity">
+          <span id="inspector-identifier" class="inspector-code">—</span>
+          <h3 id="inspector-name">—</h3>
+          <span id="inspector-status" class="status-badge status-ready">—</span>
+        </div>
+
+        <dl class="technical-definition-list">
+          <div><dt>device.type</dt><dd id="inspector-type">—</dd></div>
+          <div><dt>vendor</dt><dd id="inspector-vendor">—</dd></div>
+          <div><dt>organization</dt><dd id="inspector-organization">—</dd></div>
+          <div><dt>site</dt><dd id="inspector-site">—</dd></div>
+          <div><dt>criticality</dt><dd id="inspector-criticality">—</dd></div>
+          <div><dt>resource.id</dt><dd id="inspector-id">—</dd></div>
+        </dl>
+
+        <div class="inspector-footnote">
+          <code>scope = audit_ready</code>
+          <span>Disponible para futuras configuraciones, baselines y auditorías.</span>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <dialog id="device-dialog" class="technical-dialog">
+    <form id="device-form" class="device-form">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">// POST /api/devices</span>
+          <h2>Registrar dispositivo</h2>
+          <p>Incorporá un activo de red al inventario auditable.</p>
+        </div>
+        <button id="close-device-dialog" class="dialog-close" type="button" aria-label="Cerrar">×</button>
+      </div>
+
+      <div class="device-form-grid">
+        <label class="field">
+          <span>identifier *</span>
+          <input id="device-identifier" type="text" maxlength="100" placeholder="RTR-CORE-01" required />
+        </label>
+
+        <label class="field">
+          <span>display_name *</span>
+          <input id="device-name" type="text" maxlength="120" placeholder="Router Core Central" required />
+        </label>
+
+        <label class="field">
+          <span>device_type *</span>
+          <select id="device-type" class="form-select" required>
+            <option value="">Seleccionar tipo...</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>vendor</span>
+          <input id="device-vendor" type="text" readonly placeholder="Se completa según el tipo" />
+        </label>
+
+        <label class="field">
+          <span>organization *</span>
+          <select id="device-organization" class="form-select" required>
+            <option value="">Seleccionar organización...</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>site</span>
+          <select id="device-site" class="form-select" disabled>
+            <option value="">Sin sede específica</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>criticality *</span>
+          <select id="device-criticality" class="form-select" required>
+            <option value="MEDIA">MEDIA</option>
+            <option value="BAJA">BAJA</option>
+            <option value="ALTA">ALTA</option>
+            <option value="CRITICA">CRITICA</option>
+          </select>
+        </label>
+
+        <div class="device-form-context">
+          <code>state = ACTIVO</code>
+          <span>El estado inicial se asigna automáticamente.</span>
+        </div>
+      </div>
+
+      <div id="device-form-error" class="alert alert-error is-hidden"></div>
+
+      <div class="dialog-actions">
+        <button id="cancel-device-dialog" class="button button-ghost" type="button">Cancelar</button>
+        <button id="save-device" class="button button-primary" type="submit">Registrar dispositivo</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    import { auditFetch, authFetch, getStoredUser } from '../lib/auth';
+    import {
+      readApiError,
+      type DeviceType,
+      type NetworkDevice,
+      type Organization,
+      type Site,
+    } from '../lib/api';
+
+    const state = {
+      devices: [] as NetworkDevice[],
+      deviceTypes: [] as DeviceType[],
+      organizations: [] as Organization[],
+      sitesByOrganization: new Map<number, Site[]>(),
+    };
+
+    const body = document.querySelector<HTMLTableSectionElement>('#devices-body');
+    const empty = document.querySelector<HTMLElement>('#devices-empty');
+    const count = document.querySelector<HTMLElement>('#device-count');
+    const search = document.querySelector<HTMLInputElement>('#device-search');
+    const criticalityFilter = document.querySelector<HTMLSelectElement>('#device-criticality-filter');
+    const dialog = document.querySelector<HTMLDialogElement>('#device-dialog');
+    const form = document.querySelector<HTMLFormElement>('#device-form');
+    const formError = document.querySelector<HTMLElement>('#device-form-error');
+    const message = document.querySelector<HTMLElement>('#device-message');
+
+    const typeSelect = document.querySelector<HTMLSelectElement>('#device-type');
+    const vendorInput = document.querySelector<HTMLInputElement>('#device-vendor');
+    const organizationSelect = document.querySelector<HTMLSelectElement>('#device-organization');
+    const siteSelect = document.querySelector<HTMLSelectElement>('#device-site');
+
+    function showMessage(text: string, kind: 'success' | 'error' = 'success'): void {
+      if (!message) return;
+      message.textContent = text;
+      message.className = `alert ${kind === 'error' ? 'alert-error' : 'alert-success'}`;
+      window.setTimeout(() => message.classList.add('is-hidden'), 4200);
+    }
+
+    function typeFor(id: number): DeviceType | undefined {
+      return state.deviceTypes.find((type) => type.id === id);
+    }
+
+    function organizationFor(id: number): Organization | undefined {
+      return state.organizations.find((organization) => organization.id === id);
+    }
+
+    function siteFor(device: NetworkDevice): Site | undefined {
+      if (!device.sedeId) return undefined;
+      return state.sitesByOrganization.get(device.organizacionId)?.find((site) => site.id === device.sedeId);
+    }
+
+    function criticalityClass(value: NetworkDevice['criticidad']): string {
+      if (value === 'CRITICA') return 'severity-critical';
+      if (value === 'ALTA') return 'severity-high';
+      if (value === 'MEDIA') return 'severity-medium';
+      return 'severity-low';
+    }
+
+    function filteredDevices(): NetworkDevice[] {
+      const query = search?.value.trim().toLowerCase() ?? '';
+      const criticality = criticalityFilter?.value ?? '';
+
+      return state.devices.filter((device) => {
+        const type = typeFor(device.tipoDispositivoId);
+        const haystack = [device.identificador, device.nombre, device.fabricante, type?.nombre ?? '']
+          .join(' ')
+          .toLowerCase();
+        const matchesQuery = !query || haystack.includes(query);
+        const matchesCriticality = !criticality || device.criticidad === criticality;
+        return matchesQuery && matchesCriticality;
+      });
+    }
+
+    function buildRow(device: NetworkDevice): HTMLTableRowElement {
+      const row = document.createElement('tr');
+      row.className = 'device-row';
+      row.tabIndex = 0;
+      row.dataset.deviceId = String(device.id);
+
+      const type = typeFor(device.tipoDispositivoId);
+      const site = siteFor(device);
+      const organization = organizationFor(device.organizacionId);
+
+      const identifier = document.createElement('td');
+      const identifierCode = document.createElement('code');
+      identifierCode.textContent = device.identificador;
+      identifier.appendChild(identifierCode);
+
+      const name = document.createElement('td');
+      const nameStrong = document.createElement('strong');
+      nameStrong.textContent = device.nombre;
+      const vendorSmall = document.createElement('small');
+      vendorSmall.textContent = device.fabricante;
+      name.append(nameStrong, vendorSmall);
+
+      const typeCell = document.createElement('td');
+      typeCell.textContent = type?.nombre ?? `#${device.tipoDispositivoId}`;
+
+      const location = document.createElement('td');
+      const locationStrong = document.createElement('strong');
+      locationStrong.textContent = site?.nombre ?? 'Sin sede específica';
+      const organizationSmall = document.createElement('small');
+      organizationSmall.textContent = organization?.razonSocial ?? `Organización #${device.organizacionId}`;
+      location.append(locationStrong, organizationSmall);
+
+      const criticality = document.createElement('td');
+      const criticalityBadge = document.createElement('span');
+      criticalityBadge.className = `severity-badge ${criticalityClass(device.criticidad)}`;
+      criticalityBadge.textContent = device.criticidad;
+      criticality.appendChild(criticalityBadge);
+
+      const status = document.createElement('td');
+      const statusBadge = document.createElement('span');
+      statusBadge.className = 'status-badge status-ready';
+      statusBadge.textContent = device.estado;
+      status.appendChild(statusBadge);
+
+      row.append(identifier, name, typeCell, location, criticality, status);
+
+      const inspect = () => void inspectDevice(device.id, row);
+      row.addEventListener('click', inspect);
+      row.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') inspect();
+      });
+
+      return row;
+    }
+
+    function renderDevices(): void {
+      const devices = filteredDevices();
+      if (count) count.textContent = `${state.devices.length} ${state.devices.length === 1 ? 'activo' : 'activos'}`;
+      if (!body || !empty) return;
+
+      body.replaceChildren(...devices.map(buildRow));
+      empty.classList.toggle('is-hidden', devices.length > 0);
+      document.querySelector('.device-table')?.classList.toggle('is-hidden', devices.length === 0);
+    }
+
+    async function inspectDevice(id: number, selectedRow?: HTMLElement): Promise<void> {
+      document.querySelectorAll('.device-row').forEach((row) => row.classList.remove('is-selected'));
+      selectedRow?.classList.add('is-selected');
+
+      const response = await auditFetch(`/api/devices/${id}`);
+      if (!response.ok) {
+        showMessage(await readApiError(response), 'error');
+        return;
+      }
+
+      const device = await response.json() as NetworkDevice;
+      const type = typeFor(device.tipoDispositivoId);
+      const organization = organizationFor(device.organizacionId);
+      const site = siteFor(device);
+
+      const set = (selector: string, value: string) => {
+        const node = document.querySelector(selector);
+        if (node) node.textContent = value;
+      };
+
+      set('#inspector-identifier', device.identificador);
+      set('#inspector-name', device.nombre);
+      set('#inspector-status', device.estado);
+      set('#inspector-type', type ? `${type.nombre} / ${type.familia}` : `#${device.tipoDispositivoId}`);
+      set('#inspector-vendor', device.fabricante);
+      set('#inspector-organization', organization?.razonSocial ?? `#${device.organizacionId}`);
+      set('#inspector-site', site?.nombre ?? 'Sin sede específica');
+      set('#inspector-criticality', device.criticidad);
+      set('#inspector-id', String(device.id));
+
+      const status = document.querySelector('#inspector-status');
+      if (status) status.className = 'status-badge status-ready';
+
+      document.querySelector('#device-inspector-empty')?.classList.add('is-hidden');
+      document.querySelector('#device-inspector-content')?.classList.remove('is-hidden');
+    }
+
+    async function loadSites(organizationId: number): Promise<Site[]> {
+      if (state.sitesByOrganization.has(organizationId)) {
+        return state.sitesByOrganization.get(organizationId) ?? [];
+      }
+
+      const response = await authFetch(`/api/client-organizations/${organizationId}/sites`);
+      if (!response.ok) return [];
+      const sites = await response.json() as Site[];
+      state.sitesByOrganization.set(organizationId, sites);
+      return sites;
+    }
+
+    async function loadReferenceData(): Promise<void> {
+      const [typesResponse, organizationsResponse] = await Promise.all([
+        auditFetch('/api/device-types'),
+        authFetch('/api/client-organizations'),
+      ]);
+
+      if (!typesResponse.ok) throw new Error(await readApiError(typesResponse));
+      if (!organizationsResponse.ok) throw new Error(await readApiError(organizationsResponse));
+
+      state.deviceTypes = (await typesResponse.json() as DeviceType[]).filter((type) => type.activo);
+      state.organizations = await organizationsResponse.json() as Organization[];
+
+      await Promise.all(state.organizations.map((organization) => loadSites(organization.id)));
+
+      if (typeSelect) {
+        typeSelect.replaceChildren(new Option('Seleccionar tipo...', ''));
+        state.deviceTypes.forEach((type) => {
+          typeSelect.add(new Option(`${type.nombre} · ${type.fabricante} · ${type.familia}`, String(type.id)));
+        });
+      }
+
+      if (organizationSelect) {
+        organizationSelect.replaceChildren(new Option('Seleccionar organización...', ''));
+        state.organizations.forEach((organization) => {
+          organizationSelect.add(new Option(organization.razonSocial, String(organization.id)));
+        });
+      }
+    }
+
+    async function loadDevices(): Promise<void> {
+      const response = await auditFetch('/api/devices');
+      if (!response.ok) throw new Error(await readApiError(response));
+      state.devices = await response.json() as NetworkDevice[];
+      renderDevices();
+    }
+
+    async function updateSiteSelect(): Promise<void> {
+      if (!organizationSelect || !siteSelect) return;
+      const organizationId = Number(organizationSelect.value);
+      siteSelect.replaceChildren(new Option('Sin sede específica', ''));
+
+      if (!organizationId) {
+        siteSelect.disabled = true;
+        return;
+      }
+
+      const sites = await loadSites(organizationId);
+      sites.forEach((site) => siteSelect.add(new Option(`${site.nombre} · ${site.ubicacion}`, String(site.id))));
+      siteSelect.disabled = false;
+    }
+
+    typeSelect?.addEventListener('change', () => {
+      const type = typeFor(Number(typeSelect.value));
+      if (vendorInput) vendorInput.value = type?.fabricante ?? '';
+    });
+
+    organizationSelect?.addEventListener('change', () => void updateSiteSelect());
+    search?.addEventListener('input', renderDevices);
+    criticalityFilter?.addEventListener('change', renderDevices);
+
+    document.querySelector('#open-device-dialog')?.addEventListener('click', () => {
+      form?.reset();
+      if (vendorInput) vendorInput.value = '';
+      if (siteSelect) {
+        siteSelect.replaceChildren(new Option('Sin sede específica', ''));
+        siteSelect.disabled = true;
+      }
+      formError?.classList.add('is-hidden');
+      dialog?.showModal();
+    });
+
+    const closeDialog = () => dialog?.close();
+    document.querySelector('#close-device-dialog')?.addEventListener('click', closeDialog);
+    document.querySelector('#cancel-device-dialog')?.addEventListener('click', closeDialog);
+
+    dialog?.addEventListener('click', (event) => {
+      if (event.target === dialog) closeDialog();
+    });
+
+    form?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      formError?.classList.add('is-hidden');
+
+      const selectedType = typeFor(Number(typeSelect?.value));
+      const payload = {
+        nombre: document.querySelector<HTMLInputElement>('#device-name')?.value.trim(),
+        identificador: document.querySelector<HTMLInputElement>('#device-identifier')?.value.trim(),
+        tipoDispositivoId: Number(typeSelect?.value),
+        fabricante: selectedType?.fabricante ?? vendorInput?.value.trim(),
+        organizacionId: Number(organizationSelect?.value),
+        sedeId: siteSelect?.value ? Number(siteSelect.value) : null,
+        criticidad: document.querySelector<HTMLSelectElement>('#device-criticality')?.value,
+      };
+
+      const saveButton = document.querySelector<HTMLButtonElement>('#save-device');
+      if (saveButton) {
+        saveButton.disabled = true;
+        saveButton.textContent = 'Registrando...';
+      }
+
+      try {
+        const response = await auditFetch('/api/devices', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const text = await readApiError(response);
+          if (formError) {
+            formError.textContent = text;
+            formError.classList.remove('is-hidden');
+          }
+          return;
+        }
+
+        const created = await response.json() as NetworkDevice;
+        dialog?.close();
+        showMessage(`Dispositivo ${created.identificador} registrado correctamente.`);
+        await loadDevices();
+        const row = document.querySelector<HTMLElement>(`.device-row[data-device-id="${created.id}"]`);
+        await inspectDevice(created.id, row ?? undefined);
+      } catch (error) {
+        if (formError) {
+          formError.textContent = error instanceof Error ? error.message : 'No se pudo registrar el dispositivo.';
+          formError.classList.remove('is-hidden');
+        }
+      } finally {
+        if (saveButton) {
+          saveButton.disabled = false;
+          saveButton.textContent = 'Registrar dispositivo';
+        }
+      }
+    });
+
+    async function initializeDevices(): Promise<void> {
+      try {
+        await loadReferenceData();
+        await loadDevices();
+      } catch (error) {
+        if (body) body.replaceChildren();
+        showMessage(error instanceof Error ? error.message : 'No se pudo cargar el inventario.', 'error');
+      }
+    }
+
+    initializeDevices();
+  </script>
+</MasterLayout>

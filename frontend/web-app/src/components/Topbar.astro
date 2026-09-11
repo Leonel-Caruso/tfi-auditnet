@@ -1,0 +1,60 @@
+---
+const path = Astro.url.pathname;
+const labels: Record<string, string> = {
+  '/dashboard': 'inicio',
+  '/organizations': 'organizations',
+  '/users': 'users',
+  '/devices': 'devices',
+  '/baselines': 'baselines',
+  '/rules': 'rules',
+  '/audits': 'audits',
+  '/results': 'findings',
+};
+const currentLabel = labels[path] ?? 'console';
+---
+
+<header class="console-header">
+  <div class="console-breadcrumb" aria-label="Ubicación actual">
+    <strong>AuditConfig</strong>
+    <span>/</span>
+    <code>{currentLabel}</code>
+  </div>
+
+  <div class="command-palette-shell">
+    <span class="command-prefix">&gt;</span>
+    <input
+      id="command-palette"
+      class="command-palette"
+      type="text"
+      autocomplete="off"
+      spellcheck="false"
+      placeholder="ir a módulo..."
+      aria-label="Navegar a un módulo"
+    />
+    <kbd>Enter</kbd>
+  </div>
+
+  <div class="header-actions">
+    <div class="service-state" title="Management API disponible">
+      <span class="service-dot"></span>
+      <code id="topbar-connection">api</code>
+    </div>
+
+    <div class="compact-user">
+      <button id="user-menu-button" class="compact-user-button" type="button" aria-expanded="false" aria-controls="user-popover">
+        <span class="compact-user-avatar" id="user-avatar">U_</span>
+        <span class="compact-user-handle" id="user-handle">user</span>
+        <span class="compact-user-caret">⌄</span>
+      </button>
+
+      <div id="user-popover" class="user-popover is-hidden">
+        <div class="user-popover-copy">
+          <strong id="user-name">Usuario</strong>
+          <code id="user-role">sin_rol</code>
+        </div>
+        <div class="user-popover-divider"></div>
+        <button id="logout-button" class="user-popover-action" type="button">cerrar_sesion</button>
+      </div>
+    </div>
+  </div>
+</header>

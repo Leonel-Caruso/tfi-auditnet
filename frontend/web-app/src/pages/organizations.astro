@@ -1,0 +1,161 @@
+---
+import MasterLayout from '../layouts/MasterLayout.astro';
+---
+
+<MasterLayout
+  title="Organizaciones y sedes"
+  section="Control de acceso"
+  description="Consulta de clientes registrados y sus sedes operativas asociadas."
+>
+  <section id="organization-access-error" class="alert alert-error is-hidden"></section>
+
+  <section class="two-column two-column-wide">
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Organizaciones</span>
+          <h2>Clientes registrados</h2>
+        </div>
+        <span id="organization-count" class="counter-chip">—</span>
+      </div>
+      <div id="organization-list" class="select-list">
+        <div class="skeleton-row"></div>
+        <div class="skeleton-row"></div>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Sedes asociadas</span>
+          <h2 id="site-title">Seleccioná una organización</h2>
+        </div>
+      </div>
+      <div id="site-list" class="data-list empty-state">
+        <p>Elegí una organización para consultar sus sedes.</p>
+      </div>
+    </article>
+  </section>
+
+  <script>
+    import { authFetch } from '../lib/auth';
+    import { readApiError, type Organization, type Site } from '../lib/api';
+
+    const orgList = document.querySelector<HTMLDivElement>('#organization-list');
+    const orgCount = document.querySelector<HTMLSpanElement>('#organization-count');
+    const siteList = document.querySelector<HTMLDivElement>('#site-list');
+    const siteTitle = document.querySelector<HTMLHeadingElement>('#site-title');
+    const accessError = document.querySelector<HTMLElement>('#organization-access-error');
+
+    function showError(message: string): void {
+      if (!accessError) return;
+      accessError.textContent = message;
+      accessError.classList.remove('is-hidden');
+    }
+
+    function buildSiteRow(site: Site): HTMLDivElement {
+      const row = document.createElement('div');
+      row.className = 'data-row';
+
+      const copy = document.createElement('div');
+      const name = document.createElement('strong');
+      name.textContent = site.nombre;
+      const location = document.createElement('span');
+      location.textContent = site.ubicacion;
+      copy.append(name, location);
+
+      const status = document.createElement('span');
+      status.className = 'status-badge status-ready';
+      status.textContent = site.estado;
+
+      row.append(copy, status);
+      return row;
+    }
+
+    async function loadSites(organization: Organization): Promise<void> {
+      if (siteTitle) siteTitle.textContent = organization.razonSocial;
+      if (siteList) {
+        siteList.className = 'data-list';
+        siteList.replaceChildren();
+        const skeleton = document.createElement('div');
+        skeleton.className = 'skeleton-row';
+        siteList.appendChild(skeleton);
+      }
+
+      const response = await authFetch(`/api/client-organizations/${organization.id}/sites`);
+      if (!response.ok) {
+        if (siteList) {
+          const error = document.createElement('div');
+          error.className = 'alert alert-error';
+          error.textContent = await readApiError(response);
+          siteList.replaceChildren(error);
+        }
+        return;
+      }
+
+      const sites = await response.json() as Site[];
+      if (!siteList) return;
+
+      siteList.replaceChildren();
+      if (sites.length === 0) {
+        siteList.className = 'data-list empty-state';
+        const empty = document.createElement('p');
+        empty.textContent = 'Esta organización todavía no tiene sedes registradas.';
+        siteList.appendChild(empty);
+        return;
+      }
+
+      siteList.className = 'data-list';
+      sites.forEach((site) => siteList.appendChild(buildSiteRow(site)));
+    }
+
+    function buildOrganizationButton(organization: Organization): HTMLButtonElement {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'select-row';
+
+      const copy = document.createElement('span');
+      copy.className = 'select-row-main';
+      const name = document.createElement('strong');
+      name.textContent = organization.razonSocial;
+      const identifier = document.createElement('small');
+      identifier.textContent = organization.identificador;
+      copy.append(name, identifier);
+
+      const status = document.createElement('span');
+      status.className = 'status-badge status-ready';
+      status.textContent = organization.estado;
+      button.append(copy, status);
+
+      button.addEventListener('click', () => {
+        document.querySelectorAll('.select-row').forEach((node) => node.classList.remove('is-selected'));
+        button.classList.add('is-selected');
+        void loadSites(organization);
+      });
+
+      return button;
+    }
+
+    async function loadOrganizations(): Promise<void> {
+      const response = await authFetch('/api/client-organizations');
+      if (!response.ok) {
+        showError(await readApiError(response));
+        orgList?.replaceChildren();
+        return;
+      }
+
+      const organizations = await response.json() as Organization[];
+      if (orgCount) orgCount.textContent = String(organizations.length);
+      if (!orgList) return;
+
+      orgList.replaceChildren();
+      organizations.forEach((organization, index) => {
+        const button = buildOrganizationButton(organization);
+        orgList.appendChild(button);
+        if (index === 0) button.click();
+      });
+    }
+
+    loadOrganizations().catch(() => showError('No se pudo cargar la información de organizaciones y sedes.'));
+  </script>
+</MasterLayout>

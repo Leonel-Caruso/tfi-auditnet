@@ -1,0 +1,385 @@
+---
+import MasterLayout from '../layouts/MasterLayout.astro';
+---
+
+<MasterLayout
+  title="Reglas"
+  section="Operación técnica"
+  description="Catálogo de controles que convierten una baseline en condiciones verificables de cumplimiento."
+>
+  <section id="rule-message" class="alert is-hidden" role="status"></section>
+
+  <section class="policy-toolbar panel compact-panel">
+    <div class="device-toolbar-copy">
+      <span class="eyebrow">// rule engine</span>
+      <div>
+        <strong id="rule-count">0 reglas</strong>
+        <span>controles técnicos configurados</span>
+      </div>
+    </div>
+
+    <div class="device-toolbar-actions">
+      <label class="terminal-search">
+        <span>&gt;</span>
+        <input id="rule-search" type="search" placeholder="buscar código, regla, baseline o patrón..." />
+      </label>
+      <select id="rule-severity-filter" class="technical-select" aria-label="Filtrar por severidad">
+        <option value="">severidad: todas</option>
+        <option value="CRITICA">severidad: crítica</option>
+        <option value="ALTA">severidad: alta</option>
+        <option value="MEDIA">severidad: media</option>
+        <option value="BAJA">severidad: baja</option>
+      </select>
+      <button
+        id="open-rule-dialog"
+        class="button button-primary device-create-action"
+        type="button"
+        data-roles="ADMINISTRADOR_SISTEMA,AUDITOR_TECNICO"
+      >
+        + nueva regla
+      </button>
+    </div>
+  </section>
+
+  <section class="policy-workspace">
+    <article class="panel policy-list-panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">// compliance controls</span>
+          <h2>Controles de configuración</h2>
+        </div>
+        <span class="technical-hint">GET /api/rules</span>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table policy-table">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Regla</th>
+              <th>Baseline</th>
+              <th>Condición</th>
+              <th>Severidad</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody id="rules-body"><tr><td colspan="6"><div class="skeleton-row"></div></td></tr></tbody>
+        </table>
+      </div>
+
+      <div id="rules-empty" class="empty-state compact-empty is-hidden">
+        <div>
+          <code>rules.count = 0</code>
+          <p>No hay reglas configuradas con los filtros actuales.</p>
+        </div>
+      </div>
+    </article>
+
+    <aside class="panel policy-inspector" aria-label="Detalle de regla">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">// rule inspector</span>
+          <h2>Detalle del control</h2>
+        </div>
+        <span class="inspector-led"></span>
+      </div>
+
+      <div id="rule-inspector-empty" class="inspector-empty">
+        <code>select rule;</code>
+        <p>Seleccioná una regla para revisar condición, severidad y recomendación.</p>
+      </div>
+
+      <div id="rule-inspector-content" class="inspector-content is-hidden">
+        <div class="inspector-identity">
+          <span id="rule-inspector-code" class="inspector-code">—</span>
+          <h3 id="rule-inspector-name">—</h3>
+          <span id="rule-inspector-status" class="status-badge status-ready">—</span>
+        </div>
+        <p id="rule-inspector-description" class="policy-description">—</p>
+        <dl class="technical-definition-list">
+          <div><dt>baseline</dt><dd id="rule-inspector-baseline">—</dd></div>
+          <div><dt>condition</dt><dd id="rule-inspector-type">—</dd></div>
+          <div><dt>severity</dt><dd id="rule-inspector-severity">—</dd></div>
+          <div><dt>resource.id</dt><dd id="rule-inspector-id">—</dd></div>
+        </dl>
+        <div class="rule-expression-block">
+          <span>pattern</span>
+          <code id="rule-inspector-pattern">—</code>
+        </div>
+        <div class="rule-recommendation">
+          <span>recomendación</span>
+          <p id="rule-inspector-recommendation">—</p>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <dialog id="rule-dialog" class="technical-dialog">
+    <form id="rule-form" class="device-form">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">{'// POST /api/baselines/{id}/rules'}</span>
+          <h2>Crear regla</h2>
+          <p>Convertí una condición de configuración en un control auditable.</p>
+        </div>
+        <button id="close-rule-dialog" class="dialog-close" type="button" aria-label="Cerrar">×</button>
+      </div>
+
+      <div class="device-form-grid">
+        <label class="field field-span-2">
+          <span>baseline *</span>
+          <select id="rule-baseline" class="form-select" required><option value="">Seleccionar baseline...</option></select>
+        </label>
+        <label class="field">
+          <span>rule_code *</span>
+          <input id="rule-code" type="text" maxlength="60" placeholder="SEC-SSH-01" required />
+        </label>
+        <label class="field">
+          <span>name *</span>
+          <input id="rule-name" type="text" maxlength="140" placeholder="Forzar SSH versión 2" required />
+        </label>
+        <label class="field">
+          <span>condition *</span>
+          <select id="rule-type" class="form-select" required>
+            <option value="DEBE_CONTENER">DEBE_CONTENER</option>
+            <option value="NO_DEBE_CONTENER">NO_DEBE_CONTENER</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>severity *</span>
+          <select id="rule-severity" class="form-select" required>
+            <option value="MEDIA">MEDIA</option>
+            <option value="BAJA">BAJA</option>
+            <option value="ALTA">ALTA</option>
+            <option value="CRITICA">CRITICA</option>
+          </select>
+        </label>
+        <label class="field field-span-2">
+          <span>pattern *</span>
+          <input id="rule-pattern" class="mono-input" type="text" maxlength="500" placeholder="ip ssh version 2" required />
+        </label>
+        <label class="field field-span-2">
+          <span>description *</span>
+          <textarea id="rule-description" rows="3" maxlength="500" placeholder="La configuración debe utilizar exclusivamente SSH versión 2." required></textarea>
+        </label>
+        <label class="field field-span-2">
+          <span>recommendation *</span>
+          <textarea id="rule-recommendation" rows="3" maxlength="500" placeholder="Configurar: ip ssh version 2" required></textarea>
+        </label>
+      </div>
+      <div class="rule-help"><code>DEBE_CONTENER</code><span>cumple si el patrón aparece en la configuración</span><code>NO_DEBE_CONTENER</code><span>cumple si el patrón no aparece</span></div>
+      <div id="rule-form-error" class="alert alert-error is-hidden"></div>
+      <div class="dialog-actions">
+        <button id="cancel-rule-dialog" class="button button-ghost" type="button">Cancelar</button>
+        <button class="button button-primary" type="submit">Crear regla</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    import { auditFetch, authFetch } from '../lib/auth';
+    import { readApiError, type BaselineRule, type ConfigurationBaseline, type Organization } from '../lib/api';
+
+    const state = {
+      rules: [] as BaselineRule[],
+      baselines: [] as ConfigurationBaseline[],
+      organizations: [] as Organization[],
+    };
+
+    const body = document.querySelector<HTMLTableSectionElement>('#rules-body');
+    const empty = document.querySelector<HTMLElement>('#rules-empty');
+    const count = document.querySelector<HTMLElement>('#rule-count');
+    const search = document.querySelector<HTMLInputElement>('#rule-search');
+    const severityFilter = document.querySelector<HTMLSelectElement>('#rule-severity-filter');
+    const dialog = document.querySelector<HTMLDialogElement>('#rule-dialog');
+    const form = document.querySelector<HTMLFormElement>('#rule-form');
+    const formError = document.querySelector<HTMLElement>('#rule-form-error');
+    const message = document.querySelector<HTMLElement>('#rule-message');
+    const baselineSelect = document.querySelector<HTMLSelectElement>('#rule-baseline');
+
+    const baselineFor = (id: number) => state.baselines.find((baseline) => baseline.id === id);
+    const organizationFor = (id: number) => state.organizations.find((org) => org.id === id);
+
+    function showMessage(text: string, kind: 'success' | 'error' = 'success'): void {
+      if (!message) return;
+      message.textContent = text;
+      message.className = `alert ${kind === 'error' ? 'alert-error' : 'alert-success'}`;
+      window.setTimeout(() => message.classList.add('is-hidden'), 4200);
+    }
+
+    function severityClass(value: BaselineRule['severidad']): string {
+      if (value === 'CRITICA') return 'severity-critical';
+      if (value === 'ALTA') return 'severity-high';
+      if (value === 'MEDIA') return 'severity-medium';
+      return 'severity-low';
+    }
+
+    function conditionLabel(value: BaselineRule['tipo']): string {
+      return value === 'DEBE_CONTENER' ? 'must contain' : 'must not contain';
+    }
+
+    function filteredRules(): BaselineRule[] {
+      const query = search?.value.trim().toLowerCase() ?? '';
+      const severity = severityFilter?.value ?? '';
+      return state.rules.filter((rule) => {
+        const baseline = baselineFor(rule.baselineId);
+        const haystack = [rule.codigo, rule.nombre, rule.descripcion, rule.patron, baseline?.nombre ?? ''].join(' ').toLowerCase();
+        return (!query || haystack.includes(query)) && (!severity || rule.severidad === severity);
+      });
+    }
+
+    function buildRow(rule: BaselineRule): HTMLTableRowElement {
+      const row = document.createElement('tr');
+      row.className = 'policy-row';
+      row.tabIndex = 0;
+      const baseline = baselineFor(rule.baselineId);
+
+      const code = document.createElement('td');
+      const codeNode = document.createElement('code');
+      codeNode.textContent = rule.codigo;
+      code.appendChild(codeNode);
+
+      const name = document.createElement('td');
+      const strong = document.createElement('strong');
+      strong.textContent = rule.nombre;
+      const small = document.createElement('small');
+      small.textContent = rule.patron;
+      name.append(strong, small);
+
+      const baselineCell = document.createElement('td');
+      baselineCell.textContent = baseline?.nombre ?? `#${rule.baselineId}`;
+
+      const type = document.createElement('td');
+      const typeCode = document.createElement('code');
+      typeCode.textContent = conditionLabel(rule.tipo);
+      type.appendChild(typeCode);
+
+      const severity = document.createElement('td');
+      const severityBadge = document.createElement('span');
+      severityBadge.className = `severity-badge ${severityClass(rule.severidad)}`;
+      severityBadge.textContent = rule.severidad;
+      severity.appendChild(severityBadge);
+
+      const status = document.createElement('td');
+      const statusBadge = document.createElement('span');
+      statusBadge.className = 'status-badge status-ready';
+      statusBadge.textContent = rule.estado;
+      status.appendChild(statusBadge);
+
+      row.append(code, name, baselineCell, type, severity, status);
+      const inspect = () => void inspectRule(rule.id, row);
+      row.addEventListener('click', inspect);
+      row.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') inspect();
+      });
+      return row;
+    }
+
+    function render(): void {
+      const rules = filteredRules();
+      if (count) count.textContent = `${state.rules.length} ${state.rules.length === 1 ? 'regla' : 'reglas'}`;
+      if (!body || !empty) return;
+      body.replaceChildren(...rules.map(buildRow));
+      empty.classList.toggle('is-hidden', rules.length > 0);
+      document.querySelector('.policy-table')?.classList.toggle('is-hidden', rules.length === 0);
+    }
+
+    async function inspectRule(id: number, selectedRow?: HTMLElement): Promise<void> {
+      document.querySelectorAll('.policy-row').forEach((row) => row.classList.remove('is-selected'));
+      selectedRow?.classList.add('is-selected');
+      const response = await auditFetch(`/api/rules/${id}`);
+      if (!response.ok) return showMessage(await readApiError(response), 'error');
+      const rule = await response.json() as BaselineRule;
+      const baseline = baselineFor(rule.baselineId);
+      const org = baseline ? organizationFor(baseline.organizacionId) : undefined;
+      const set = (selector: string, value: string) => {
+        const node = document.querySelector(selector);
+        if (node) node.textContent = value;
+      };
+      set('#rule-inspector-code', rule.codigo);
+      set('#rule-inspector-name', rule.nombre);
+      set('#rule-inspector-status', rule.estado);
+      set('#rule-inspector-description', rule.descripcion);
+      set('#rule-inspector-baseline', baseline ? `${baseline.nombre} · ${org?.razonSocial ?? ''}` : `#${rule.baselineId}`);
+      set('#rule-inspector-type', rule.tipo);
+      set('#rule-inspector-severity', rule.severidad);
+      set('#rule-inspector-id', String(rule.id));
+      set('#rule-inspector-pattern', rule.patron);
+      set('#rule-inspector-recommendation', rule.recomendacion);
+      document.querySelector('#rule-inspector-empty')?.classList.add('is-hidden');
+      document.querySelector('#rule-inspector-content')?.classList.remove('is-hidden');
+    }
+
+    async function load(): Promise<void> {
+      try {
+        const [rulesResponse, baselinesResponse, organizationsResponse] = await Promise.all([
+          auditFetch('/api/rules'),
+          auditFetch('/api/baselines'),
+          authFetch('/api/client-organizations'),
+        ]);
+        for (const response of [rulesResponse, baselinesResponse, organizationsResponse]) {
+          if (!response.ok) throw new Error(await readApiError(response));
+        }
+        state.rules = await rulesResponse.json() as BaselineRule[];
+        state.baselines = await baselinesResponse.json() as ConfigurationBaseline[];
+        state.organizations = await organizationsResponse.json() as Organization[];
+        baselineSelect?.replaceChildren(new Option('Seleccionar baseline...', ''));
+        state.baselines.filter((baseline) => baseline.estado === 'ACTIVO').forEach((baseline) => {
+          const org = organizationFor(baseline.organizacionId);
+          baselineSelect?.add(new Option(`${baseline.nombre} · ${org?.razonSocial ?? ''} · v${baseline.version}`, String(baseline.id)));
+        });
+        if (baselineSelect && state.baselines.length === 1) baselineSelect.value = String(state.baselines[0].id);
+        render();
+      } catch (error) {
+        showMessage(error instanceof Error ? error.message : 'No se pudieron cargar las reglas.', 'error');
+      }
+    }
+
+    document.querySelector('#open-rule-dialog')?.addEventListener('click', () => {
+      form?.reset();
+      formError?.classList.add('is-hidden');
+      if (baselineSelect && state.baselines.length === 1) baselineSelect.value = String(state.baselines[0].id);
+      dialog?.showModal();
+    });
+    document.querySelector('#close-rule-dialog')?.addEventListener('click', () => dialog?.close());
+    document.querySelector('#cancel-rule-dialog')?.addEventListener('click', () => dialog?.close());
+    search?.addEventListener('input', render);
+    severityFilter?.addEventListener('change', render);
+
+    form?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      formError?.classList.add('is-hidden');
+      const baselineId = Number(baselineSelect?.value);
+      const payload = {
+        codigo: (document.querySelector<HTMLInputElement>('#rule-code')?.value ?? '').trim(),
+        nombre: (document.querySelector<HTMLInputElement>('#rule-name')?.value ?? '').trim(),
+        descripcion: (document.querySelector<HTMLTextAreaElement>('#rule-description')?.value ?? '').trim(),
+        tipo: document.querySelector<HTMLSelectElement>('#rule-type')?.value ?? '',
+        patron: (document.querySelector<HTMLInputElement>('#rule-pattern')?.value ?? '').trim(),
+        severidad: document.querySelector<HTMLSelectElement>('#rule-severity')?.value ?? '',
+        recomendacion: (document.querySelector<HTMLTextAreaElement>('#rule-recommendation')?.value ?? '').trim(),
+      };
+      const response = await auditFetch(`/api/baselines/${baselineId}/rules`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        if (formError) {
+          formError.textContent = await readApiError(response);
+          formError.classList.remove('is-hidden');
+        }
+        return;
+      }
+      const created = await response.json() as BaselineRule;
+      state.rules.push(created);
+      dialog?.close();
+      render();
+      showMessage(`Regla ${created.codigo} creada correctamente.`);
+      const row = Array.from(document.querySelectorAll<HTMLElement>('.policy-row')).find((node) => node.textContent?.includes(created.codigo));
+      await inspectRule(created.id, row);
+    });
+
+    load();
+  </script>
+</MasterLayout>
