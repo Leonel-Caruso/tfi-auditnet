@@ -54,6 +54,9 @@ cd .\backend\management-service
 mvn quarkus:dev
 ```
 
+   Al iniciar, Flyway aplica las migraciones de `management-service`. Debe levantarse antes que `audit-core-service`
+   (ver `docs/database/MIGRACIONES.md`).
+
 4. `audit-core-service`:
 
 ```powershell
