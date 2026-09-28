@@ -31,12 +31,16 @@ server {
     add_header X-Frame-Options "DENY" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
-    # ---- management-service: acceso, usuarios, roles, organizaciones y sedes
-    location ~ ^/api/(auth|users|roles|client-organizations|sites|management)(/|$) {
+    # Identificador de correlación: nginx genera uno por solicitud ($request_id) y lo envía a los
+    # servicios en X-Request-ID; las bitácoras lo guardan para seguir una operación de punta a punta.
+
+    # ---- management-service: acceso, usuarios, roles, organizaciones, sedes y bitácoras (admin)
+    location ~ ^/api/(auth|users|roles|client-organizations|sites|management|admin)(/|$) {
         proxy_pass ${MANAGEMENT_UPSTREAM};
         proxy_ssl_server_name on;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Request-ID $request_id;
         proxy_read_timeout 90s;
     }
 
@@ -47,6 +51,7 @@ server {
         proxy_ssl_server_name on;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Request-ID $request_id;
         proxy_read_timeout 90s;
     }
 

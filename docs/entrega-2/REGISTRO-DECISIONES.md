@@ -73,6 +73,32 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
   Son reproducibles, quedan en el repositorio y no contienen secretos.
 - **Documentación:** `docs/deploy/AZURE.md`.
 
+## D-10 · Diseño de las tres bitácoras (Bloque 2.3)
+
+- **Decisión:** según los Puntos Mandatorios 2026:
+  - **Auditoría de sistema** (seguridad): PostgreSQL, `bitacora_sistema`, escribe management-service.
+  - **Transacciones** (negocio, con valor anterior y nuevo): PostgreSQL, `bitacora_transacciones`, tabla
+    creada por management-service y escrita por ambos servicios (audit-core ya depende del esquema de
+    management, por lo que no se genera una dependencia circular).
+  - **Excepciones** (nivel configurable): MongoDB (Cosmos DB para MongoDB), escriben ambos servicios.
+- **Consulta:** management-service expone `/api/admin/bitacoras/...` solo para `ADMINISTRADOR_SISTEMA`.
+- **Correlación:** nginx genera `X-Request-ID` por solicitud; los servicios lo guardan en cada registro y lo
+  devuelven en la respuesta.
+- **Documentación:** `docs/bitacoras/BITACORAS.md`. En la tesis: RF-014, RNF-003, Tabla 44 (clase Bitacora),
+  Tabla 46 (diccionario: reemplaza `bitacora_actividad` por las tres bitácoras), nuevos CU y CP de consulta.
+
+## D-11 · Bitácora de sistema: reglas de registro (Bloque 2.3a)
+
+- **Rechazos (FALLO)** se guardan en una transacción nueva: quedan aunque la operación falle.
+- **Éxitos (EXITO)** se guardan en la misma transacción que la operación: existen solo si la operación se confirmó.
+- **Inmutable:** un trigger rechaza UPDATE, DELETE y TRUNCATE sobre la tabla.
+- **Sin claves foráneas** hacia usuarios u organizaciones: el registro se conserva tal como ocurrió.
+- **Login fallido:** se distingue internamente usuario inexistente / contraseña incorrecta / cuenta deshabilitada,
+  pero la respuesta al cliente no revela si el usuario existe.
+- **Prueba:** tests unitarios (login exitoso, contraseña incorrecta, usuario inexistente, cuenta deshabilitada,
+  creación de usuario con roles, validación de filtros) y prueba de la migración: los triggers rechazan
+  UPDATE, DELETE y TRUNCATE.
+
 ## Pendientes detectados (para migraciones futuras)
 
 - Los CHECK generados por Hibernate limitan los estados (`hallazgos_auditoria.estado` solo admite `ABIERTO`;

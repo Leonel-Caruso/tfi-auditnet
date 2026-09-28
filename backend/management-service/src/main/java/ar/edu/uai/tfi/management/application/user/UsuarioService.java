@@ -3,8 +3,10 @@ package ar.edu.uai.tfi.management.application.user;
 import ar.edu.uai.tfi.management.application.ErrorAplicacion;
 import ar.edu.uai.tfi.management.application.ExcepcionAplicacion;
 import ar.edu.uai.tfi.management.application.port.PasswordPort;
-import ar.edu.uai.tfi.management.application.port.TrazabilidadPort;
+import ar.edu.uai.tfi.management.application.port.BitacoraSistemaPort;
 import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
+import ar.edu.uai.tfi.management.domain.model.EventoSistema;
+import ar.edu.uai.tfi.management.domain.model.TipoEventoSistema;
 import ar.edu.uai.tfi.management.domain.model.Rol;
 import ar.edu.uai.tfi.management.domain.model.Usuario;
 import ar.edu.uai.tfi.management.domain.repository.OrganizacionClienteRepository;
@@ -27,18 +29,18 @@ public class UsuarioService {
     private final OrganizacionClienteRepository organizacionRepository;
     private final RolRepository rolRepository;
     private final PasswordPort passwordPort;
-    private final TrazabilidadPort trazabilidad;
+    private final BitacoraSistemaPort bitacora;
 
     public UsuarioService(UsuarioRepository usuarioRepository,
                           OrganizacionClienteRepository organizacionRepository,
                           RolRepository rolRepository,
                           PasswordPort passwordPort,
-                          TrazabilidadPort trazabilidad) {
+                          BitacoraSistemaPort bitacora) {
         this.usuarioRepository = usuarioRepository;
         this.organizacionRepository = organizacionRepository;
         this.rolRepository = rolRepository;
         this.passwordPort = passwordPort;
-        this.trazabilidad = trazabilidad;
+        this.bitacora = bitacora;
     }
 
     public List<Usuario> listar() {
@@ -81,7 +83,11 @@ public class UsuarioService {
                 EstadoRegistro.ACTIVO,
                 roles), roles);
 
-        trazabilidad.registrar("USUARIO_CREADO", "usuarioId=" + creado.id() + ", username=" + creado.nombreUsuario());
+        // actor = null: el adaptador toma el usuario autenticado que realizó la operación
+        bitacora.registrar(EventoSistema.exito(TipoEventoSistema.USUARIO_CREADO, null, creado.id(),
+                creado.organizacionId(), "username=" + creado.nombreUsuario() + ", email=" + creado.email()));
+        bitacora.registrar(EventoSistema.exito(TipoEventoSistema.ROLES_ASIGNADOS, null, creado.id(),
+                creado.organizacionId(), "roles=" + String.join(",", roles)));
         return creado;
     }
 

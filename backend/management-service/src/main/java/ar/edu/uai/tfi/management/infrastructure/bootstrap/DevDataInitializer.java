@@ -1,7 +1,10 @@
 package ar.edu.uai.tfi.management.infrastructure.bootstrap;
 
+import ar.edu.uai.tfi.management.application.port.BitacoraSistemaPort;
 import ar.edu.uai.tfi.management.application.port.PasswordPort;
 import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
+import ar.edu.uai.tfi.management.domain.model.EventoSistema;
+import ar.edu.uai.tfi.management.domain.model.TipoEventoSistema;
 import ar.edu.uai.tfi.management.domain.model.OrganizacionCliente;
 import ar.edu.uai.tfi.management.domain.model.Rol;
 import ar.edu.uai.tfi.management.domain.model.Usuario;
@@ -28,6 +31,7 @@ public class DevDataInitializer {
     private final RolRepository rolRepository;
     private final UsuarioRepository usuarioRepository;
     private final PasswordPort passwordPort;
+    private final BitacoraSistemaPort bitacora;
 
     @ConfigProperty(name = "app.bootstrap.admin.email")
     String adminEmail;
@@ -43,11 +47,13 @@ public class DevDataInitializer {
     public DevDataInitializer(OrganizacionClienteRepository organizacionRepository,
                               RolRepository rolRepository,
                               UsuarioRepository usuarioRepository,
-                              PasswordPort passwordPort) {
+                              PasswordPort passwordPort,
+                              BitacoraSistemaPort bitacora) {
         this.organizacionRepository = organizacionRepository;
         this.rolRepository = rolRepository;
         this.usuarioRepository = usuarioRepository;
         this.passwordPort = passwordPort;
+        this.bitacora = bitacora;
     }
 
     @Transactional
@@ -67,7 +73,10 @@ public class DevDataInitializer {
 
         for (RolBase rolBase : roles) {
             if (rolRepository.buscarPorNombre(rolBase.nombre()).isEmpty()) {
-                rolRepository.guardar(new Rol(null, rolBase.nombre(), rolBase.descripcion(), EstadoRegistro.ACTIVO));
+                Rol creado = rolRepository.guardar(
+                        new Rol(null, rolBase.nombre(), rolBase.descripcion(), EstadoRegistro.ACTIVO));
+                bitacora.registrar(EventoSistema.exito(TipoEventoSistema.ROL_CREADO, null, null, null,
+                        "rolId=" + creado.id() + ", nombre=" + creado.nombre() + ", origen=bootstrap"));
             }
         }
     }
@@ -100,6 +109,10 @@ public class DevDataInitializer {
                 roles);
         Usuario creado = usuarioRepository.guardar(admin, roles);
         LOG.infof("Bootstrap: administrador creado con id=%d y contraseña almacenada con hash BCrypt.", creado.id());
+        bitacora.registrar(EventoSistema.exito(TipoEventoSistema.USUARIO_CREADO, null, creado.id(), organizacionId,
+                "username=" + creado.nombreUsuario() + ", origen=bootstrap"));
+        bitacora.registrar(EventoSistema.exito(TipoEventoSistema.ROLES_ASIGNADOS, null, creado.id(), organizacionId,
+                "roles=" + String.join(",", roles) + ", origen=bootstrap"));
     }
 
     private record RolBase(String nombre, String descripcion) {

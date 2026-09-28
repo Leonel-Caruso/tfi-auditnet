@@ -2,8 +2,10 @@ package ar.edu.uai.tfi.management.application.user;
 
 import ar.edu.uai.tfi.management.application.ErrorAplicacion;
 import ar.edu.uai.tfi.management.application.ExcepcionAplicacion;
-import ar.edu.uai.tfi.management.application.port.TrazabilidadPort;
+import ar.edu.uai.tfi.management.application.port.BitacoraSistemaPort;
 import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
+import ar.edu.uai.tfi.management.domain.model.EventoSistema;
+import ar.edu.uai.tfi.management.domain.model.TipoEventoSistema;
 import ar.edu.uai.tfi.management.domain.model.Rol;
 import ar.edu.uai.tfi.management.domain.repository.RolRepository;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -15,11 +17,11 @@ import java.util.Locale;
 @ApplicationScoped
 public class RolService {
     private final RolRepository repository;
-    private final TrazabilidadPort trazabilidad;
+    private final BitacoraSistemaPort bitacora;
 
-    public RolService(RolRepository repository, TrazabilidadPort trazabilidad) {
+    public RolService(RolRepository repository, BitacoraSistemaPort bitacora) {
         this.repository = repository;
-        this.trazabilidad = trazabilidad;
+        this.bitacora = bitacora;
     }
 
     public List<Rol> listar() {
@@ -37,7 +39,8 @@ public class RolService {
         }
 
         Rol creado = repository.guardar(new Rol(null, nombreNormalizado, descripcion.trim(), EstadoRegistro.ACTIVO));
-        trazabilidad.registrar("ROL_CREADO", "rolId=" + creado.id() + ", nombre=" + creado.nombre());
+        bitacora.registrar(EventoSistema.exito(TipoEventoSistema.ROL_CREADO, null, null, null,
+                "rolId=" + creado.id() + ", nombre=" + creado.nombre()));
         return creado;
     }
 
