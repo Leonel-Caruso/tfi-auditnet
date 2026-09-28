@@ -1,5 +1,7 @@
 package ar.edu.uai.tfi.auditcore.application.config;
 
+import ar.edu.uai.tfi.auditcore.domain.model.OperacionTransaccion;
+import ar.edu.uai.tfi.auditcore.domain.model.Transaccion;
 import ar.edu.uai.tfi.auditcore.application.port.TrazabilidadPort;
 import ar.edu.uai.tfi.auditcore.domain.model.ConfiguracionDispositivo;
 import ar.edu.uai.tfi.auditcore.domain.model.DispositivoRed;
@@ -10,7 +12,13 @@ import ar.edu.uai.tfi.auditcore.domain.repository.DispositivoRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.util.HexFormat;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -129,14 +137,41 @@ public class ConfiguracionService {
         );
 
         ConfiguracionDispositivo creada = configuracionRepository.guardar(nueva);
-        trazabilidad.registrar(
+        // En la bitácora no se copia la configuración completa (puede ser extensa y sensible):
+        // se registra un resumen con el hash SHA-256 del contenido original como evidencia de integridad.
+        trazabilidad.registrar(new Transaccion(
+                "CONFIGURACION",
+                creada.id(),
+                OperacionTransaccion.IMPORTACION,
+                creada.organizacionId(),
+                null,
+                resumen(creada),
                 actorSeguro(actor),
-                "CONFIGURACION_IMPORTADA",
-                "configuracionId=" + creada.id()
-                        + ", dispositivoId=" + creada.dispositivoId()
-                        + ", version=" + creada.version()
-        );
+                "dispositivoId=" + creada.dispositivoId() + ", version=" + creada.version()
+        ));
         return creada;
+    }
+
+    static Map<String, Object> resumen(ConfiguracionDispositivo configuracion) {
+        Map<String, Object> resumen = new LinkedHashMap<>();
+        resumen.put("id", configuracion.id());
+        resumen.put("dispositivoId", configuracion.dispositivoId());
+        resumen.put("version", configuracion.version());
+        resumen.put("formato", configuracion.formato().name());
+        resumen.put("nombreFuente", configuracion.nombreFuente());
+        resumen.put("caracteres", configuracion.contenidoOriginal().length());
+        resumen.put("sha256", sha256(configuracion.contenidoOriginal()));
+        resumen.put("fechaImportacion", configuracion.fechaImportacion().toString());
+        return resumen;
+    }
+
+    static String sha256(String contenido) {
+        try {
+            byte[] hash = MessageDigest.getInstance("SHA-256").digest(contenido.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 no está disponible en la JVM.", exception);
+        }
     }
 
     private FormatoConfiguracion parsearFormato(String valor) {

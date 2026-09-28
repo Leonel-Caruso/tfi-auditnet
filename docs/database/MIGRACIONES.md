@@ -37,6 +37,7 @@ las tablas del primero, **sin saltear su V1**.
 | V1 | management-service | Esquema inicial de la Entrega 1 (acceso y B2B) | 2.1 |
 | V1 | audit-core-service | Esquema inicial de la Entrega 1 (núcleo de auditoría) | 2.1 |
 | V2 | management-service | Bitácora de auditoría de sistema (`bitacora_sistema`, solo inserción) | 2.3a |
+| V3 | management-service | Bitácora de transacciones (`bitacora_transacciones`, compartida, solo inserción) | 2.3b |
 
 La V1 reproduce exactamente la estructura generada por Hibernate en la Entrega 1 (mismas columnas, tipos, nulabilidad,
 claves primarias, únicas y CHECK). Única diferencia deliberada: las claves foráneas tienen nombres legibles

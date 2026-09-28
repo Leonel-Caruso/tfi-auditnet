@@ -18,7 +18,7 @@ class ReglaBaselineServiceTest {
     void creaReglaNormalizandoCodigoYClasificacion() {
         FakeBaselineRepository baselines = new FakeBaselineRepository();
         FakeReglaRepository reglas = new FakeReglaRepository();
-        ReglaBaselineService service = new ReglaBaselineService(reglas, baselines, (actor, accion, detalle) -> {});
+        ReglaBaselineService service = new ReglaBaselineService(reglas, baselines, transaccion -> {});
 
         ReglaBaseline creada = service.crear(
                 1L,
@@ -46,7 +46,7 @@ class ReglaBaselineServiceTest {
                 1L, 1L, "SEC-SSH-01", "SSH", "desc", TipoReglaConfiguracion.DEBE_CONTENER,
                 "ip ssh version 2", SeveridadRegla.ALTA, "recom", EstadoRegla.ACTIVA
         ));
-        ReglaBaselineService service = new ReglaBaselineService(reglas, baselines, (actor, accion, detalle) -> {});
+        ReglaBaselineService service = new ReglaBaselineService(reglas, baselines, transaccion -> {});
 
         assertThrows(IllegalStateException.class, () -> service.crear(
                 1L, "sec-ssh-01", "Otra", "desc", "DEBE_CONTENER", "ssh", "MEDIA", "recom", "admin"

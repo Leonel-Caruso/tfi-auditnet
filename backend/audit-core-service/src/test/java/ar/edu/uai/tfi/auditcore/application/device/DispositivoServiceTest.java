@@ -1,6 +1,7 @@
 package ar.edu.uai.tfi.auditcore.application.device;
 
-import ar.edu.uai.tfi.auditcore.application.port.TrazabilidadPort;
+import ar.edu.uai.tfi.auditcore.domain.model.OperacionTransaccion;
+import ar.edu.uai.tfi.auditcore.domain.model.Transaccion;
 import ar.edu.uai.tfi.auditcore.domain.model.CriticidadDispositivo;
 import ar.edu.uai.tfi.auditcore.domain.model.DispositivoRed;
 import ar.edu.uai.tfi.auditcore.domain.model.EstadoDispositivo;
@@ -12,14 +13,33 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class DispositivoServiceTest {
 
     @Test
+    void crearDispositivoRegistraTransaccionDeAlta() {
+        List<Transaccion> transacciones = new ArrayList<>();
+        DispositivoService service = new DispositivoService(new FakeRepository(), transacciones::add);
+
+        DispositivoRed creado = service.crear("Router Central", "rtr-core-01", 1L, "Cisco", 2L, 1L, "ALTA", "admin");
+
+        assertEquals(1, transacciones.size());
+        Transaccion alta = transacciones.get(0);
+        assertEquals("DISPOSITIVO", alta.entidad());
+        assertEquals(creado.id(), alta.entidadId());
+        assertEquals(OperacionTransaccion.ALTA, alta.operacion());
+        assertEquals(2L, alta.organizacionId());
+        assertNull(alta.valorAnterior());
+        assertEquals(creado, alta.valorNuevo());
+        assertEquals("admin", alta.actor());
+    }
+
+    @Test
     void creaDispositivoNormalizandoIdentificador() {
         FakeRepository repository = new FakeRepository();
-        DispositivoService service = new DispositivoService(repository, (actor, accion, detalle) -> {});
+        DispositivoService service = new DispositivoService(repository, transaccion -> {});
 
         DispositivoRed creado = service.crear(
                 "Router Central",
@@ -52,7 +72,7 @@ class DispositivoServiceTest {
                 EstadoDispositivo.ACTIVO
         ));
 
-        DispositivoService service = new DispositivoService(repository, (actor, accion, detalle) -> {});
+        DispositivoService service = new DispositivoService(repository, transaccion -> {});
 
         assertThrows(IllegalStateException.class, () -> service.crear(
                 "Otro router",

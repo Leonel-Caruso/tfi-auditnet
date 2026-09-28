@@ -4,6 +4,7 @@ import ar.edu.uai.tfi.management.application.ErrorAplicacion;
 import ar.edu.uai.tfi.management.application.ExcepcionAplicacion;
 import ar.edu.uai.tfi.management.application.port.TrazabilidadPort;
 import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
+import ar.edu.uai.tfi.management.domain.model.Transaccion;
 import ar.edu.uai.tfi.management.domain.model.OrganizacionCliente;
 import ar.edu.uai.tfi.management.domain.repository.OrganizacionClienteRepository;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -56,7 +57,7 @@ public class OrganizacionClienteService {
                 razonSocialNormalizada,
                 EstadoRegistro.ACTIVO));
 
-        trazabilidad.registrar("ORGANIZACION_CREADA", "organizacionId=" + creada.id());
+        trazabilidad.registrar(Transaccion.alta("ORGANIZACION", creada.id(), creada.id(), creada));
         return creada;
     }
 

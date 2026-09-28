@@ -1,5 +1,6 @@
 package ar.edu.uai.tfi.auditcore.application.policy;
 
+import ar.edu.uai.tfi.auditcore.domain.model.Transaccion;
 import ar.edu.uai.tfi.auditcore.application.port.TrazabilidadPort;
 import ar.edu.uai.tfi.auditcore.domain.model.BaselineConfiguracion;
 import ar.edu.uai.tfi.auditcore.domain.model.EstadoBaseline;
@@ -50,11 +51,8 @@ public class BaselineService {
         );
 
         BaselineConfiguracion creada = repository.guardar(nueva);
-        trazabilidad.registrar(
-                actorSeguro(actor),
-                "BASELINE_CREADA",
-                "baselineId=" + creada.id() + ", nombre=" + creada.nombre() + ", version=" + creada.version()
-        );
+        trazabilidad.registrar(Transaccion.alta("BASELINE", creada.id(), creada.organizacionId(), creada,
+                actorSeguro(actor)));
         return creada;
     }
 

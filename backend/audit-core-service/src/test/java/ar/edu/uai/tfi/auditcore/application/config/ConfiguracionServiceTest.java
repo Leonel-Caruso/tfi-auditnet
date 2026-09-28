@@ -1,5 +1,7 @@
 package ar.edu.uai.tfi.auditcore.application.config;
 
+import ar.edu.uai.tfi.auditcore.domain.model.OperacionTransaccion;
+import ar.edu.uai.tfi.auditcore.domain.model.Transaccion;
 import ar.edu.uai.tfi.auditcore.domain.model.*;
 import ar.edu.uai.tfi.auditcore.domain.repository.ConfiguracionRepository;
 import ar.edu.uai.tfi.auditcore.domain.repository.DispositivoRepository;
@@ -7,11 +9,37 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class ConfiguracionServiceTest {
+
+    @Test
+    void importacionRegistraResumenConHashSinCopiarElContenido() {
+        List<Transaccion> transacciones = new ArrayList<>();
+        ConfiguracionService service = new ConfiguracionService(
+                new FakeConfiguracionRepository(),
+                new FakeDispositivoRepository(),
+                new NormalizacionConfiguracionService(),
+                transacciones::add
+        );
+        String contenido = "hostname RTR-CORE-01\nenable secret 5 $1$abc$xyz\n";
+
+        ConfiguracionDispositivo creada = service.importarParaOrganizacion(1L, 2L, contenido, "TXT", "r.txt", "analista");
+
+        assertEquals(1, transacciones.size());
+        Transaccion importacion = transacciones.get(0);
+        assertEquals("CONFIGURACION", importacion.entidad());
+        assertEquals(OperacionTransaccion.IMPORTACION, importacion.operacion());
+        assertEquals(creada.id(), importacion.entidadId());
+
+        Map<?, ?> resumen = (Map<?, ?>) importacion.valorNuevo();
+        assertEquals(ConfiguracionService.sha256(contenido), resumen.get("sha256"));
+        assertEquals(64, ((String) resumen.get("sha256")).length());
+        assertFalse(resumen.toString().contains("enable secret"), "La bitácora no debe copiar la configuración");
+    }
 
     @Test
     void importaNuevaVersionConOriginalYNormalizada() {
@@ -21,7 +49,7 @@ class ConfiguracionServiceTest {
                 configuraciones,
                 dispositivos,
                 new NormalizacionConfiguracionService(),
-                (actor, accion, detalle) -> {}
+                transaccion -> {}
         );
 
         ConfiguracionDispositivo primera = service.importarParaOrganizacion(
@@ -53,7 +81,7 @@ class ConfiguracionServiceTest {
                 new FakeConfiguracionRepository(),
                 new FakeDispositivoRepository(),
                 new NormalizacionConfiguracionService(),
-                (actor, accion, detalle) -> {}
+                transaccion -> {}
         );
 
         assertThrows(

@@ -99,6 +99,19 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
   creación de usuario con roles, validación de filtros) y prueba de la migración: los triggers rechazan
   UPDATE, DELETE y TRUNCATE.
 
+## D-12 · Bitácora de transacciones (Bloque 2.3b)
+
+- **Decisión:** el puerto `TrazabilidadPort` de ambos servicios pasa de escribir texto en el log a registrar una
+  `Transaccion` estructurada (entidad, id, operación, organización, valor anterior y nuevo en JSON, actor).
+  Se guarda en la misma transacción que la operación.
+- **Configuraciones:** se registra un resumen con hash SHA-256, no el contenido.
+- **audit-core-service** inserta con SQL explícito (JDBC dentro de la transacción de Hibernate) en lugar de mapear
+  la tabla como entidad, para no acoplar su arranque a la migración de management-service.
+- **Prueba:** tests unitarios de alta de organización, alta de dispositivo, importación de configuración (hash y
+  sin contenido) y filtros de consulta; migración V3 aplicada y triggers verificados.
+- **Operación:** tras un deploy, management-service debe arrancar primero (aplica la V3). Hasta entonces, una alta
+  en audit-core-service fallaría y se revertiría completa.
+
 ## Pendientes detectados (para migraciones futuras)
 
 - Los CHECK generados por Hibernate limitan los estados (`hallazgos_auditoria.estado` solo admite `ABIERTO`;

@@ -4,6 +4,7 @@ import ar.edu.uai.tfi.management.application.ErrorAplicacion;
 import ar.edu.uai.tfi.management.application.ExcepcionAplicacion;
 import ar.edu.uai.tfi.management.application.port.TrazabilidadPort;
 import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
+import ar.edu.uai.tfi.management.domain.model.Transaccion;
 import ar.edu.uai.tfi.management.domain.model.Sede;
 import ar.edu.uai.tfi.management.domain.repository.OrganizacionClienteRepository;
 import ar.edu.uai.tfi.management.domain.repository.SedeRepository;
@@ -58,7 +59,7 @@ public class SedeService {
                 ubicacion.trim(),
                 EstadoRegistro.ACTIVO));
 
-        trazabilidad.registrar("SEDE_CREADA", "sedeId=" + creada.id() + ", organizacionId=" + organizacionId);
+        trazabilidad.registrar(Transaccion.alta("SEDE", creada.id(), organizacionId, creada));
         return creada;
     }
 

@@ -1,5 +1,7 @@
 package ar.edu.uai.tfi.auditcore.application.audit;
 
+import ar.edu.uai.tfi.auditcore.domain.model.OperacionTransaccion;
+import ar.edu.uai.tfi.auditcore.domain.model.Transaccion;
 import ar.edu.uai.tfi.auditcore.application.port.TrazabilidadPort;
 import ar.edu.uai.tfi.auditcore.domain.model.*;
 import ar.edu.uai.tfi.auditcore.domain.repository.*;
@@ -170,15 +172,20 @@ public class AuditoriaService {
             }
         }
 
-        trazabilidad.registrar(
+        trazabilidad.registrar(new Transaccion(
+                "AUDITORIA",
+                auditoria.id(),
+                OperacionTransaccion.EJECUCION,
+                auditoria.organizacionId(),
+                null,
+                auditoria,
                 actorSeguro(actor),
-                "AUDITORIA_EJECUTADA",
                 "auditoriaId=" + auditoria.id()
                         + ", configuracionId=" + configuracion.id()
                         + ", baselineId=" + baseline.id()
                         + ", reglas=" + calculadas.size()
                         + ", hallazgos=" + hallazgos
-        );
+        ));
 
         return armarDetalle(auditoria);
     }

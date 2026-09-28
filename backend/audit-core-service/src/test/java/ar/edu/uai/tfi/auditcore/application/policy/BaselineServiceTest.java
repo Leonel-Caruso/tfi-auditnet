@@ -17,7 +17,7 @@ class BaselineServiceTest {
     @Test
     void creaBaselineActivaEnVersionUno() {
         FakeRepository repository = new FakeRepository();
-        BaselineService service = new BaselineService(repository, (actor, accion, detalle) -> {});
+        BaselineService service = new BaselineService(repository, transaccion -> {});
 
         BaselineConfiguracion creada = service.crear(
                 " Hardening Cisco IOS ",
@@ -39,7 +39,7 @@ class BaselineServiceTest {
         repository.items.add(new BaselineConfiguracion(
                 1L, "Hardening Cisco IOS", "Base", 1, 1L, 2L, EstadoBaseline.ACTIVO
         ));
-        BaselineService service = new BaselineService(repository, (actor, accion, detalle) -> {});
+        BaselineService service = new BaselineService(repository, transaccion -> {});
 
         assertThrows(IllegalStateException.class, () -> service.crear(
                 "hardening cisco ios", "Otra", 1L, 2L, "admin"

@@ -1,5 +1,6 @@
 package ar.edu.uai.tfi.auditcore.application.device;
 
+import ar.edu.uai.tfi.auditcore.domain.model.Transaccion;
 import ar.edu.uai.tfi.auditcore.application.port.TrazabilidadPort;
 import ar.edu.uai.tfi.auditcore.domain.model.CriticidadDispositivo;
 import ar.edu.uai.tfi.auditcore.domain.model.DispositivoRed;
@@ -65,11 +66,8 @@ public class DispositivoService {
 
         DispositivoRed creado = repository.guardar(nuevo);
 
-        trazabilidad.registrar(
-                actor == null || actor.isBlank() ? "SISTEMA_O_ANONIMO" : actor,
-                "DISPOSITIVO_CREADO",
-                "dispositivoId=" + creado.id() + ", identificador=" + creado.identificador()
-        );
+        trazabilidad.registrar(Transaccion.alta("DISPOSITIVO", creado.id(), creado.organizacionId(), creado,
+                actor == null || actor.isBlank() ? null : actor));
 
         return creado;
     }
