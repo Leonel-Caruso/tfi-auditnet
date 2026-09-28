@@ -16,6 +16,11 @@ PG_ADMIN="auditnetadmin"
 PG_BASE="tfi_auditnet"
 PG_VERSION="17"
 
+# Cosmos DB para MongoDB (bitácora de excepciones). Nombre único en todo Azure.
+COSMOS_CUENTA="cosmos-auditnet-lcaruso"
+MONGO_BASE="auditnet"
+MONGO_VERSION="6.0"
+
 # Container Apps
 ENTORNO="cae-auditnet"
 APP_MANAGEMENT="ca-auditnet-management"

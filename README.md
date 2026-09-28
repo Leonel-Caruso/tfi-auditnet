@@ -46,6 +46,8 @@ Astro frontend
 docker compose --env-file .env -f docker/compose.database.yaml up -d
 ```
 
+El compose levanta PostgreSQL y MongoDB (bitácora de excepciones).
+
 3. `management-service`:
 
 ```powershell

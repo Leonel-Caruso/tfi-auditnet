@@ -40,7 +40,8 @@ public class ContextoSolicitudFilter {
             origen = request.remoteAddress().host();
         }
 
-        contexto.completar(origen, solicitud.getHeaderString("User-Agent"), correlacion);
+        contexto.completar(origen, solicitud.getHeaderString("User-Agent"), correlacion,
+                solicitud.getMethod(), solicitud.getUriInfo().getPath());
     }
 
     @ServerResponseFilter

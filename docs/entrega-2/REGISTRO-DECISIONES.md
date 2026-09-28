@@ -112,6 +112,20 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
 - **Operación:** tras un deploy, management-service debe arrancar primero (aplica la V3). Hasta entonces, una alta
   en audit-core-service fallaría y se revertiría completa.
 
+## D-13 · Bitácora de excepciones en MongoDB (Bloque 2.3c)
+
+- **Decisión:** un mapeador global (`ErrorInesperadoMapper`) captura en ambos servicios los errores que ningún otro
+  componente atendió, responde un 500 genérico con el código de correlación y los registra en MongoDB.
+  `ExcepcionAplicacionMapper` (management) registra los rechazos de negocio como WARN.
+- **Nivel configurable:** `BITACORA_EXCEPCIONES_NIVEL` (ERROR, WARN u OFF) y `LOG_LEVEL` para el log de Quarkus.
+- **Escritura asíncrona** con timeouts cortos: la bitácora nunca demora ni rompe la respuesta al usuario.
+- **Azure:** Cosmos DB para MongoDB (API 6.0) con plan gratuito, firewall limitado a servicios de Azure,
+  conexión como secreto de Container Apps (`infra/azure/04-crear-cosmos.sh`). **Local:** `mongo:7` en el docker compose.
+- **Diagnóstico:** `POST /api/admin/diagnostico/excepcion` (solo administradores) para demostrar el registro.
+- **Documentación:** Tabla 43 (MongoDB reemplaza a "SQL Server (BD alterna)"), DER/diccionario (documento
+  `bitacora_excepciones`), Figura 41 (despliegue).
+- **Prueba:** tests del nivel configurable y de los filtros de consulta.
+
 ## Pendientes detectados (para migraciones futuras)
 
 - Los CHECK generados por Hibernate limitan los estados (`hallazgos_auditoria.estado` solo admite `ABIERTO`;

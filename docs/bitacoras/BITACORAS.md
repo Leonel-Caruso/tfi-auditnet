@@ -6,7 +6,7 @@ Requisito: Puntos Mandatorios de Carpeta 2026 (cátedra) y RF-014 / RNF-003 / RN
 |---|---|---|---|
 | Auditoría de sistema | Inicios de sesión (exitosos y rechazados), creación de usuarios, asignación de roles, creación de roles | PostgreSQL · `bitacora_sistema` | ✅ Bloque 2.3a |
 | Transacciones | Altas, modificaciones y cambios de estado de entidades críticas (valor anterior y nuevo), ejecución de auditorías | PostgreSQL · `bitacora_transacciones` | ✅ Bloque 2.3b |
-| Excepciones | Errores inesperados, con nivel de log configurable | MongoDB (Cosmos DB para MongoDB) | Bloque 2.3c |
+| Excepciones | Errores inesperados, con nivel de log configurable | MongoDB (Cosmos DB para MongoDB) | ✅ Bloque 2.3c |
 
 ## Bitácora de auditoría de sistema
 
@@ -77,3 +77,47 @@ anterior y nuevo, cuando se implementen la edición y las bajas lógicas (Bloque
 
 `GET /api/admin/bitacoras/transacciones` (solo `ADMINISTRADOR_SISTEMA`). Filtros opcionales: `entidad`,
 `entidadId` (historial de un objeto puntual), `operacion`, `actor`, `organizacionId`, `desde`, `hasta` y `limite`.
+
+## Bitácora de excepciones
+
+Es la **entidad NoSQL** que exigen los Puntos Mandatorios 2026. Cada error se guarda como un documento en la
+colección `bitacora_excepciones` de MongoDB (en Azure, Cosmos DB para MongoDB con el plan gratuito; en local,
+el contenedor `tfi-mongo` del docker compose).
+
+### Por qué NoSQL para esta bitácora
+
+- Los errores son **documentos semiestructurados** (tipo, mensaje, traza de longitud variable, contexto HTTP) que no
+  se relacionan con otras tablas: no necesitan claves foráneas ni transacciones con el negocio.
+- Se escriben de forma **independiente** del modelo relacional: un problema en PostgreSQL puede registrarse igual.
+- Separa el volumen técnico (trazas) de la base transaccional.
+
+### Documento
+
+| Campo | Descripción |
+|---|---|
+| `fecha` | Momento del error (índice descendente) |
+| `servicio` | `management-service` o `audit-core-service` |
+| `nivel` | `ERROR` (falla inesperada, 5xx) o `WARN` (error de uso rechazado, 4xx) |
+| `tipo`, `mensaje`, `traza` | Clase de la excepción, mensaje y traza (hasta 4000 caracteres) |
+| `metodoHttp`, `ruta`, `estadoHttp` | Solicitud que produjo el error |
+| `usuario`, `correlacion` | Usuario autenticado y `X-Request-ID` (el mismo de las otras bitácoras) |
+
+### Nivel configurable
+
+| Variable | Valores | Efecto |
+|---|---|---|
+| `BITACORA_EXCEPCIONES_NIVEL` | `ERROR` (defecto) · `WARN` · `OFF` | Qué se guarda en MongoDB |
+| `LOG_LEVEL` / `LOG_LEVEL_APP` | `DEBUG`, `INFO`, `WARN`, `ERROR`… | Nivel del log de consola de Quarkus |
+
+### Garantías
+
+- **No afecta al usuario:** la escritura es asíncrona y con timeouts de 3 segundos. Si MongoDB no responde, el error
+  queda igual en el log del servicio.
+- **Sin filtración de detalles:** ante un error inesperado el cliente recibe un 500 genérico con el código de
+  correlación; la traza solo queda en la bitácora.
+
+### Consulta y diagnóstico
+
+- `GET /api/admin/bitacoras/excepciones` (solo `ADMINISTRADOR_SISTEMA`). Filtros: `servicio`, `nivel`, `desde`, `hasta`, `limite`.
+- `POST /api/admin/diagnostico/excepcion` (solo `ADMINISTRADOR_SISTEMA`): genera un error controlado para verificar
+  de punta a punta que la bitácora funciona.

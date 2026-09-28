@@ -16,5 +16,20 @@ services:
       timeout: 5s
       retries: 10
 
+  # Bloque 2.3c: MongoDB local para la bitácora de excepciones (en Azure: Cosmos DB para MongoDB)
+  mongo:
+    image: mongo:7
+    container_name: tfi-mongo
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - tfi_mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
 volumes:
   tfi_postgres_data:
+  tfi_mongo_data:
