@@ -1,0 +1,93 @@
+# =====================================================================
+# AuditNet · Integración continua y publicación de imágenes Docker
+# ---------------------------------------------------------------------
+# En cada push a entrega-2 (o a mano desde la pestaña Actions):
+#   1. Ejecuta los tests de ambos servicios y el chequeo/build del frontend.
+#   2. Solo si todo pasa, construye las 3 imágenes Docker y las publica en
+#      GitHub Container Registry (ghcr.io).
+# Azure Container Apps despliega esas imágenes (ver infra/azure).
+# =====================================================================
+name: CI e imagenes
+
+on:
+  push:
+    branches: [entrega-2]
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - ".github/workflows/imagenes.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  tests-backend:
+    name: Tests ${{ matrix.servicio }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        servicio: [management-service, audit-core-service]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: backend/${{ matrix.servicio }}/pom.xml
+      - name: mvn test
+        working-directory: backend/${{ matrix.servicio }}
+        run: mvn -B test
+
+  frontend:
+    name: Chequeo y build del frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/web-app/package-lock.json
+      - name: npm ci, check y build
+        working-directory: frontend/web-app
+        run: |
+          npm ci
+          npm run check
+          npm run build
+
+  imagenes:
+    name: Imagen ${{ matrix.imagen }}
+    needs: [tests-backend, frontend]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - imagen: auditnet-management
+            contexto: backend/management-service
+          - imagen: auditnet-core
+            contexto: backend/audit-core-service
+          - imagen: auditnet-web
+            contexto: frontend/web-app
+    steps:
+      - uses: actions/checkout@v4
+      - name: Nombre del registro en minúsculas
+        run: echo "OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.contexto }}
+          push: true
+          tags: |
+            ghcr.io/${{ env.OWNER }}/${{ matrix.imagen }}:${{ github.ref_name }}
+            ghcr.io/${{ env.OWNER }}/${{ matrix.imagen }}:sha-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}

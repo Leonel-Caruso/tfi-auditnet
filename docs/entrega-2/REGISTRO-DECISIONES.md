@@ -43,6 +43,36 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
   (columnas, tipos, nulabilidad, PK, UK, CHECK y FK por definición). Además: `mvn test` en ambos servicios,
   arranque local sobre una base nueva y validación de Hibernate sin errores.
 
+## D-06 · Región y restricciones de la suscripción (Bloque 2.2)
+
+- **Decisión:** región `brazilsouth`. La suscripción *Azure for Students* solo permite `southafricanorth`,
+  `newzealandnorth`, `brazilsouth`, `canadacentral` y `chilecentral`.
+- **Consecuencia:** Static Web Apps no está disponible en esas regiones, por lo que el frontend también se
+  despliega como contenedor en Container Apps.
+
+## D-07 · API Gateway con nginx (Bloque 2.2)
+
+- **Decisión:** el contenedor web (nginx) sirve el sitio Astro y enruta `/api/...` a cada servicio.
+  Los backends quedan con ingress interno (sin exposición a Internet) y no se necesita CORS.
+- **Código:** `frontend/web-app/Dockerfile`, `frontend/web-app/nginx/default.conf.template`.
+  El frontend se compila con URLs de API vacías (mismo origen); en local sigue usando `localhost:8081/8082`.
+- **Documentación:** Tabla 42 y Figura 36 (el API Gateway pasa a existir físicamente), Figura 41 (despliegue).
+- **Prueba:** enrutamiento verificado con nginx y servicios simulados: las 15 rutas van al servicio correcto,
+  las páginas del sitio responden 200 sin redirecciones y se envían los encabezados de seguridad.
+
+## D-08 · Imágenes en GitHub Container Registry publicadas por GitHub Actions (Bloque 2.2)
+
+- **Decisión:** GitHub Actions ejecuta los tests (backend y frontend) y, solo si pasan, publica las 3 imágenes
+  en `ghcr.io/leonel-caruso`. Se evita Azure Container Registry porque consume créditos.
+- **Código:** `.github/workflows/imagenes.yml`. Adelanta parte del Bloque 2.4 (CI).
+- **Trazabilidad:** cada imagen se etiqueta con `sha-<commit>`, así cada deploy apunta a un commit exacto.
+
+## D-09 · Infraestructura como scripts versionados (Bloque 2.2)
+
+- **Decisión:** la infraestructura se crea con scripts de Azure CLI en `infra/azure/`, ejecutados en Cloud Shell.
+  Son reproducibles, quedan en el repositorio y no contienen secretos.
+- **Documentación:** `docs/deploy/AZURE.md`.
+
 ## Pendientes detectados (para migraciones futuras)
 
 - Los CHECK generados por Hibernate limitan los estados (`hallazgos_auditoria.estado` solo admite `ABIERTO`;

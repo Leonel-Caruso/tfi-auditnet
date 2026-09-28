@@ -1,0 +1,57 @@
+# =====================================================================
+# AuditNet · Frontend + API Gateway (nginx)
+# ---------------------------------------------------------------------
+# 1. Sirve el sitio estático generado por Astro.
+# 2. Actúa como API Gateway simple: el navegador llama siempre al mismo
+#    origen (/api/...) y nginx deriva cada ruta al servicio que corresponde.
+#    Así los backends no se exponen a Internet y no hace falta CORS.
+#
+# ${MANAGEMENT_UPSTREAM} y ${CORE_UPSTREAM} se completan al iniciar el
+# contenedor (envsubst de la imagen oficial de nginx). Ejemplo:
+#   MANAGEMENT_UPSTREAM=https://ca-auditnet-management.internal.<dominio>
+# =====================================================================
+
+server {
+    listen 8080;
+    server_name _;
+    server_tokens off;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Detrás de Container Apps el HTTPS lo termina Azure: las redirecciones
+    # deben ser relativas para no apuntar a http://...:8080
+    absolute_redirect off;
+
+    # Tamaño máximo de una configuración importada (.txt / .cfg)
+    client_max_body_size 5m;
+
+    # Encabezados de seguridad básicos
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # ---- management-service: acceso, usuarios, roles, organizaciones y sedes
+    location ~ ^/api/(auth|users|roles|client-organizations|sites|management)(/|$) {
+        proxy_pass ${MANAGEMENT_UPSTREAM};
+        proxy_ssl_server_name on;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 90s;
+    }
+
+    # ---- audit-core-service: el resto de la API (dispositivos, baselines,
+    #      reglas, configuraciones, auditorías y hallazgos)
+    location /api/ {
+        proxy_pass ${CORE_UPSTREAM};
+        proxy_ssl_server_name on;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 90s;
+    }
+
+    # ---- Sitio estático de Astro (/devices -> /devices/index.html, sin redirecciones)
+    location / {
+        try_files $uri $uri/index.html $uri.html =404;
+    }
+}

@@ -1,0 +1,2 @@
+# Los scripts de shell se ejecutan en Linux (Docker, Cloud Shell): siempre con fin de línea LF
+*.sh text eol=lf
