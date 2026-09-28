@@ -119,12 +119,19 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
   `ExcepcionAplicacionMapper` (management) registra los rechazos de negocio como WARN.
 - **Nivel configurable:** `BITACORA_EXCEPCIONES_NIVEL` (ERROR, WARN u OFF) y `LOG_LEVEL` para el log de Quarkus.
 - **Escritura asíncrona** con timeouts cortos: la bitácora nunca demora ni rompe la respuesta al usuario.
-- **Azure:** Cosmos DB para MongoDB (API 6.0) con plan gratuito, firewall limitado a servicios de Azure,
+- **Azure:** Cosmos DB para MongoDB (API 4.2) con plan gratuito, firewall limitado a servicios de Azure,
   conexión como secreto de Container Apps (`infra/azure/04-crear-cosmos.sh`). **Local:** `mongo:7` en el docker compose.
 - **Diagnóstico:** `POST /api/admin/diagnostico/excepcion` (solo administradores) para demostrar el registro.
 - **Documentación:** Tabla 43 (MongoDB reemplaza a "SQL Server (BD alterna)"), DER/diccionario (documento
   `bitacora_excepciones`), Figura 41 (despliegue).
-- **Prueba:** tests del nivel configurable y de los filtros de consulta.
+- **Prueba:** tests del nivel configurable y de los filtros de consulta. En Azure: `POST /api/admin/diagnostico/excepcion`
+  responde 500 con código de seguimiento y el registro aparece en `GET /api/admin/bitacoras/excepciones`.
+- **Incidente de despliegue:** aunque el script pidió la API 6.0, Azure creó la cuenta con la API 3.6 y
+  `az cosmosdb update --server-version` no la modificó. El driver de MongoDB 5.x exige 4.2 o superior, por lo que las
+  excepciones no se guardaban (el error solo quedaba en el log del contenedor, sin afectar la respuesta al usuario).
+  Se subió a 4.2 desde el Portal (desde 3.6 solo se permite 4.0 o 4.2). **Corrección:** `MONGO_VERSION="4.2"` y el
+  script verifica la versión real al terminar y se detiene con instrucciones si no coincide.
+  **Lección:** verificar siempre la configuración efectiva de un recurso cloud, no solo que el comando termine bien.
 
 ## Pendientes detectados (para migraciones futuras)
 

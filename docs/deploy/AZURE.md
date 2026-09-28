@@ -20,7 +20,7 @@ Navegador ──HTTPS──► ca-auditnet-web  (nginx: sitio Astro + API Gatewa
 | management-service | Container Apps (`ca-auditnet-management`) | Quarkus, 0,5 vCPU / 1 GiB, ingress interno |
 | audit-core-service | Container Apps (`ca-auditnet-core`) | Quarkus, 0,5 vCPU / 1 GiB, ingress interno |
 | Base de datos | PostgreSQL Flexible Server | Burstable B1ms, 32 GB, PostgreSQL 17, backups de 7 días |
-| Bitácora de excepciones (NoSQL) | Cosmos DB para MongoDB (`cosmos-auditnet-lcaruso`) | Plan gratuito, base `auditnet` con 400 RU/s compartidas, solo accesible desde servicios de Azure |
+| Bitácora de excepciones (NoSQL) | Cosmos DB para MongoDB (`cosmos-auditnet-lcaruso`) | API 4.2, plan gratuito, base `auditnet` con 400 RU/s compartidas, solo accesible desde servicios de Azure |
 | Imágenes Docker | GitHub Container Registry | Publicadas por `.github/workflows/imagenes.yml` |
 | Región | `brazilsouth` | Región permitida por la suscripción más cercana a Argentina |
 
@@ -54,6 +54,10 @@ bash 01-crear-base.sh      # grupo de recursos, PostgreSQL, base y entorno de Co
 bash 02-crear-apps.sh      # las 3 Container Apps a partir de las imágenes de GHCR
 bash 04-crear-cosmos.sh    # Cosmos DB para MongoDB y su conexión con ambos servicios (Bloque 2.3c)
 ```
+
+`04-crear-cosmos.sh` verifica que la cuenta quede con la API de MongoDB 4.2 (el driver de los servicios no admite
+versiones menores). Si Azure la crea con otra versión, el script se detiene e indica cómo subirla desde el Portal
+(*Características > Upgrade MongoDB server version*); luego se vuelve a ejecutar sin recrear nada.
 
 Para desplegar una versión nueva después de un push (cuando GitHub Actions termina en verde):
 

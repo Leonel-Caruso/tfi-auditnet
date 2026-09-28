@@ -19,7 +19,10 @@ PG_VERSION="17"
 # Cosmos DB para MongoDB (bitácora de excepciones). Nombre único en todo Azure.
 COSMOS_CUENTA="cosmos-auditnet-lcaruso"
 MONGO_BASE="auditnet"
-MONGO_VERSION="6.0"
+# Versión de la API de MongoDB. El driver de Quarkus (MongoDB Java 5.x) exige 4.2 o superior.
+# Azure creó la cuenta en 3.6 aunque se pidió 6.0, y desde 3.6 solo se puede subir a 4.0 o 4.2:
+# por eso se fija 4.2 y 04-crear-cosmos.sh verifica la versión real al terminar.
+MONGO_VERSION="4.2"
 
 # Container Apps
 ENTORNO="cae-auditnet"
