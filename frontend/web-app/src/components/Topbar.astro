@@ -1,9 +1,11 @@
 ---
-const path = Astro.url.pathname;
+// En el build estático la ruta termina en '/' (ej. /logs/): se normaliza para comparar.
+const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
 const labels: Record<string, string> = {
   '/dashboard': 'inicio',
   '/organizations': 'organizations',
   '/users': 'users',
+  '/logs': 'logs',
   '/devices': 'devices',
   '/baselines': 'baselines',
   '/rules': 'rules',

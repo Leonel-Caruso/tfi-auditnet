@@ -1,11 +1,13 @@
 ---
-const currentPath = Astro.url.pathname;
+// En el build estático la ruta termina en '/' (ej. /logs/): se normaliza para comparar.
+const currentPath = Astro.url.pathname.replace(/\/+$/, '') || '/';
 
 const railItems = [
   { href: '/dashboard', label: 'Inicio', code: '~/' },
   { separator: true },
   { href: '/organizations', label: 'Organizaciones y sedes', code: 'ORG', adminOnly: true },
   { href: '/users', label: 'Usuarios', code: 'USR', adminOnly: true },
+  { href: '/logs', label: 'Bitácoras', code: 'BIT', adminOnly: true },
   { separator: true },
   { href: '/devices', label: 'Dispositivos', code: 'DEV' },
   { href: '/baselines', label: 'Baselines', code: 'BL' },

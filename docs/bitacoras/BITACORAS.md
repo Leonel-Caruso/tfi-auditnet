@@ -121,3 +121,24 @@ el contenedor `tfi-mongo` del docker compose).
 - `GET /api/admin/bitacoras/excepciones` (solo `ADMINISTRADOR_SISTEMA`). Filtros: `servicio`, `nivel`, `desde`, `hasta`, `limite`.
 - `POST /api/admin/diagnostico/excepcion` (solo `ADMINISTRADOR_SISTEMA`): genera un error controlado para verificar
   de punta a punta que la bitácora funciona.
+
+## Pantalla de consulta (Bloque 2.3d)
+
+Ruta **`/logs`** del frontend (ítem **BIT** del menú lateral, o `bitacoras` en la barra de comandos). Visible solo para
+`ADMINISTRADOR_SISTEMA`: el ítem se oculta para otros perfiles y, si alguien entra por URL, la API responde 403 y la
+pantalla lo informa. No modifica ningún registro.
+
+| Pestaña | Endpoint | Filtros enviados a la API |
+|---|---|---|
+| SYS · Auditoría de sistema | `/api/admin/bitacoras/sistema` | evento, resultado, actor, desde, hasta, límite |
+| TRX · Transacciones | `/api/admin/bitacoras/transacciones` | entidad, id de entidad, operación, actor, desde, hasta, límite |
+| EXC · Excepciones | `/api/admin/bitacoras/excepciones` | servicio, nivel, desde, hasta, límite |
+
+- Las fechas se ingresan en hora local y se envían en UTC (ISO-8601).
+- El inspector muestra todos los campos del registro; en transacciones, el valor anterior y el nuevo con formato JSON;
+  en excepciones, el mensaje y la traza.
+- **Seguimiento de una solicitud:** el cuadro de búsqueda filtra los registros ya cargados por cualquier texto, incluido
+  el código de seguimiento (correlación) que recibe el usuario en un error 500. El filtro se mantiene al cambiar de
+  pestaña, así se ve lo que dejó la misma solicitud en las tres bitácoras. Alcance: busca dentro de los registros
+  cargados (según el límite elegido), no en toda la base.
+- La pestaña activa queda en la URL (`/logs#transacciones`), para abrirla directamente.

@@ -1,0 +1,646 @@
+---
+import MasterLayout from '../layouts/MasterLayout.astro';
+---
+
+<MasterLayout
+  title="Bitácoras"
+  section="Panel de administración"
+  description="Registros inmutables de seguridad, de operaciones de negocio y de errores de la plataforma. Solo lectura y exclusivo del administrador del sistema."
+>
+  <div id="log-error" class="alert alert-error is-hidden" role="alert"></div>
+
+  <nav class="log-tabs" role="tablist" aria-label="Bitácoras">
+    <button type="button" class="log-tab" role="tab" id="tab-sistema" data-tab="sistema" aria-controls="log-panel" aria-selected="true">
+      <code>SYS</code>
+      <span>Auditoría de sistema</span>
+      <small>accesos y seguridad · PostgreSQL</small>
+    </button>
+    <button type="button" class="log-tab" role="tab" id="tab-transacciones" data-tab="transacciones" aria-controls="log-panel" aria-selected="false" tabindex="-1">
+      <code>TRX</code>
+      <span>Transacciones</span>
+      <small>operaciones de negocio · PostgreSQL</small>
+    </button>
+    <button type="button" class="log-tab" role="tab" id="tab-excepciones" data-tab="excepciones" aria-controls="log-panel" aria-selected="false" tabindex="-1">
+      <code>EXC</code>
+      <span>Excepciones</span>
+      <small>errores inesperados · MongoDB</small>
+    </button>
+  </nav>
+
+  <form id="log-filters" class="panel compact-panel log-filters" novalidate>
+    <div class="log-filter-grid">
+      <label class="log-filter" data-tabs="sistema">
+        <span>evento</span>
+        <select name="evento" class="technical-select">
+          <option value="">todos</option>
+          <option value="LOGIN_EXITOSO">LOGIN_EXITOSO</option>
+          <option value="LOGIN_RECHAZADO">LOGIN_RECHAZADO</option>
+          <option value="USUARIO_CREADO">USUARIO_CREADO</option>
+          <option value="ROLES_ASIGNADOS">ROLES_ASIGNADOS</option>
+          <option value="ROL_CREADO">ROL_CREADO</option>
+        </select>
+      </label>
+      <label class="log-filter" data-tabs="sistema">
+        <span>resultado</span>
+        <select name="resultado" class="technical-select">
+          <option value="">todos</option>
+          <option value="EXITO">EXITO</option>
+          <option value="FALLO">FALLO</option>
+        </select>
+      </label>
+      <label class="log-filter" data-tabs="transacciones">
+        <span>entidad</span>
+        <select name="entidad" class="technical-select">
+          <option value="">todas</option>
+          <option value="ORGANIZACION">ORGANIZACION</option>
+          <option value="SEDE">SEDE</option>
+          <option value="DISPOSITIVO">DISPOSITIVO</option>
+          <option value="BASELINE">BASELINE</option>
+          <option value="REGLA">REGLA</option>
+          <option value="CONFIGURACION">CONFIGURACION</option>
+          <option value="AUDITORIA">AUDITORIA</option>
+        </select>
+      </label>
+      <label class="log-filter" data-tabs="transacciones">
+        <span>id entidad</span>
+        <input name="entidadId" class="technical-input" type="number" min="1" step="1" inputmode="numeric" placeholder="ej. 4" />
+      </label>
+      <label class="log-filter" data-tabs="transacciones">
+        <span>operación</span>
+        <select name="operacion" class="technical-select">
+          <option value="">todas</option>
+          <option value="ALTA">ALTA</option>
+          <option value="MODIFICACION">MODIFICACION</option>
+          <option value="CAMBIO_ESTADO">CAMBIO_ESTADO</option>
+          <option value="BAJA_LOGICA">BAJA_LOGICA</option>
+          <option value="IMPORTACION">IMPORTACION</option>
+          <option value="EJECUCION">EJECUCION</option>
+        </select>
+      </label>
+      <label class="log-filter" data-tabs="sistema,transacciones">
+        <span>actor</span>
+        <input name="actor" class="technical-input" type="text" maxlength="160" autocomplete="off" placeholder="usuario" />
+      </label>
+      <label class="log-filter" data-tabs="excepciones">
+        <span>servicio</span>
+        <select name="servicio" class="technical-select">
+          <option value="">todos</option>
+          <option value="management-service">management-service</option>
+          <option value="audit-core-service">audit-core-service</option>
+        </select>
+      </label>
+      <label class="log-filter" data-tabs="excepciones">
+        <span>nivel</span>
+        <select name="nivel" class="technical-select">
+          <option value="">todos</option>
+          <option value="ERROR">ERROR</option>
+          <option value="WARN">WARN</option>
+        </select>
+      </label>
+      <label class="log-filter">
+        <span>desde</span>
+        <input name="desde" class="technical-input" type="datetime-local" />
+      </label>
+      <label class="log-filter">
+        <span>hasta</span>
+        <input name="hasta" class="technical-input" type="datetime-local" />
+      </label>
+      <label class="log-filter">
+        <span>límite</span>
+        <select name="limite" class="technical-select">
+          <option value="50">50</option>
+          <option value="100" selected>100</option>
+          <option value="500">500</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="log-filter-actions">
+      <div class="terminal-search">
+        <span>&gt;</span>
+        <input id="log-search" type="search" autocomplete="off" placeholder="filtrar lo cargado: código de seguimiento, actor, detalle..." aria-label="Filtrar registros cargados" />
+      </div>
+      <button type="button" id="log-clear" class="button button-ghost button-small">Limpiar</button>
+      <button type="submit" id="log-submit" class="button button-primary button-small">Consultar</button>
+    </div>
+  </form>
+
+  <section class="finding-workspace log-workspace">
+    <article id="log-panel" class="panel finding-list-panel" role="tabpanel" aria-labelledby="tab-sistema">
+      <div class="panel-heading">
+        <div>
+          <span id="log-eyebrow" class="eyebrow">bitacora_sistema</span>
+          <h2 id="log-title">Auditoría de sistema</h2>
+        </div>
+        <div class="log-heading-meta">
+          <span id="log-endpoint" class="technical-hint">GET /api/admin/bitacoras/sistema</span>
+          <span id="log-count" class="counter-chip">—</span>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table finding-table log-table">
+          <thead id="log-head"></thead>
+          <tbody id="log-body"></tbody>
+        </table>
+        <div id="log-loading" class="log-loading is-hidden"><div class="skeleton-row"></div><div class="skeleton-row"></div></div>
+        <div id="log-empty" class="empty-state compact-empty is-hidden">
+          <div>
+            <code>registros = 0</code>
+            <p>No hay registros para los filtros actuales.</p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <aside class="panel finding-inspector" aria-live="polite">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Inspector</span>
+          <h2>Detalle del registro</h2>
+        </div>
+        <span class="inspector-led"></span>
+      </div>
+
+      <div id="log-inspector-empty" class="inspector-empty">
+        <code>select registro;</code>
+        <p>Seleccioná un registro para ver todos sus campos.</p>
+      </div>
+
+      <div id="log-inspector-content" class="inspector-content is-hidden"></div>
+    </aside>
+  </section>
+
+  <script>
+    import { authFetch } from '../lib/auth';
+    import { readApiError } from '../lib/api';
+    import type {
+      ExceptionLogRecord,
+      Organization,
+      SystemLogRecord,
+      TransactionLogRecord,
+    } from '../lib/api';
+
+    type Tab = 'sistema' | 'transacciones' | 'excepciones';
+    type LogRecord = SystemLogRecord | TransactionLogRecord | ExceptionLogRecord;
+
+    type TabConfig = {
+      title: string;
+      eyebrow: string;
+      endpoint: string;
+      params: string[];
+      columns: string[];
+    };
+
+    const TABS: Record<Tab, TabConfig> = {
+      sistema: {
+        title: 'Auditoría de sistema',
+        eyebrow: 'bitacora_sistema',
+        endpoint: '/api/admin/bitacoras/sistema',
+        params: ['evento', 'resultado', 'actor', 'desde', 'hasta', 'limite'],
+        columns: ['ID', 'FECHA', 'EVENTO', 'RESULTADO', 'ACTOR', 'ORIGEN', 'SEGUIMIENTO'],
+      },
+      transacciones: {
+        title: 'Transacciones',
+        eyebrow: 'bitacora_transacciones',
+        endpoint: '/api/admin/bitacoras/transacciones',
+        params: ['entidad', 'entidadId', 'operacion', 'actor', 'desde', 'hasta', 'limite'],
+        columns: ['ID', 'FECHA', 'ENTIDAD', 'OPERACIÓN', 'ACTOR', 'SERVICIO', 'SEGUIMIENTO'],
+      },
+      excepciones: {
+        title: 'Excepciones',
+        eyebrow: 'bitacora_excepciones (MongoDB)',
+        endpoint: '/api/admin/bitacoras/excepciones',
+        params: ['servicio', 'nivel', 'desde', 'hasta', 'limite'],
+        columns: ['FECHA', 'NIVEL', 'EXCEPCIÓN', 'SOLICITUD', 'HTTP', 'SERVICIO', 'SEGUIMIENTO'],
+      },
+    };
+
+    const isTab = (value: string): value is Tab => value in TABS;
+
+    const state: Record<Tab, { records: LogRecord[]; loaded: boolean }> = {
+      sistema: { records: [], loaded: false },
+      transacciones: { records: [], loaded: false },
+      excepciones: { records: [], loaded: false },
+    };
+
+    const initialHash = window.location.hash.replace('#', '');
+    let activeTab: Tab = isTab(initialHash) ? initialHash : 'sistema';
+    let selectedIndex: number | null = null;
+    let organizations = new Map<number, string>();
+    let requestSequence = 0;
+
+    const form = document.querySelector<HTMLFormElement>('#log-filters');
+    const search = document.querySelector<HTMLInputElement>('#log-search');
+
+    const escapeHtml = (value: unknown) =>
+      String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+
+    const formatDate = (value: string) => {
+      try {
+        return new Intl.DateTimeFormat('es-AR', { dateStyle: 'short', timeStyle: 'medium' }).format(new Date(value));
+      } catch {
+        return value;
+      }
+    };
+
+    const code = (prefix: string, id: number | null | undefined) =>
+      id == null ? '—' : `${prefix}-${String(id).padStart(4, '0')}`;
+
+    const shortCorrelation = (value: string | null) => (value ? value.slice(0, 8) : '—');
+
+    const shortType = (value: string) => value.split('.').pop() ?? value;
+
+    const orgLabel = (id: number | null) =>
+      id == null ? '—' : `${organizations.get(id) ?? 'organización'} (#${id})`;
+
+    const prettyJson = (value: string | null) => {
+      if (value == null) return null;
+      try {
+        return JSON.stringify(JSON.parse(value), null, 2);
+      } catch {
+        return value;
+      }
+    };
+
+    const resultBadge = (value: string) =>
+      value === 'FALLO'
+        ? `<span class="severity-badge severity-critical">FALLO</span>`
+        : `<span class="status-badge status-ready">${escapeHtml(value)}</span>`;
+
+    const levelBadge = (value: string) =>
+      `<span class="severity-badge ${value === 'ERROR' ? 'severity-critical' : 'severity-medium'}">${escapeHtml(value)}</span>`;
+
+    const showError = (message: string | null) => {
+      const node = document.querySelector<HTMLElement>('#log-error');
+      if (!node) return;
+      node.textContent = message ?? '';
+      node.classList.toggle('is-hidden', !message);
+    };
+
+    // ---------------------------------------------------------------
+    // Filtros: solo se envían los parámetros de la bitácora activa.
+    // Las fechas del formulario están en hora local y se envían en UTC (ISO-8601).
+    // ---------------------------------------------------------------
+    const buildQuery = (tab: Tab): string => {
+      if (!form) return '';
+      const data = new FormData(form);
+      const params = new URLSearchParams();
+
+      for (const name of TABS[tab].params) {
+        const raw = String(data.get(name) ?? '').trim();
+        if (!raw) continue;
+
+        if (name === 'desde' || name === 'hasta') {
+          const date = new Date(raw);
+          if (Number.isNaN(date.getTime())) throw new Error(`La fecha '${name}' no es válida.`);
+          params.set(name, date.toISOString());
+        } else if (name === 'entidadId') {
+          if (!/^[1-9]\d*$/.test(raw)) throw new Error('El id de entidad debe ser un número entero positivo.');
+          params.set(name, raw);
+        } else {
+          params.set(name, raw);
+        }
+      }
+
+      const desde = params.get('desde');
+      const hasta = params.get('hasta');
+      if (desde && hasta && desde > hasta) {
+        throw new Error("La fecha 'desde' no puede ser posterior a 'hasta'.");
+      }
+
+      const query = params.toString();
+      return query ? `?${query}` : '';
+    };
+
+    const syncFilterVisibility = () => {
+      document.querySelectorAll<HTMLElement>('.log-filter[data-tabs]').forEach((field) => {
+        const tabs = (field.dataset.tabs ?? '').split(',');
+        field.classList.toggle('is-hidden', !tabs.includes(activeTab));
+      });
+    };
+
+    // ---------------------------------------------------------------
+    // Tabla
+    // ---------------------------------------------------------------
+    const haystack = (record: LogRecord) =>
+      Object.values(record).map((value) => String(value ?? '')).join(' ').toLowerCase();
+
+    const rowCells = (record: LogRecord): string[] => {
+      if (activeTab === 'sistema') {
+        const r = record as SystemLogRecord;
+        return [
+          `<code>${code('SYS', r.id)}</code>`,
+          `<span class="log-nowrap">${escapeHtml(formatDate(r.fecha))}</span>`,
+          `<strong>${escapeHtml(r.evento)}</strong>`,
+          resultBadge(r.resultado),
+          escapeHtml(r.actor ?? '—'),
+          escapeHtml(r.origenIp ?? '—'),
+          `<code title="${escapeHtml(r.correlacion)}">${escapeHtml(shortCorrelation(r.correlacion))}</code>`,
+        ];
+      }
+      if (activeTab === 'transacciones') {
+        const r = record as TransactionLogRecord;
+        return [
+          `<code>${code('TRX', r.id)}</code>`,
+          `<span class="log-nowrap">${escapeHtml(formatDate(r.fecha))}</span>`,
+          `<strong>${escapeHtml(r.entidad)}</strong><small>id ${escapeHtml(r.entidadId ?? '—')}</small>`,
+          `<span class="status-badge status-strong">${escapeHtml(r.operacion)}</span>`,
+          escapeHtml(r.actor),
+          `<small>${escapeHtml(r.servicio)}</small>`,
+          `<code title="${escapeHtml(r.correlacion)}">${escapeHtml(shortCorrelation(r.correlacion))}</code>`,
+        ];
+      }
+      const r = record as ExceptionLogRecord;
+      return [
+        `<span class="log-nowrap">${escapeHtml(formatDate(r.fecha))}</span>`,
+        levelBadge(r.nivel),
+        `<strong title="${escapeHtml(r.tipo)}">${escapeHtml(shortType(r.tipo))}</strong><small>${escapeHtml(r.mensaje ?? '')}</small>`,
+        `<small>${escapeHtml([r.metodoHttp, r.ruta].filter(Boolean).join(' ') || '—')}</small>`,
+        `<code>${escapeHtml(r.estadoHttp)}</code>`,
+        `<small>${escapeHtml(r.servicio)}</small>`,
+        `<code title="${escapeHtml(r.correlacion)}">${escapeHtml(shortCorrelation(r.correlacion))}</code>`,
+      ];
+    };
+
+    const render = () => {
+      const head = document.querySelector<HTMLElement>('#log-head');
+      const body = document.querySelector<HTMLElement>('#log-body');
+      const empty = document.querySelector<HTMLElement>('#log-empty');
+      const count = document.querySelector<HTMLElement>('#log-count');
+      if (!head || !body) return;
+
+      const config = TABS[activeTab];
+      head.innerHTML = `<tr>${config.columns.map((column) => `<th>${escapeHtml(column)}</th>`).join('')}</tr>`;
+
+      const term = search?.value.trim().toLowerCase() ?? '';
+      const records = state[activeTab].records;
+      const visible = records
+        .map((record, index) => ({ record, index }))
+        .filter(({ record }) => !term || haystack(record).includes(term));
+
+      body.innerHTML = visible.map(({ record, index }) => `
+        <tr class="finding-row ${index === selectedIndex ? 'is-selected' : ''}" data-index="${index}" tabindex="0">
+          ${rowCells(record).map((cell) => `<td>${cell}</td>`).join('')}
+        </tr>`).join('');
+
+      if (count) {
+        count.textContent = term && state[activeTab].loaded
+          ? `${visible.length}/${records.length}`
+          : state[activeTab].loaded ? String(records.length) : '—';
+      }
+      empty?.classList.toggle('is-hidden', !state[activeTab].loaded || visible.length > 0);
+
+      body.querySelectorAll<HTMLElement>('[data-index]').forEach((row) => {
+        const select = () => selectRecord(Number(row.dataset.index));
+        row.addEventListener('click', select);
+        row.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            select();
+          }
+        });
+      });
+    };
+
+    // ---------------------------------------------------------------
+    // Inspector
+    // ---------------------------------------------------------------
+    const definition = (label: string, value: unknown) =>
+      `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value ?? '—')}</dd></div>`;
+
+    const block = (label: string, value: string | null, empty: string) => `
+      <div class="config-preview">
+        <span>${escapeHtml(label)}</span>
+        ${value ? `<pre>${escapeHtml(value)}</pre>` : `<p class="log-muted">${escapeHtml(empty)}</p>`}
+      </div>`;
+
+    const correlationAction = (value: string | null) => value ? `
+      <div class="rule-expression-block">
+        <span>código de seguimiento</span>
+        <code>${escapeHtml(value)}</code>
+      </div>
+      <button type="button" class="button button-ghost button-small button-full" data-follow="${escapeHtml(value)}">
+        Filtrar por este código en las 3 bitácoras
+      </button>` : '';
+
+    const inspectorHtml = (record: LogRecord): string => {
+      if (activeTab === 'sistema') {
+        const r = record as SystemLogRecord;
+        return `
+          <div class="inspector-identity">
+            <span class="inspector-code">${code('SYS', r.id)}</span>
+            <h3>${escapeHtml(r.evento)}</h3>
+            ${resultBadge(r.resultado)}
+          </div>
+          <dl class="technical-definition-list">
+            ${definition('fecha', formatDate(r.fecha))}
+            ${definition('actor', r.actor)}
+            ${definition('usuario.afectado', r.usuarioAfectadoId == null ? null : `#${r.usuarioAfectadoId}`)}
+            ${definition('organización', orgLabel(r.organizacionId))}
+            ${definition('origen.ip', r.origenIp)}
+            ${definition('user.agent', r.userAgent)}
+          </dl>
+          ${block('detalle', r.detalle, 'sin detalle')}
+          ${correlationAction(r.correlacion)}`;
+      }
+      if (activeTab === 'transacciones') {
+        const r = record as TransactionLogRecord;
+        return `
+          <div class="inspector-identity">
+            <span class="inspector-code">${code('TRX', r.id)}</span>
+            <h3>${escapeHtml(r.entidad)} #${escapeHtml(r.entidadId ?? '—')}</h3>
+            <span class="status-badge status-strong">${escapeHtml(r.operacion)}</span>
+          </div>
+          <dl class="technical-definition-list">
+            ${definition('fecha', formatDate(r.fecha))}
+            ${definition('servicio', r.servicio)}
+            ${definition('actor', r.actor)}
+            ${definition('organización', orgLabel(r.organizacionId))}
+          </dl>
+          ${r.detalle ? block('detalle', r.detalle, '') : ''}
+          ${block('valor anterior', prettyJson(r.valorAnterior), r.operacion === 'ALTA' ? 'alta: no existía un valor anterior' : 'sin valor anterior')}
+          ${block('valor nuevo', prettyJson(r.valorNuevo), 'sin valor nuevo')}
+          ${correlationAction(r.correlacion)}`;
+      }
+      const r = record as ExceptionLogRecord;
+      return `
+        <div class="inspector-identity">
+          <span class="inspector-code">${escapeHtml(r.servicio)}</span>
+          <h3>${escapeHtml(shortType(r.tipo))}</h3>
+          ${levelBadge(r.nivel)}
+        </div>
+        <dl class="technical-definition-list">
+          ${definition('fecha', formatDate(r.fecha))}
+          ${definition('tipo', r.tipo)}
+          ${definition('solicitud', [r.metodoHttp, r.ruta].filter(Boolean).join(' ') || null)}
+          ${definition('http.status', r.estadoHttp)}
+          ${definition('usuario', r.usuario)}
+        </dl>
+        <div class="finding-evidence-block">
+          <span>mensaje</span>
+          <p>${escapeHtml(r.mensaje ?? 'sin mensaje')}</p>
+        </div>
+        ${block('traza', r.traza, 'sin traza')}
+        ${correlationAction(r.correlacion)}`;
+    };
+
+    const clearInspector = () => {
+      selectedIndex = null;
+      document.querySelector('#log-inspector-empty')?.classList.remove('is-hidden');
+      const content = document.querySelector<HTMLElement>('#log-inspector-content');
+      if (content) {
+        content.innerHTML = '';
+        content.classList.add('is-hidden');
+      }
+    };
+
+    const selectRecord = (index: number) => {
+      const record = state[activeTab].records[index];
+      if (!record) return;
+      selectedIndex = index;
+      render();
+
+      document.querySelector('#log-inspector-empty')?.classList.add('is-hidden');
+      const content = document.querySelector<HTMLElement>('#log-inspector-content');
+      if (!content) return;
+      content.innerHTML = inspectorHtml(record);
+      content.classList.remove('is-hidden');
+
+      content.querySelector<HTMLButtonElement>('[data-follow]')?.addEventListener('click', (event) => {
+        const value = (event.currentTarget as HTMLButtonElement).dataset.follow ?? '';
+        if (search) search.value = value;
+        render();
+        search?.focus();
+      });
+    };
+
+    // ---------------------------------------------------------------
+    // Carga
+    // ---------------------------------------------------------------
+    const setLoading = (loading: boolean) => {
+      document.querySelector('#log-loading')?.classList.toggle('is-hidden', !loading);
+      const submit = document.querySelector<HTMLButtonElement>('#log-submit');
+      if (submit) submit.disabled = loading;
+    };
+
+    const load = async (tab: Tab) => {
+      let query: string;
+      try {
+        query = buildQuery(tab);
+      } catch (error) {
+        showError(error instanceof Error ? error.message : 'Filtros inválidos.');
+        return;
+      }
+
+      const sequence = ++requestSequence;
+      showError(null);
+      setLoading(true);
+      try {
+        const response = await authFetch(`${TABS[tab].endpoint}${query}`);
+        if (sequence !== requestSequence) return;
+        if (!response.ok) {
+          showError(response.status === 403
+            ? 'Solo el ADMINISTRADOR_SISTEMA puede consultar las bitácoras.'
+            : await readApiError(response));
+          return;
+        }
+        state[tab].records = await response.json() as LogRecord[];
+        state[tab].loaded = true;
+      } catch (error) {
+        if (sequence === requestSequence) {
+          showError(error instanceof Error ? error.message : 'No se pudo consultar la bitácora.');
+        }
+      } finally {
+        if (sequence === requestSequence) {
+          setLoading(false);
+          if (tab === activeTab) {
+            clearInspector();
+            render();
+          }
+        }
+      }
+    };
+
+    const loadOrganizations = async () => {
+      try {
+        const response = await authFetch('/api/client-organizations');
+        if (!response.ok) return;
+        const list = await response.json() as Organization[];
+        organizations = new Map(list.map((item) => [item.id, item.razonSocial]));
+      } catch {
+        // Solo se usa para mostrar nombres; sin esto se muestra el id.
+      }
+    };
+
+    // ---------------------------------------------------------------
+    // Pestañas
+    // ---------------------------------------------------------------
+    const tabButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('.log-tab'));
+
+    const activate = (tab: Tab, focus = false) => {
+      activeTab = tab;
+      const config = TABS[tab];
+
+      tabButtons.forEach((button) => {
+        const selected = button.dataset.tab === tab;
+        button.setAttribute('aria-selected', String(selected));
+        button.tabIndex = selected ? 0 : -1;
+        button.classList.toggle('is-active', selected);
+        if (selected && focus) button.focus();
+      });
+
+      document.querySelector('#log-panel')?.setAttribute('aria-labelledby', `tab-${tab}`);
+      const title = document.querySelector('#log-title');
+      const eyebrow = document.querySelector('#log-eyebrow');
+      const endpoint = document.querySelector('#log-endpoint');
+      if (title) title.textContent = config.title;
+      if (eyebrow) eyebrow.textContent = config.eyebrow;
+      if (endpoint) endpoint.textContent = `GET ${config.endpoint}`;
+
+      history.replaceState(null, '', `#${tab}`);
+      syncFilterVisibility();
+      clearInspector();
+      render();
+      if (!state[tab].loaded) load(tab);
+    };
+
+    tabButtons.forEach((button, position) => {
+      button.addEventListener('click', () => {
+        const tab = button.dataset.tab ?? '';
+        if (isTab(tab)) activate(tab);
+      });
+      button.addEventListener('keydown', (event) => {
+        if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+        event.preventDefault();
+        const next = tabButtons[(position + (event.key === 'ArrowRight' ? 1 : tabButtons.length - 1)) % tabButtons.length];
+        const tab = next.dataset.tab ?? '';
+        if (isTab(tab)) activate(tab, true);
+      });
+    });
+
+    form?.addEventListener('submit', (event) => {
+      event.preventDefault();
+      // Los filtros cambiaron: las otras pestañas se vuelven a consultar al abrirlas.
+      (Object.keys(state) as Tab[]).forEach((tab) => { if (tab !== activeTab) state[tab].loaded = false; });
+      load(activeTab);
+    });
+
+    document.querySelector('#log-clear')?.addEventListener('click', () => {
+      form?.reset();
+      if (search) search.value = '';
+      (Object.keys(state) as Tab[]).forEach((tab) => { state[tab].loaded = false; });
+      load(activeTab);
+    });
+
+    search?.addEventListener('input', render);
+
+    activate(activeTab);
+    loadOrganizations();
+  </script>
+</MasterLayout>

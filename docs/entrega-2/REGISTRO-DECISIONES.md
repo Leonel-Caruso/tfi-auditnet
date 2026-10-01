@@ -133,6 +133,24 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
   script verifica la versión real al terminar y se detiene con instrucciones si no coincide.
   **Lección:** verificar siempre la configuración efectiva de un recurso cloud, no solo que el comando termine bien.
 
+## D-14 · Pantalla de bitácoras en el panel de administración (Bloque 2.3d)
+
+- **Decisión:** una sola pantalla `/logs` con tres pestañas (sistema, transacciones, excepciones), de solo lectura y
+  exclusiva de `ADMINISTRADOR_SISTEMA`. Usa los endpoints de consulta existentes: no cambia el backend ni la base.
+- **Código:** `frontend/web-app/src/pages/logs.astro`, tipos en `src/lib/api.ts`, ítem `BIT` en `Sidebar.astro`,
+  ruta en `Topbar.astro` y en la barra de comandos (`MasterLayout.astro`), estilos `log-*` en `global.css`.
+- **Corrección incluida:** en el build estático la ruta actual llega con barra final (`/logs/`), por lo que el menú no
+  marcaba el ítem activo ni la ruta superior mostraba el módulo (en Azure se veía "console"). Se normaliza la ruta en
+  `Sidebar.astro` y `Topbar.astro`; afecta a todas las pantallas.
+- **Seguridad:** la autorización la decide la API (403); el frontend solo oculta el acceso. Todo valor recibido se
+  escapa antes de mostrarse (los registros contienen datos ingresados por usuarios, por ejemplo el user-agent).
+- **Documentación:** `docs/bitacoras/BITACORAS.md`. En la tesis: panel de administración (Puntos Mandatorios 2026),
+  nuevo CU "Consultar bitácoras" con sus CP, y la pantalla en el prototipo de interfaz.
+- **Prueba:** `astro check` y `astro build` sin errores; prueba de humo en navegador con API simulada (26 controles:
+  carga y filtros de cada pestaña, parámetros enviados, inspector, búsqueda por código de seguimiento entre pestañas,
+  validación de fechas e id, limpiar, navegación por teclado y por URL, escape de HTML, perfil sin permisos con 403,
+  pantalla de 390 px sin desplazamiento horizontal). Prueba manual local y en Azure con datos reales.
+
 ## Pendientes detectados (para migraciones futuras)
 
 - Los CHECK generados por Hibernate limitan los estados (`hallazgos_auditoria.estado` solo admite `ABIERTO`;

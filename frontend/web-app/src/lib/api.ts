@@ -168,3 +168,47 @@ export type AuditDetail = {
   hallazgos: AuditFinding[];
 };
 
+
+// Bloque 2.3d: registros de las tres bitácoras (GET /api/admin/bitacoras/...).
+export type SystemLogRecord = {
+  id: number;
+  fecha: string;
+  evento: 'LOGIN_EXITOSO' | 'LOGIN_RECHAZADO' | 'USUARIO_CREADO' | 'ROLES_ASIGNADOS' | 'ROL_CREADO';
+  resultado: 'EXITO' | 'FALLO';
+  actor: string | null;
+  usuarioAfectadoId: number | null;
+  organizacionId: number | null;
+  origenIp: string | null;
+  userAgent: string | null;
+  correlacion: string | null;
+  detalle: string | null;
+};
+
+export type TransactionLogRecord = {
+  id: number;
+  fecha: string;
+  servicio: string;
+  entidad: string;
+  entidadId: number | null;
+  operacion: 'ALTA' | 'MODIFICACION' | 'CAMBIO_ESTADO' | 'BAJA_LOGICA' | 'IMPORTACION' | 'EJECUCION';
+  actor: string;
+  organizacionId: number | null;
+  valorAnterior: string | null;
+  valorNuevo: string | null;
+  correlacion: string | null;
+  detalle: string | null;
+};
+
+export type ExceptionLogRecord = {
+  fecha: string;
+  servicio: string;
+  nivel: 'ERROR' | 'WARN';
+  tipo: string;
+  mensaje: string | null;
+  traza: string | null;
+  metodoHttp: string | null;
+  ruta: string | null;
+  estadoHttp: number;
+  usuario: string | null;
+  correlacion: string | null;
+};
