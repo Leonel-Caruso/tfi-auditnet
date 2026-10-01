@@ -1,7 +1,10 @@
 package ar.edu.uai.tfi.auditcore.api.rest;
 
+import ar.edu.uai.tfi.auditcore.api.rest.dto.CambiarEstadoRequest;
 import ar.edu.uai.tfi.auditcore.api.rest.dto.policy.BaselineResponse;
 import ar.edu.uai.tfi.auditcore.api.rest.dto.policy.CrearBaselineRequest;
+import ar.edu.uai.tfi.auditcore.api.rest.dto.policy.ModificarBaselineRequest;
+import ar.edu.uai.tfi.auditcore.api.rest.dto.policy.NuevaVersionBaselineRequest;
 import ar.edu.uai.tfi.auditcore.application.policy.BaselineService;
 import ar.edu.uai.tfi.auditcore.domain.model.BaselineConfiguracion;
 import jakarta.annotation.security.RolesAllowed;
@@ -15,7 +18,12 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.function.Supplier;
 
+/**
+ * Baselines (CU-003-001). Lectura para todos los perfiles; gestión para el administrador y el
+ * auditor técnico (este último solo sobre su organización).
+ */
 @Path("/api/baselines")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -42,22 +50,16 @@ public class BaselineResource {
         List<BaselineConfiguracion> baselines = esAdministrador()
                 ? service.listar()
                 : service.listarPorOrganizacion(organizationIdActual());
-        return baselines.stream().map(this::aResponse).toList();
+        Map<Long, Long> auditorias = service.auditoriasPorBaseline();
+        return baselines.stream()
+                .map(baseline -> aResponse(baseline, auditorias))
+                .toList();
     }
 
     @GET
     @Path("/{id}")
     public BaselineResponse buscar(@PathParam("id") Long id) {
-        try {
-            BaselineConfiguracion baseline = esAdministrador()
-                    ? service.buscarPorId(id)
-                    : service.buscarPorIdYOrganizacion(id, organizationIdActual());
-            return aResponse(baseline);
-        } catch (IllegalArgumentException exception) {
-            throw error(Response.Status.BAD_REQUEST, exception.getMessage());
-        } catch (NoSuchElementException exception) {
-            throw error(Response.Status.NOT_FOUND, exception.getMessage());
-        }
+        return ejecutar(() -> buscarConAcceso(id));
     }
 
     @POST
@@ -67,18 +69,66 @@ public class BaselineResource {
             throw error(Response.Status.BAD_REQUEST, "El cuerpo de la solicitud es obligatorio.");
         }
 
+        BaselineResponse creada = ejecutar(() -> service.crear(
+                request.nombre(),
+                request.descripcion(),
+                request.tipoDispositivoId(),
+                resolverOrganizacionCreacion(request.organizacionId()),
+                jwt.getName()
+        ));
+        return Response.created(URI.create("/api/baselines/" + creada.id())).entity(creada).build();
+    }
+
+    /** Modifica la descripción. Los criterios (reglas) se cambian generando una nueva versión. */
+    @PUT
+    @Path("/{id}")
+    @RolesAllowed({ADMIN, AUDITOR})
+    public BaselineResponse modificar(@PathParam("id") Long id, ModificarBaselineRequest request) {
+        if (request == null) {
+            throw error(Response.Status.BAD_REQUEST, "El cuerpo de la solicitud es obligatorio.");
+        }
+        return ejecutar(() -> {
+            buscarConAcceso(id);
+            return service.modificarDescripcion(id, request.descripcion(), jwt.getName());
+        });
+    }
+
+    /** Activa o desactiva ({"estado":"ACTIVO"|"INACTIVO"}). Solo una baseline activa por alcance. */
+    @PATCH
+    @Path("/{id}/status")
+    @RolesAllowed({ADMIN, AUDITOR})
+    public BaselineResponse cambiarEstado(@PathParam("id") Long id, CambiarEstadoRequest request) {
+        if (request == null) {
+            throw error(Response.Status.BAD_REQUEST, "El cuerpo de la solicitud es obligatorio.");
+        }
+        return ejecutar(() -> {
+            buscarConAcceso(id);
+            return service.cambiarEstado(id, request.estado(), jwt.getName());
+        });
+    }
+
+    /** Genera una nueva versión a partir de esta (copia las reglas activas y pasa a ser la vigente). */
+    @POST
+    @Path("/{id}/versions")
+    @RolesAllowed({ADMIN, AUDITOR})
+    public Response nuevaVersion(@PathParam("id") Long id, NuevaVersionBaselineRequest request) {
+        BaselineResponse creada = ejecutar(() -> {
+            buscarConAcceso(id);
+            return service.nuevaVersion(id, request == null ? null : request.descripcion(), jwt.getName());
+        });
+        return Response.created(URI.create("/api/baselines/" + creada.id())).entity(creada).build();
+    }
+
+    private BaselineConfiguracion buscarConAcceso(Long id) {
+        return esAdministrador()
+                ? service.buscarPorId(id)
+                : service.buscarPorIdYOrganizacion(id, organizationIdActual());
+    }
+
+    private BaselineResponse ejecutar(Supplier<BaselineConfiguracion> operacion) {
         try {
-            Long organizacionId = resolverOrganizacionCreacion(request.organizacionId());
-            BaselineConfiguracion creada = service.crear(
-                    request.nombre(),
-                    request.descripcion(),
-                    request.tipoDispositivoId(),
-                    organizacionId,
-                    jwt.getName()
-            );
-            return Response.created(URI.create("/api/baselines/" + creada.id()))
-                    .entity(aResponse(creada))
-                    .build();
+            BaselineConfiguracion baseline = operacion.get();
+            return aResponse(baseline, Map.of(baseline.id(), service.auditoriasDe(baseline.id())));
         } catch (ForbiddenException exception) {
             throw exception;
         } catch (IllegalStateException exception) {
@@ -116,10 +166,11 @@ public class BaselineResource {
         return organizationId.longValue();
     }
 
-    private BaselineResponse aResponse(BaselineConfiguracion baseline) {
+    private BaselineResponse aResponse(BaselineConfiguracion baseline, Map<Long, Long> auditorias) {
         return new BaselineResponse(
                 baseline.id(), baseline.nombre(), baseline.descripcion(), baseline.version(),
-                baseline.tipoDispositivoId(), baseline.organizacionId(), baseline.estado().name()
+                baseline.tipoDispositivoId(), baseline.organizacionId(), baseline.estado().name(),
+                auditorias.getOrDefault(baseline.id(), 0L)
         );
     }
 

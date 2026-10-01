@@ -85,6 +85,7 @@ public class HallazgoResource {
                 hallazgo.severidad().name(),
                 hallazgo.evidencia(),
                 hallazgo.recomendacion(),
+                hallazgo.impacto(),
                 hallazgo.estado().name(),
                 hallazgo.fechaDeteccion()
         );

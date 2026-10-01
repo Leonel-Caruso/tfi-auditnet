@@ -16,6 +16,7 @@ public record HallazgoResponse(
         String severidad,
         String evidencia,
         String recomendacion,
+        String impacto,
         String estado,
         Instant fechaDeteccion
 ) {

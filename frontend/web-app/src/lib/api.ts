@@ -48,6 +48,15 @@ export type User = {
   roles: string[];
 };
 
+/** Opciones de fetch para enviar JSON (POST, PUT, PATCH). */
+export function jsonRequest(method: 'POST' | 'PUT' | 'PATCH', payload: unknown): RequestInit {
+  return {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  };
+}
+
 export async function readApiError(response: Response): Promise<string> {
   try {
     const payload = await response.json();
@@ -87,7 +96,11 @@ export type ConfigurationBaseline = {
   tipoDispositivoId: number;
   organizacionId: number;
   estado: 'ACTIVO' | 'INACTIVO';
+  /** Auditorías que usaron esta versión; si es mayor a 0 sus reglas están congeladas. */
+  auditorias: number;
 };
+
+export type RuleType = 'DEBE_CONTENER' | 'NO_DEBE_CONTENER' | 'VALOR_ESPERADO';
 
 export type BaselineRule = {
   id: number;
@@ -95,9 +108,12 @@ export type BaselineRule = {
   codigo: string;
   nombre: string;
   descripcion: string;
-  tipo: 'DEBE_CONTENER' | 'NO_DEBE_CONTENER';
+  tipo: RuleType;
+  /** Texto buscado, o parámetro evaluado en reglas VALOR_ESPERADO. */
   patron: string;
+  valorEsperado: string | null;
   severidad: 'BAJA' | 'MEDIA' | 'ALTA' | 'CRITICA';
+  impacto: string;
   recomendacion: string;
   estado: 'ACTIVA' | 'INACTIVA';
 };
@@ -137,7 +153,7 @@ export type RuleEvaluation = {
   reglaId: number;
   codigoRegla: string;
   nombreRegla: string;
-  tipo: 'DEBE_CONTENER' | 'NO_DEBE_CONTENER';
+  tipo: RuleType;
   patron: string;
   severidad: 'BAJA' | 'MEDIA' | 'ALTA' | 'CRITICA';
   cumple: boolean;
@@ -153,11 +169,13 @@ export type AuditFinding = {
   organizacionId: number;
   codigoRegla: string;
   nombreRegla: string;
-  tipoRegla: 'DEBE_CONTENER' | 'NO_DEBE_CONTENER';
+  tipoRegla: RuleType;
   patron: string;
   severidad: 'BAJA' | 'MEDIA' | 'ALTA' | 'CRITICA';
   evidencia: string;
   recomendacion: string;
+  /** Copia del impacto de la regla; null en hallazgos anteriores a la Entrega 2. */
+  impacto: string | null;
   estado: 'ABIERTO';
   fechaDeteccion: string;
 };

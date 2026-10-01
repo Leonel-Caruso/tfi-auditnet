@@ -65,6 +65,10 @@ public class HallazgoEntity {
     @Column(nullable = false, length = 500)
     public String recomendacion;
 
+    /** Copia del impacto de la regla (V2); null en hallazgos anteriores. */
+    @Column(length = 500)
+    public String impacto;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     public EstadoHallazgo estado;

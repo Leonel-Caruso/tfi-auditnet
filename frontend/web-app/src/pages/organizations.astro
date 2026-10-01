@@ -5,9 +5,10 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 <MasterLayout
   title="Organizaciones y sedes"
   section="Control de acceso"
-  description="Consulta de clientes registrados y sus sedes operativas asociadas."
+  description="Clientes registrados y sus sedes operativas asociadas."
 >
   <section id="organization-access-error" class="alert alert-error is-hidden"></section>
+  <section id="organization-message" class="alert is-hidden" role="status"></section>
 
   <section class="two-column two-column-wide">
     <article class="panel">
@@ -16,7 +17,12 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <span class="eyebrow">Organizaciones</span>
           <h2>Clientes registrados</h2>
         </div>
-        <span id="organization-count" class="counter-chip">—</span>
+        <div class="panel-heading-actions">
+          <span id="organization-count" class="counter-chip">—</span>
+          <button id="open-organization-dialog" class="button button-primary button-small" type="button" data-admin-only="true">
+            + organización
+          </button>
+        </div>
       </div>
       <div id="organization-list" class="select-list">
         <div class="skeleton-row"></div>
@@ -30,6 +36,9 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <span class="eyebrow">Sedes asociadas</span>
           <h2 id="site-title">Seleccioná una organización</h2>
         </div>
+        <button id="open-site-dialog" class="button button-primary button-small" type="button" data-admin-only="true" disabled>
+          + sede
+        </button>
       </div>
       <div id="site-list" class="data-list empty-state">
         <p>Elegí una organización para consultar sus sedes.</p>
@@ -37,20 +46,108 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     </article>
   </section>
 
+  <dialog id="organization-dialog" class="technical-dialog">
+    <form id="organization-form" class="device-form">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">// POST /api/client-organizations</span>
+          <h2>Registrar organización</h2>
+          <p>Incorporá un cliente a la plataforma (RF-015).</p>
+        </div>
+        <button class="dialog-close" type="button" data-close-dialog aria-label="Cerrar">×</button>
+      </div>
+
+      <div class="device-form-grid">
+        <label class="field">
+          <span>identificador *</span>
+          <input id="organization-identifier" type="text" maxlength="80" placeholder="CLIENTE-NORTE" required />
+        </label>
+        <label class="field">
+          <span>razón social *</span>
+          <input id="organization-name" type="text" maxlength="160" placeholder="Cliente Norte SA" required />
+        </label>
+        <div class="device-form-context field-span-2">
+          <code>estado = ACTIVO</code>
+          <span>El identificador se guarda en mayúsculas y debe ser único, igual que la razón social.</span>
+        </div>
+      </div>
+
+      <div id="organization-form-error" class="alert alert-error is-hidden"></div>
+      <div class="dialog-actions">
+        <button class="button button-ghost" type="button" data-close-dialog>Cancelar</button>
+        <button class="button button-primary" type="submit">Registrar organización</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="site-dialog" class="technical-dialog">
+    <form id="site-form" class="device-form">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">{'// POST /api/client-organizations/{id}/sites'}</span>
+          <h2>Registrar sede</h2>
+          <p id="site-dialog-context">Sede de la organización seleccionada (RF-016).</p>
+        </div>
+        <button class="dialog-close" type="button" data-close-dialog aria-label="Cerrar">×</button>
+      </div>
+
+      <div class="device-form-grid">
+        <label class="field">
+          <span>nombre *</span>
+          <input id="site-name" type="text" maxlength="120" placeholder="Sede Central" required />
+        </label>
+        <label class="field">
+          <span>ubicación *</span>
+          <input id="site-location" type="text" maxlength="200" placeholder="Av. Siempre Viva 123, CABA" required />
+        </label>
+      </div>
+
+      <div id="site-form-error" class="alert alert-error is-hidden"></div>
+      <div class="dialog-actions">
+        <button class="button button-ghost" type="button" data-close-dialog>Cancelar</button>
+        <button class="button button-primary" type="submit">Registrar sede</button>
+      </div>
+    </form>
+  </dialog>
+
   <script>
     import { authFetch } from '../lib/auth';
-    import { readApiError, type Organization, type Site } from '../lib/api';
+    import { jsonRequest, readApiError, type Organization, type Site } from '../lib/api';
 
     const orgList = document.querySelector<HTMLDivElement>('#organization-list');
     const orgCount = document.querySelector<HTMLSpanElement>('#organization-count');
     const siteList = document.querySelector<HTMLDivElement>('#site-list');
     const siteTitle = document.querySelector<HTMLHeadingElement>('#site-title');
     const accessError = document.querySelector<HTMLElement>('#organization-access-error');
+    const message = document.querySelector<HTMLElement>('#organization-message');
+    const openSiteButton = document.querySelector<HTMLButtonElement>('#open-site-dialog');
+    const organizationDialog = document.querySelector<HTMLDialogElement>('#organization-dialog');
+    const siteDialog = document.querySelector<HTMLDialogElement>('#site-dialog');
 
-    function showError(message: string): void {
+    let selectedOrganization: Organization | null = null;
+
+    function showError(text: string): void {
       if (!accessError) return;
-      accessError.textContent = message;
+      accessError.textContent = text;
       accessError.classList.remove('is-hidden');
+    }
+
+    function showMessage(text: string): void {
+      if (!message) return;
+      message.textContent = text;
+      message.className = 'alert alert-success';
+      window.setTimeout(() => message.classList.add('is-hidden'), 4200);
+    }
+
+    function showFormError(selector: string, text: string | null): void {
+      const node = document.querySelector<HTMLElement>(selector);
+      if (!node) return;
+      node.textContent = text ?? '';
+      node.classList.toggle('is-hidden', !text);
+    }
+
+    function inputValue(selector: string): string {
+      return (document.querySelector<HTMLInputElement>(selector)?.value ?? '').trim();
     }
 
     function buildSiteRow(site: Site): HTMLDivElement {
@@ -65,7 +162,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       copy.append(name, location);
 
       const status = document.createElement('span');
-      status.className = 'status-badge status-ready';
+      status.className = `status-badge ${site.estado === 'ACTIVO' ? 'status-ready' : 'status-next'}`;
       status.textContent = site.estado;
 
       row.append(copy, status);
@@ -73,13 +170,14 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     }
 
     async function loadSites(organization: Organization): Promise<void> {
+      selectedOrganization = organization;
+      if (openSiteButton) openSiteButton.disabled = false;
       if (siteTitle) siteTitle.textContent = organization.razonSocial;
       if (siteList) {
         siteList.className = 'data-list';
-        siteList.replaceChildren();
         const skeleton = document.createElement('div');
         skeleton.className = 'skeleton-row';
-        siteList.appendChild(skeleton);
+        siteList.replaceChildren(skeleton);
       }
 
       const response = await authFetch(`/api/client-organizations/${organization.id}/sites`);
@@ -113,6 +211,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'select-row';
+      button.dataset.organizationId = String(organization.id);
 
       const copy = document.createElement('span');
       copy.className = 'select-row-main';
@@ -123,7 +222,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       copy.append(name, identifier);
 
       const status = document.createElement('span');
-      status.className = 'status-badge status-ready';
+      status.className = `status-badge ${organization.estado === 'ACTIVO' ? 'status-ready' : 'status-next'}`;
       status.textContent = organization.estado;
       button.append(copy, status);
 
@@ -136,7 +235,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       return button;
     }
 
-    async function loadOrganizations(): Promise<void> {
+    async function loadOrganizations(selectId?: number): Promise<void> {
       const response = await authFetch('/api/client-organizations');
       if (!response.ok) {
         showError(await readApiError(response));
@@ -148,13 +247,67 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       if (orgCount) orgCount.textContent = String(organizations.length);
       if (!orgList) return;
 
-      orgList.replaceChildren();
-      organizations.forEach((organization, index) => {
-        const button = buildOrganizationButton(organization);
-        orgList.appendChild(button);
-        if (index === 0) button.click();
-      });
+      const buttons = organizations.map(buildOrganizationButton);
+      orgList.replaceChildren(...buttons);
+      const toSelect = buttons.find((button) => Number(button.dataset.organizationId) === selectId) ?? buttons[0];
+      toSelect?.click();
     }
+
+    // ---- Diálogos -------------------------------------------------------
+    document.querySelectorAll<HTMLButtonElement>('[data-close-dialog]').forEach((button) => {
+      button.addEventListener('click', () => button.closest('dialog')?.close());
+    });
+
+    document.querySelector('#open-organization-dialog')?.addEventListener('click', () => {
+      document.querySelector<HTMLFormElement>('#organization-form')?.reset();
+      showFormError('#organization-form-error', null);
+      organizationDialog?.showModal();
+    });
+
+    openSiteButton?.addEventListener('click', () => {
+      if (!selectedOrganization) return;
+      document.querySelector<HTMLFormElement>('#site-form')?.reset();
+      showFormError('#site-form-error', null);
+      const context = document.querySelector('#site-dialog-context');
+      if (context) context.textContent = `Nueva sede de ${selectedOrganization.razonSocial} (RF-016).`;
+      siteDialog?.showModal();
+    });
+
+    document.querySelector<HTMLFormElement>('#organization-form')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      showFormError('#organization-form-error', null);
+      const response = await authFetch('/api/client-organizations', jsonRequest('POST', {
+        identificador: inputValue('#organization-identifier'),
+        razonSocial: inputValue('#organization-name'),
+      }));
+      if (!response.ok) {
+        showFormError('#organization-form-error', await readApiError(response));
+        return;
+      }
+      const created = await response.json() as Organization;
+      organizationDialog?.close();
+      showMessage(`Organización ${created.razonSocial} registrada correctamente.`);
+      await loadOrganizations(created.id);
+    });
+
+    document.querySelector<HTMLFormElement>('#site-form')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!selectedOrganization) return;
+      showFormError('#site-form-error', null);
+      const organization = selectedOrganization;
+      const response = await authFetch(`/api/client-organizations/${organization.id}/sites`, jsonRequest('POST', {
+        nombre: inputValue('#site-name'),
+        ubicacion: inputValue('#site-location'),
+      }));
+      if (!response.ok) {
+        showFormError('#site-form-error', await readApiError(response));
+        return;
+      }
+      const created = await response.json() as Site;
+      siteDialog?.close();
+      showMessage(`Sede ${created.nombre} registrada en ${organization.razonSocial}.`);
+      await loadSites(organization);
+    });
 
     loadOrganizations().catch(() => showError('No se pudo cargar la información de organizaciones y sedes.'));
   </script>

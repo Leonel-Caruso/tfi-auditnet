@@ -38,6 +38,21 @@ public class ErrorInesperadoMapper {
             return webError.getResponse();
         }
 
+        if (esViolacionDeRestriccion(error)) {
+            // Dos solicitudes simultáneas pasaron la validación del servicio y la base rechazó la segunda
+            // (por ejemplo, el mismo identificador en la misma organización): es un conflicto, no un error interno.
+            bitacora.registrar(error, NivelExcepcion.WARN, 409);
+            Map<String, String> cuerpo = new LinkedHashMap<>();
+            cuerpo.put("error", "CONFLICTO");
+            cuerpo.put("message", "El dato entra en conflicto con otro registro guardado al mismo tiempo. "
+                    + "Actualizá la pantalla y volvé a intentar.");
+            cuerpo.put("correlacion", contexto.correlacion());
+            return Response.status(Response.Status.CONFLICT)
+                    .type(MediaType.APPLICATION_JSON)
+                    .entity(cuerpo)
+                    .build();
+        }
+
         bitacora.registrar(error, NivelExcepcion.ERROR, 500);
 
         Map<String, String> cuerpo = new LinkedHashMap<>();
@@ -48,5 +63,18 @@ public class ErrorInesperadoMapper {
                 .type(MediaType.APPLICATION_JSON)
                 .entity(cuerpo)
                 .build();
+    }
+
+    /** Busca en la cadena de causas una violación de restricción de Hibernate (única, FK o CHECK). */
+    static boolean esViolacionDeRestriccion(Throwable error) {
+        for (Throwable actual = error; actual != null; actual = actual.getCause()) {
+            if ("org.hibernate.exception.ConstraintViolationException".equals(actual.getClass().getName())) {
+                return true;
+            }
+            if (actual.getCause() == actual) {
+                return false;
+            }
+        }
+        return false;
     }
 }

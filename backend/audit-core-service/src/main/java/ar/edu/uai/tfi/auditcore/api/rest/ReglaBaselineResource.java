@@ -1,5 +1,7 @@
 package ar.edu.uai.tfi.auditcore.api.rest;
 
+import ar.edu.uai.tfi.auditcore.api.rest.dto.CambiarEstadoRequest;
+import ar.edu.uai.tfi.auditcore.api.rest.dto.policy.ModificarReglaRequest;
 import ar.edu.uai.tfi.auditcore.api.rest.dto.policy.ReglaResponse;
 import ar.edu.uai.tfi.auditcore.application.policy.ReglaBaselineService;
 import ar.edu.uai.tfi.auditcore.domain.model.ReglaBaseline;
@@ -13,7 +15,12 @@ import org.eclipse.microprofile.jwt.JsonWebToken;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.function.Supplier;
 
+/**
+ * Reglas de auditoría (CU-003-002). El alta se hace sobre una baseline:
+ * POST /api/baselines/{baselineId}/rules (ver {@link ReglaPorBaselineResource}).
+ */
 @Path("/api/rules")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -25,6 +32,7 @@ import java.util.NoSuchElementException;
 })
 public class ReglaBaselineResource {
     private static final String ADMIN = "ADMINISTRADOR_SISTEMA";
+    private static final String AUDITOR = "AUDITOR_TECNICO";
 
     private final ReglaBaselineService service;
     private final JsonWebToken jwt;
@@ -39,21 +47,63 @@ public class ReglaBaselineResource {
         List<ReglaBaseline> reglas = esAdministrador()
                 ? service.listar()
                 : service.listarPorOrganizacion(organizationIdActual());
-        return reglas.stream().map(this::aResponse).toList();
+        return reglas.stream().map(ReglaBaselineResource::aResponse).toList();
     }
 
     @GET
     @Path("/{id}")
     public ReglaResponse buscar(@PathParam("id") Long id) {
+        return ejecutar(() -> buscarConAcceso(id));
+    }
+
+    /** Modifica la regla. Si su baseline ya se usó en auditorías responde 409: hay que versionar la baseline. */
+    @PUT
+    @Path("/{id}")
+    @RolesAllowed({ADMIN, AUDITOR})
+    public ReglaResponse modificar(@PathParam("id") Long id, ModificarReglaRequest request) {
+        if (request == null) {
+            throw error(Response.Status.BAD_REQUEST, "El cuerpo de la solicitud es obligatorio.");
+        }
+        return ejecutar(() -> {
+            buscarConAcceso(id);
+            return service.modificar(id, new ReglaBaselineService.DatosRegla(
+                    request.nombre(), request.descripcion(), request.tipo(), request.patron(),
+                    request.valorEsperado(), request.severidad(), request.impacto(), request.recomendacion()
+            ), jwt.getName());
+        });
+    }
+
+    /** Baja lógica ({"estado":"INACTIVA"}) o reactivación ({"estado":"ACTIVA"}). */
+    @PATCH
+    @Path("/{id}/status")
+    @RolesAllowed({ADMIN, AUDITOR})
+    public ReglaResponse cambiarEstado(@PathParam("id") Long id, CambiarEstadoRequest request) {
+        if (request == null) {
+            throw error(Response.Status.BAD_REQUEST, "El cuerpo de la solicitud es obligatorio.");
+        }
+        return ejecutar(() -> {
+            buscarConAcceso(id);
+            return service.cambiarEstado(id, request.estado(), jwt.getName());
+        });
+    }
+
+    private ReglaBaseline buscarConAcceso(Long id) {
+        return esAdministrador()
+                ? service.buscarPorId(id)
+                : service.buscarPorIdYOrganizacion(id, organizationIdActual());
+    }
+
+    private ReglaResponse ejecutar(Supplier<ReglaBaseline> operacion) {
         try {
-            ReglaBaseline regla = esAdministrador()
-                    ? service.buscarPorId(id)
-                    : service.buscarPorIdYOrganizacion(id, organizationIdActual());
-            return aResponse(regla);
-        } catch (IllegalArgumentException exception) {
-            throw error(Response.Status.BAD_REQUEST, exception.getMessage());
+            return aResponse(operacion.get());
+        } catch (ForbiddenException exception) {
+            throw exception;
+        } catch (IllegalStateException exception) {
+            throw error(Response.Status.CONFLICT, exception.getMessage());
         } catch (NoSuchElementException exception) {
             throw error(Response.Status.NOT_FOUND, exception.getMessage());
+        } catch (IllegalArgumentException exception) {
+            throw error(Response.Status.BAD_REQUEST, exception.getMessage());
         }
     }
 
@@ -69,11 +119,11 @@ public class ReglaBaselineResource {
         return organizationId.longValue();
     }
 
-    private ReglaResponse aResponse(ReglaBaseline regla) {
+    static ReglaResponse aResponse(ReglaBaseline regla) {
         return new ReglaResponse(
                 regla.id(), regla.baselineId(), regla.codigo(), regla.nombre(), regla.descripcion(),
-                regla.tipo().name(), regla.patron(), regla.severidad().name(),
-                regla.recomendacion(), regla.estado().name()
+                regla.tipo().name(), regla.patron(), regla.valorEsperado(), regla.severidad().name(),
+                regla.impacto(), regla.recomendacion(), regla.estado().name()
         );
     }
 

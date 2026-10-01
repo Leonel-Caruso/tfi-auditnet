@@ -64,10 +64,10 @@ public class ReglaPorBaselineResource {
 
         try {
             validarAccesoBaseline(baselineId);
-            ReglaBaseline creada = service.crear(
-                    baselineId, request.codigo(), request.nombre(), request.descripcion(), request.tipo(),
-                    request.patron(), request.severidad(), request.recomendacion(), jwt.getName()
-            );
+            ReglaBaseline creada = service.crear(baselineId, request.codigo(), new ReglaBaselineService.DatosRegla(
+                    request.nombre(), request.descripcion(), request.tipo(), request.patron(),
+                    request.valorEsperado(), request.severidad(), request.impacto(), request.recomendacion()
+            ), jwt.getName());
             return Response.created(URI.create("/api/rules/" + creada.id()))
                     .entity(aResponse(creada)).build();
         } catch (ForbiddenException exception) {
@@ -99,10 +99,7 @@ public class ReglaPorBaselineResource {
     }
 
     private ReglaResponse aResponse(ReglaBaseline regla) {
-        return new ReglaResponse(
-                regla.id(), regla.baselineId(), regla.codigo(), regla.nombre(), regla.descripcion(),
-                regla.tipo().name(), regla.patron(), regla.severidad().name(), regla.recomendacion(), regla.estado().name()
-        );
+        return ReglaBaselineResource.aResponse(regla);
     }
 
     private WebApplicationException error(Response.Status status, String message) {

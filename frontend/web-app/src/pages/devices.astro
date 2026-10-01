@@ -32,6 +32,16 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         <option value="BAJA">criticidad: baja</option>
       </select>
 
+      <select id="device-status-filter" class="technical-select" aria-label="Filtrar por estado">
+        <option value="">estado: todos</option>
+        <option value="ACTIVO">estado: activo</option>
+        <option value="INACTIVO">estado: inactivo</option>
+      </select>
+
+      <button id="open-type-dialog" class="button button-ghost device-create-action" type="button" data-admin-only="true">
+        + tipo
+      </button>
+
       <button id="open-device-dialog" class="button button-primary device-create-action" type="button" data-admin-only="true">
         + registrar activo
       </button>
@@ -105,8 +115,13 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         </dl>
 
         <div class="inspector-footnote">
-          <code>scope = audit_ready</code>
-          <span>Disponible para futuras configuraciones, baselines y auditorías.</span>
+          <code id="inspector-scope">scope = audit_ready</code>
+          <span id="inspector-scope-text">Disponible para futuras configuraciones, baselines y auditorías.</span>
+        </div>
+
+        <div class="inspector-actions" data-admin-only="true">
+          <button id="edit-device" class="button button-ghost button-small" type="button">Editar</button>
+          <button id="toggle-device-status" class="button button-ghost button-small" type="button">Dar de baja</button>
         </div>
       </div>
     </aside>
@@ -116,9 +131,9 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <form id="device-form" class="device-form">
       <div class="dialog-header">
         <div>
-          <span class="eyebrow">// POST /api/devices</span>
-          <h2>Registrar dispositivo</h2>
-          <p>Incorporá un activo de red al inventario auditable.</p>
+          <span id="device-dialog-eyebrow" class="eyebrow">// POST /api/devices</span>
+          <h2 id="device-dialog-title">Registrar dispositivo</h2>
+          <p id="device-dialog-subtitle">Incorporá un activo de red al inventario auditable.</p>
         </div>
         <button id="close-device-dialog" class="dialog-close" type="button" aria-label="Cerrar">×</button>
       </div>
@@ -171,8 +186,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         </label>
 
         <div class="device-form-context">
-          <code>state = ACTIVO</code>
-          <span>El estado inicial se asigna automáticamente.</span>
+          <code id="device-form-state">state = ACTIVO</code>
+          <span id="device-form-state-text">El estado inicial se asigna automáticamente. El identificador es único dentro de la organización.</span>
         </div>
       </div>
 
@@ -185,9 +200,44 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     </form>
   </dialog>
 
+  <dialog id="type-dialog" class="technical-dialog">
+    <form id="type-form" class="device-form">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">// POST /api/device-types</span>
+          <h2>Registrar tipo de dispositivo</h2>
+          <p>Catálogo común a todas las organizaciones. Las baselines se definen por tipo.</p>
+        </div>
+        <button class="dialog-close" type="button" data-close-dialog aria-label="Cerrar">×</button>
+      </div>
+
+      <div class="device-form-grid">
+        <label class="field">
+          <span>nombre *</span>
+          <input id="type-name" type="text" maxlength="100" placeholder="Router ISR 4000" required />
+        </label>
+        <label class="field">
+          <span>fabricante *</span>
+          <input id="type-vendor" type="text" maxlength="100" placeholder="Cisco" required />
+        </label>
+        <label class="field field-span-2">
+          <span>familia / sistema operativo *</span>
+          <input id="type-family" type="text" maxlength="100" placeholder="IOS-XE" required />
+        </label>
+      </div>
+
+      <div id="type-form-error" class="alert alert-error is-hidden"></div>
+      <div class="dialog-actions">
+        <button class="button button-ghost" type="button" data-close-dialog>Cancelar</button>
+        <button class="button button-primary" type="submit">Registrar tipo</button>
+      </div>
+    </form>
+  </dialog>
+
   <script>
-    import { auditFetch, authFetch, getStoredUser } from '../lib/auth';
+    import { auditFetch, authFetch } from '../lib/auth';
     import {
+      jsonRequest,
       readApiError,
       type DeviceType,
       type NetworkDevice,
@@ -200,6 +250,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       deviceTypes: [] as DeviceType[],
       organizations: [] as Organization[],
       sitesByOrganization: new Map<number, Site[]>(),
+      current: null as NetworkDevice | null,
+      editing: null as NetworkDevice | null,
     };
 
     const body = document.querySelector<HTMLTableSectionElement>('#devices-body');
@@ -207,21 +259,29 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     const count = document.querySelector<HTMLElement>('#device-count');
     const search = document.querySelector<HTMLInputElement>('#device-search');
     const criticalityFilter = document.querySelector<HTMLSelectElement>('#device-criticality-filter');
+    const statusFilter = document.querySelector<HTMLSelectElement>('#device-status-filter');
     const dialog = document.querySelector<HTMLDialogElement>('#device-dialog');
     const form = document.querySelector<HTMLFormElement>('#device-form');
     const formError = document.querySelector<HTMLElement>('#device-form-error');
     const message = document.querySelector<HTMLElement>('#device-message');
+    const typeDialog = document.querySelector<HTMLDialogElement>('#type-dialog');
 
     const typeSelect = document.querySelector<HTMLSelectElement>('#device-type');
     const vendorInput = document.querySelector<HTMLInputElement>('#device-vendor');
     const organizationSelect = document.querySelector<HTMLSelectElement>('#device-organization');
     const siteSelect = document.querySelector<HTMLSelectElement>('#device-site');
+    const saveButton = document.querySelector<HTMLButtonElement>('#save-device');
 
     function showMessage(text: string, kind: 'success' | 'error' = 'success'): void {
       if (!message) return;
       message.textContent = text;
       message.className = `alert ${kind === 'error' ? 'alert-error' : 'alert-success'}`;
       window.setTimeout(() => message.classList.add('is-hidden'), 4200);
+    }
+
+    function setText(selector: string, value: string): void {
+      const node = document.querySelector(selector);
+      if (node) node.textContent = value;
     }
 
     function typeFor(id: number): DeviceType | undefined {
@@ -244,24 +304,30 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       return 'severity-low';
     }
 
+    function statusClass(value: NetworkDevice['estado']): string {
+      return value === 'ACTIVO' ? 'status-ready' : 'status-next';
+    }
+
     function filteredDevices(): NetworkDevice[] {
       const query = search?.value.trim().toLowerCase() ?? '';
       const criticality = criticalityFilter?.value ?? '';
+      const status = statusFilter?.value ?? '';
 
       return state.devices.filter((device) => {
         const type = typeFor(device.tipoDispositivoId);
         const haystack = [device.identificador, device.nombre, device.fabricante, type?.nombre ?? '']
           .join(' ')
           .toLowerCase();
-        const matchesQuery = !query || haystack.includes(query);
-        const matchesCriticality = !criticality || device.criticidad === criticality;
-        return matchesQuery && matchesCriticality;
+        return (!query || haystack.includes(query))
+          && (!criticality || device.criticidad === criticality)
+          && (!status || device.estado === status);
       });
     }
 
     function buildRow(device: NetworkDevice): HTMLTableRowElement {
       const row = document.createElement('tr');
       row.className = 'device-row';
+      row.classList.toggle('is-selected', state.current?.id === device.id);
       row.tabIndex = 0;
       row.dataset.deviceId = String(device.id);
 
@@ -299,13 +365,13 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
       const status = document.createElement('td');
       const statusBadge = document.createElement('span');
-      statusBadge.className = 'status-badge status-ready';
+      statusBadge.className = `status-badge ${statusClass(device.estado)}`;
       statusBadge.textContent = device.estado;
       status.appendChild(statusBadge);
 
       row.append(identifier, name, typeCell, location, criticality, status);
 
-      const inspect = () => void inspectDevice(device.id, row);
+      const inspect = () => void inspectDevice(device.id);
       row.addEventListener('click', inspect);
       row.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' || event.key === ' ') inspect();
@@ -324,10 +390,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       document.querySelector('.device-table')?.classList.toggle('is-hidden', devices.length === 0);
     }
 
-    async function inspectDevice(id: number, selectedRow?: HTMLElement): Promise<void> {
-      document.querySelectorAll('.device-row').forEach((row) => row.classList.remove('is-selected'));
-      selectedRow?.classList.add('is-selected');
-
+    async function inspectDevice(id: number): Promise<void> {
       const response = await auditFetch(`/api/devices/${id}`);
       if (!response.ok) {
         showMessage(await readApiError(response), 'error');
@@ -335,34 +398,44 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       }
 
       const device = await response.json() as NetworkDevice;
+      showDevice(device);
+    }
+
+    function showDevice(device: NetworkDevice): void {
+      state.current = device;
+      document.querySelectorAll<HTMLElement>('.device-row').forEach((row) => {
+        row.classList.toggle('is-selected', row.dataset.deviceId === String(device.id));
+      });
+
       const type = typeFor(device.tipoDispositivoId);
       const organization = organizationFor(device.organizacionId);
       const site = siteFor(device);
+      const active = device.estado === 'ACTIVO';
 
-      const set = (selector: string, value: string) => {
-        const node = document.querySelector(selector);
-        if (node) node.textContent = value;
-      };
-
-      set('#inspector-identifier', device.identificador);
-      set('#inspector-name', device.nombre);
-      set('#inspector-status', device.estado);
-      set('#inspector-type', type ? `${type.nombre} / ${type.familia}` : `#${device.tipoDispositivoId}`);
-      set('#inspector-vendor', device.fabricante);
-      set('#inspector-organization', organization?.razonSocial ?? `#${device.organizacionId}`);
-      set('#inspector-site', site?.nombre ?? 'Sin sede específica');
-      set('#inspector-criticality', device.criticidad);
-      set('#inspector-id', String(device.id));
+      setText('#inspector-identifier', device.identificador);
+      setText('#inspector-name', device.nombre);
+      setText('#inspector-status', device.estado);
+      setText('#inspector-type', type ? `${type.nombre} / ${type.familia}` : `#${device.tipoDispositivoId}`);
+      setText('#inspector-vendor', device.fabricante);
+      setText('#inspector-organization', organization?.razonSocial ?? `#${device.organizacionId}`);
+      setText('#inspector-site', site?.nombre ?? 'Sin sede específica');
+      setText('#inspector-criticality', device.criticidad);
+      setText('#inspector-id', String(device.id));
+      setText('#inspector-scope', active ? 'scope = audit_ready' : 'scope = baja_logica');
+      setText('#inspector-scope-text', active
+        ? 'Disponible para futuras configuraciones, baselines y auditorías.'
+        : 'Conserva su historial, pero no admite nuevas configuraciones ni auditorías.');
+      setText('#toggle-device-status', active ? 'Dar de baja' : 'Reactivar');
 
       const status = document.querySelector('#inspector-status');
-      if (status) status.className = 'status-badge status-ready';
+      if (status) status.className = `status-badge ${statusClass(device.estado)}`;
 
       document.querySelector('#device-inspector-empty')?.classList.add('is-hidden');
       document.querySelector('#device-inspector-content')?.classList.remove('is-hidden');
     }
 
-    async function loadSites(organizationId: number): Promise<Site[]> {
-      if (state.sitesByOrganization.has(organizationId)) {
+    async function loadSites(organizationId: number, refresh = false): Promise<Site[]> {
+      if (!refresh && state.sitesByOrganization.has(organizationId)) {
         return state.sitesByOrganization.get(organizationId) ?? [];
       }
 
@@ -373,27 +446,30 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       return sites;
     }
 
+    function fillTypeSelect(selected?: number): void {
+      if (!typeSelect) return;
+      typeSelect.replaceChildren(new Option('Seleccionar tipo...', ''));
+      state.deviceTypes.forEach((type) => {
+        typeSelect.add(new Option(`${type.nombre} · ${type.fabricante} · ${type.familia}`, String(type.id)));
+      });
+      if (selected) typeSelect.value = String(selected);
+    }
+
+    async function loadDeviceTypes(): Promise<void> {
+      const response = await auditFetch('/api/device-types');
+      if (!response.ok) throw new Error(await readApiError(response));
+      state.deviceTypes = (await response.json() as DeviceType[]).filter((type) => type.activo);
+    }
+
     async function loadReferenceData(): Promise<void> {
-      const [typesResponse, organizationsResponse] = await Promise.all([
-        auditFetch('/api/device-types'),
-        authFetch('/api/client-organizations'),
-      ]);
-
-      if (!typesResponse.ok) throw new Error(await readApiError(typesResponse));
+      const organizationsResponse = await authFetch('/api/client-organizations');
       if (!organizationsResponse.ok) throw new Error(await readApiError(organizationsResponse));
-
-      state.deviceTypes = (await typesResponse.json() as DeviceType[]).filter((type) => type.activo);
+      await loadDeviceTypes();
       state.organizations = await organizationsResponse.json() as Organization[];
 
       await Promise.all(state.organizations.map((organization) => loadSites(organization.id)));
 
-      if (typeSelect) {
-        typeSelect.replaceChildren(new Option('Seleccionar tipo...', ''));
-        state.deviceTypes.forEach((type) => {
-          typeSelect.add(new Option(`${type.nombre} · ${type.fabricante} · ${type.familia}`, String(type.id)));
-        });
-      }
-
+      fillTypeSelect();
       if (organizationSelect) {
         organizationSelect.replaceChildren(new Option('Seleccionar organización...', ''));
         state.organizations.forEach((organization) => {
@@ -409,7 +485,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       renderDevices();
     }
 
-    async function updateSiteSelect(): Promise<void> {
+    async function updateSiteSelect(selected?: number | null): Promise<void> {
       if (!organizationSelect || !siteSelect) return;
       const organizationId = Number(organizationSelect.value);
       siteSelect.replaceChildren(new Option('Sin sede específica', ''));
@@ -419,9 +495,61 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         return;
       }
 
-      const sites = await loadSites(organizationId);
+      // Se vuelve a consultar por si se registraron sedes nuevas en otra pantalla.
+      const sites = await loadSites(organizationId, true);
       sites.forEach((site) => siteSelect.add(new Option(`${site.nombre} · ${site.ubicacion}`, String(site.id))));
       siteSelect.disabled = false;
+      if (selected) siteSelect.value = String(selected);
+    }
+
+    // ---- Alta y edición de dispositivos ------------------------------------
+    function setDialogMode(device: NetworkDevice | null): void {
+      state.editing = device;
+      const editing = device !== null;
+      setText('#device-dialog-eyebrow', editing ? `// PUT /api/devices/${device.id}` : '// POST /api/devices');
+      setText('#device-dialog-title', editing ? `Editar ${device.identificador}` : 'Registrar dispositivo');
+      setText('#device-dialog-subtitle', editing
+        ? 'Los cambios quedan en la bitácora de transacciones con el valor anterior y el nuevo.'
+        : 'Incorporá un activo de red al inventario auditable.');
+      setText('#device-form-state', editing ? `state = ${device.estado}` : 'state = ACTIVO');
+      setText('#device-form-state-text', editing
+        ? 'La organización no se cambia. El estado se modifica con "Dar de baja" o "Reactivar".'
+        : 'El estado inicial se asigna automáticamente. El identificador es único dentro de la organización.');
+      if (saveButton) saveButton.textContent = editing ? 'Guardar cambios' : 'Registrar dispositivo';
+      if (organizationSelect) organizationSelect.disabled = editing;
+    }
+
+    async function openDeviceDialog(device: NetworkDevice | null): Promise<void> {
+      form?.reset();
+      formError?.classList.add('is-hidden');
+      setDialogMode(device);
+
+      const value = (selector: string, text: string) => {
+        const input = document.querySelector<HTMLInputElement | HTMLSelectElement>(selector);
+        if (input) input.value = text;
+      };
+
+      if (device) {
+        // Si el tipo del dispositivo quedó inactivo no figura en la lista: se agrega para no perderlo.
+        if (typeSelect && !typeFor(device.tipoDispositivoId)
+          && !typeSelect.querySelector(`option[value="${device.tipoDispositivoId}"]`)) {
+          typeSelect.add(new Option(`#${device.tipoDispositivoId} (inactivo)`, String(device.tipoDispositivoId)));
+        }
+        value('#device-identifier', device.identificador);
+        value('#device-name', device.nombre);
+        value('#device-type', String(device.tipoDispositivoId));
+        value('#device-vendor', device.fabricante);
+        value('#device-organization', String(device.organizacionId));
+        value('#device-criticality', device.criticidad);
+        await updateSiteSelect(device.sedeId);
+      } else {
+        if (vendorInput) vendorInput.value = '';
+        if (siteSelect) {
+          siteSelect.replaceChildren(new Option('Sin sede específica', ''));
+          siteSelect.disabled = true;
+        }
+      }
+      dialog?.showModal();
     }
 
     typeSelect?.addEventListener('change', () => {
@@ -432,22 +560,16 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     organizationSelect?.addEventListener('change', () => void updateSiteSelect());
     search?.addEventListener('input', renderDevices);
     criticalityFilter?.addEventListener('change', renderDevices);
+    statusFilter?.addEventListener('change', renderDevices);
 
-    document.querySelector('#open-device-dialog')?.addEventListener('click', () => {
-      form?.reset();
-      if (vendorInput) vendorInput.value = '';
-      if (siteSelect) {
-        siteSelect.replaceChildren(new Option('Sin sede específica', ''));
-        siteSelect.disabled = true;
-      }
-      formError?.classList.add('is-hidden');
-      dialog?.showModal();
+    document.querySelector('#open-device-dialog')?.addEventListener('click', () => void openDeviceDialog(null));
+    document.querySelector('#edit-device')?.addEventListener('click', () => {
+      if (state.current) void openDeviceDialog(state.current);
     });
 
     const closeDialog = () => dialog?.close();
     document.querySelector('#close-device-dialog')?.addEventListener('click', closeDialog);
     document.querySelector('#cancel-device-dialog')?.addEventListener('click', closeDialog);
-
     dialog?.addEventListener('click', (event) => {
       if (event.target === dialog) closeDialog();
     });
@@ -456,56 +578,112 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       event.preventDefault();
       formError?.classList.add('is-hidden');
 
+      const editing = state.editing;
       const selectedType = typeFor(Number(typeSelect?.value));
-      const payload = {
+      const fields = {
         nombre: document.querySelector<HTMLInputElement>('#device-name')?.value.trim(),
         identificador: document.querySelector<HTMLInputElement>('#device-identifier')?.value.trim(),
         tipoDispositivoId: Number(typeSelect?.value),
         fabricante: selectedType?.fabricante ?? vendorInput?.value.trim(),
-        organizacionId: Number(organizationSelect?.value),
         sedeId: siteSelect?.value ? Number(siteSelect.value) : null,
         criticidad: document.querySelector<HTMLSelectElement>('#device-criticality')?.value,
       };
 
-      const saveButton = document.querySelector<HTMLButtonElement>('#save-device');
       if (saveButton) {
         saveButton.disabled = true;
-        saveButton.textContent = 'Registrando...';
+        saveButton.textContent = editing ? 'Guardando...' : 'Registrando...';
       }
 
       try {
-        const response = await auditFetch('/api/devices', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
+        const response = editing
+          ? await auditFetch(`/api/devices/${editing.id}`, jsonRequest('PUT', fields))
+          : await auditFetch('/api/devices', jsonRequest('POST', { ...fields, organizacionId: Number(organizationSelect?.value) }));
 
         if (!response.ok) {
-          const text = await readApiError(response);
           if (formError) {
-            formError.textContent = text;
+            formError.textContent = await readApiError(response);
             formError.classList.remove('is-hidden');
           }
           return;
         }
 
-        const created = await response.json() as NetworkDevice;
+        const saved = await response.json() as NetworkDevice;
         dialog?.close();
-        showMessage(`Dispositivo ${created.identificador} registrado correctamente.`);
+        showMessage(editing
+          ? `Dispositivo ${saved.identificador} actualizado.`
+          : `Dispositivo ${saved.identificador} registrado correctamente.`);
         await loadDevices();
-        const row = document.querySelector<HTMLElement>(`.device-row[data-device-id="${created.id}"]`);
-        await inspectDevice(created.id, row ?? undefined);
+        showDevice(saved);
       } catch (error) {
         if (formError) {
-          formError.textContent = error instanceof Error ? error.message : 'No se pudo registrar el dispositivo.';
+          formError.textContent = error instanceof Error ? error.message : 'No se pudo guardar el dispositivo.';
           formError.classList.remove('is-hidden');
         }
       } finally {
         if (saveButton) {
           saveButton.disabled = false;
-          saveButton.textContent = 'Registrar dispositivo';
+          saveButton.textContent = state.editing ? 'Guardar cambios' : 'Registrar dispositivo';
         }
       }
+    });
+
+    // ---- Baja lógica / reactivación --------------------------------------
+    document.querySelector('#toggle-device-status')?.addEventListener('click', async () => {
+      const device = state.current;
+      if (!device) return;
+      const deactivate = device.estado === 'ACTIVO';
+      const question = deactivate
+        ? `¿Dar de baja ${device.identificador}? Conserva su historial, pero no admitirá nuevas configuraciones ni auditorías.`
+        : `¿Reactivar ${device.identificador}?`;
+      if (!window.confirm(question)) return;
+
+      const response = await auditFetch(`/api/devices/${device.id}/status`,
+        jsonRequest('PATCH', { estado: deactivate ? 'INACTIVO' : 'ACTIVO' }));
+      if (!response.ok) {
+        showMessage(await readApiError(response), 'error');
+        return;
+      }
+      const updated = await response.json() as NetworkDevice;
+      showMessage(deactivate ? `${updated.identificador} dado de baja.` : `${updated.identificador} reactivado.`);
+      await loadDevices();
+      showDevice(updated);
+    });
+
+    // ---- Tipos de dispositivo -------------------------------------------
+    document.querySelectorAll<HTMLButtonElement>('[data-close-dialog]').forEach((button) => {
+      button.addEventListener('click', () => button.closest('dialog')?.close());
+    });
+
+    document.querySelector('#open-type-dialog')?.addEventListener('click', () => {
+      document.querySelector<HTMLFormElement>('#type-form')?.reset();
+      document.querySelector('#type-form-error')?.classList.add('is-hidden');
+      typeDialog?.showModal();
+    });
+
+    document.querySelector<HTMLFormElement>('#type-form')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const error = document.querySelector<HTMLElement>('#type-form-error');
+      error?.classList.add('is-hidden');
+      const read = (selector: string) => (document.querySelector<HTMLInputElement>(selector)?.value ?? '').trim();
+
+      const response = await auditFetch('/api/device-types', jsonRequest('POST', {
+        nombre: read('#type-name'),
+        fabricante: read('#type-vendor'),
+        familia: read('#type-family'),
+      }));
+      if (!response.ok) {
+        if (error) {
+          error.textContent = await readApiError(response);
+          error.classList.remove('is-hidden');
+        }
+        return;
+      }
+      const created = await response.json() as DeviceType;
+      typeDialog?.close();
+      await loadDeviceTypes();
+      fillTypeSelect(Number(typeSelect?.value) || undefined);
+      renderDevices();
+      showMessage(`Tipo ${created.nombre} (${created.fabricante}) registrado. Ya está disponible al registrar dispositivos y baselines.`);
     });
 
     async function initializeDevices(): Promise<void> {

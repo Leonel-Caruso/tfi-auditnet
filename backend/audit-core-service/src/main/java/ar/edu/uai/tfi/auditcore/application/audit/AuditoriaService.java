@@ -93,6 +93,10 @@ public class AuditoriaService {
     private AuditoriaDetalle ejecutarConfiguracion(ConfiguracionDispositivo configuracion, String actor) {
         DispositivoRed dispositivo = dispositivoRepository.buscarPorId(configuracion.dispositivoId())
                 .orElseThrow(() -> new NoSuchElementException("No existe el dispositivo asociado a la configuración."));
+        if (dispositivo.estado() != EstadoDispositivo.ACTIVO) {
+            throw new IllegalStateException("El dispositivo " + dispositivo.identificador()
+                    + " está inactivo: no se pueden ejecutar auditorías sobre él.");
+        }
 
         BaselineConfiguracion baseline = baselineRepository
                 .buscarActivaAplicable(configuracion.organizacionId(), dispositivo.tipoDispositivoId())
@@ -166,6 +170,7 @@ public class AuditoriaService {
                         calculada.severidad(),
                         calculada.evidencia(),
                         calculada.recomendacion(),
+                        calculada.impacto(),
                         EstadoHallazgo.ABIERTO,
                         ahora
                 ));

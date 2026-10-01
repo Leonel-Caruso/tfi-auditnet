@@ -21,6 +21,7 @@ public class PanacheTipoDispositivoRepository
         entity.activo = tipoDispositivo.activo();
 
         persist(entity);
+        flush();
 
         return convertirADominio(entity);
     }

@@ -45,13 +45,24 @@ public class PanacheBaselineRepository implements PanacheRepository<BaselineEnti
     }
 
     @Override
+    public BaselineConfiguracion actualizar(BaselineConfiguracion baseline) {
+        BaselineEntity entity = findByIdOptional(baseline.id())
+                .orElseThrow(() -> new NoSuchElementException("No existe la baseline solicitada."));
+        // Nombre, versión y alcance identifican a la baseline: no se modifican.
+        entity.descripcion = baseline.descripcion();
+        entity.estado = baseline.estado();
+        flush();
+        return convertir(entity);
+    }
+
+    @Override
     public List<BaselineConfiguracion> listar() {
-        return find("order by nombre").list().stream().map(this::convertir).toList();
+        return find("order by nombre, version desc").list().stream().map(this::convertir).toList();
     }
 
     @Override
     public List<BaselineConfiguracion> listarPorOrganizacion(Long organizacionId) {
-        return find("organizacion.id = ?1 order by nombre", organizacionId).list().stream().map(this::convertir).toList();
+        return find("organizacion.id = ?1 order by nombre, version desc", organizacionId).list().stream().map(this::convertir).toList();
     }
 
     @Override

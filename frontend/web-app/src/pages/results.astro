@@ -271,6 +271,12 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <p>${escapeHtml(finding.evidencia)}</p>
         </div>
 
+        ${finding.impacto ? `
+        <div class="finding-evidence-block">
+          <span>impacto</span>
+          <p>${escapeHtml(finding.impacto)}</p>
+        </div>` : ''}
+
         <div class="rule-recommendation">
           <span>recomendación</span>
           <p>${escapeHtml(finding.recomendacion)}</p>

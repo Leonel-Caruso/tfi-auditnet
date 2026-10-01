@@ -1,7 +1,9 @@
 package ar.edu.uai.tfi.auditcore.api.rest;
 
+import ar.edu.uai.tfi.auditcore.api.rest.dto.CambiarEstadoRequest;
 import ar.edu.uai.tfi.auditcore.api.rest.dto.device.CrearDispositivoRequest;
 import ar.edu.uai.tfi.auditcore.api.rest.dto.device.DispositivoResponse;
+import ar.edu.uai.tfi.auditcore.api.rest.dto.device.ModificarDispositivoRequest;
 import ar.edu.uai.tfi.auditcore.application.device.DispositivoService;
 import ar.edu.uai.tfi.auditcore.domain.model.DispositivoRed;
 import jakarta.annotation.security.RolesAllowed;
@@ -9,7 +11,9 @@ import jakarta.json.JsonNumber;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -22,6 +26,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.function.Supplier;
 
 @Path("/api/devices")
 @Produces(MediaType.APPLICATION_JSON)
@@ -91,6 +96,49 @@ public class DispositivoResource {
             return Response.created(URI.create("/api/devices/" + creado.id()))
                     .entity(aResponse(creado))
                     .build();
+        } catch (IllegalStateException exception) {
+            throw error(Response.Status.CONFLICT, exception.getMessage());
+        } catch (NoSuchElementException exception) {
+            throw error(Response.Status.NOT_FOUND, exception.getMessage());
+        } catch (IllegalArgumentException exception) {
+            throw error(Response.Status.BAD_REQUEST, exception.getMessage());
+        }
+    }
+
+    /** Modifica los datos del dispositivo (RF-003). Registra MODIFICACION con valor anterior y nuevo. */
+    @PUT
+    @Path("/{id}")
+    @RolesAllowed(ADMIN)
+    public DispositivoResponse modificar(@PathParam("id") Long id, ModificarDispositivoRequest request) {
+        if (request == null) {
+            throw error(Response.Status.BAD_REQUEST, "El cuerpo de la solicitud es obligatorio.");
+        }
+        return ejecutar(() -> service.modificar(
+                id,
+                request.nombre(),
+                request.identificador(),
+                request.tipoDispositivoId(),
+                request.fabricante(),
+                request.sedeId(),
+                request.criticidad(),
+                jwt.getName()
+        ));
+    }
+
+    /** Baja lógica ({"estado":"INACTIVO"}) o reactivación ({"estado":"ACTIVO"}). */
+    @PATCH
+    @Path("/{id}/status")
+    @RolesAllowed(ADMIN)
+    public DispositivoResponse cambiarEstado(@PathParam("id") Long id, CambiarEstadoRequest request) {
+        if (request == null) {
+            throw error(Response.Status.BAD_REQUEST, "El cuerpo de la solicitud es obligatorio.");
+        }
+        return ejecutar(() -> service.cambiarEstado(id, request.estado(), jwt.getName()));
+    }
+
+    private DispositivoResponse ejecutar(Supplier<DispositivoRed> operacion) {
+        try {
+            return aResponse(operacion.get());
         } catch (IllegalStateException exception) {
             throw error(Response.Status.CONFLICT, exception.getMessage());
         } catch (NoSuchElementException exception) {

@@ -9,6 +9,9 @@ public interface DispositivoRepository {
 
     DispositivoRed guardar(DispositivoRed dispositivo);
 
+    /** Actualiza un dispositivo existente (todos sus campos salvo id y organización). */
+    DispositivoRed actualizar(DispositivoRed dispositivo);
+
     List<DispositivoRed> listar();
 
     List<DispositivoRed> listarPorOrganizacion(Long organizacionId);
@@ -17,5 +20,10 @@ public interface DispositivoRepository {
 
     Optional<DispositivoRed> buscarPorIdYOrganizacion(Long id, Long organizacionId);
 
-    boolean existePorIdentificador(String identificador);
+    /**
+     * Indica si en la organización ya existe otro dispositivo con ese identificador (sin distinguir mayúsculas).
+     *
+     * @param excluirId id a ignorar (el propio dispositivo al modificarlo); null en un alta
+     */
+    boolean existeIdentificadorEnOrganizacion(String identificador, Long organizacionId, Long excluirId);
 }

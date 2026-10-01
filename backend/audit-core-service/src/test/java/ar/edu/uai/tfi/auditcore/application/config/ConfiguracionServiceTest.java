@@ -145,6 +145,7 @@ class ConfiguracionServiceTest {
         @Override public Optional<DispositivoRed> buscarPorIdYOrganizacion(Long id, Long org) {
             return id.equals(1L) && org.equals(2L) ? Optional.of(device) : Optional.empty();
         }
-        @Override public boolean existePorIdentificador(String identificador) { return false; }
+        @Override public DispositivoRed actualizar(DispositivoRed dispositivo) { return dispositivo; }
+        @Override public boolean existeIdentificadorEnOrganizacion(String identificador, Long org, Long excluirId) { return false; }
     }
 }

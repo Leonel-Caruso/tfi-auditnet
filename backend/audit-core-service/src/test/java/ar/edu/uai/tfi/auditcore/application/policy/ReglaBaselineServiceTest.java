@@ -1,83 +1,151 @@
 package ar.edu.uai.tfi.auditcore.application.policy;
 
-import ar.edu.uai.tfi.auditcore.domain.model.*;
-import ar.edu.uai.tfi.auditcore.domain.repository.BaselineRepository;
-import ar.edu.uai.tfi.auditcore.domain.repository.ReglaBaselineRepository;
+import ar.edu.uai.tfi.auditcore.domain.model.BaselineConfiguracion;
+import ar.edu.uai.tfi.auditcore.domain.model.EstadoBaseline;
+import ar.edu.uai.tfi.auditcore.domain.model.EstadoRegla;
+import ar.edu.uai.tfi.auditcore.domain.model.OperacionTransaccion;
+import ar.edu.uai.tfi.auditcore.domain.model.ReglaBaseline;
+import ar.edu.uai.tfi.auditcore.domain.model.SeveridadRegla;
+import ar.edu.uai.tfi.auditcore.domain.model.TipoReglaConfiguracion;
+import ar.edu.uai.tfi.auditcore.domain.model.Transaccion;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ReglaBaselineServiceTest {
 
+    private final RepositoriosEnMemoria.Baselines baselines = new RepositoriosEnMemoria.Baselines();
+    private final RepositoriosEnMemoria.Reglas reglas = new RepositoriosEnMemoria.Reglas();
+    private final RepositoriosEnMemoria.Auditorias auditorias = new RepositoriosEnMemoria.Auditorias();
+    private final List<Transaccion> transacciones = new ArrayList<>();
+    private final ReglaBaselineService service =
+            new ReglaBaselineService(reglas, baselines, auditorias, transacciones::add);
+
+    ReglaBaselineServiceTest() {
+        baselines.items.add(new BaselineConfiguracion(1L, "Hardening Cisco IOS", "Base", 1, 1L, 2L, EstadoBaseline.ACTIVO));
+    }
+
     @Test
     void creaReglaNormalizandoCodigoYClasificacion() {
-        FakeBaselineRepository baselines = new FakeBaselineRepository();
-        FakeReglaRepository reglas = new FakeReglaRepository();
-        ReglaBaselineService service = new ReglaBaselineService(reglas, baselines, transaccion -> {});
-
-        ReglaBaseline creada = service.crear(
-                1L,
-                " sec-ssh-01 ",
-                "SSH versión 2",
-                "La configuración debe forzar SSH v2",
-                "debe_contener",
-                "ip ssh version 2",
-                "alta",
-                "Configurar ip ssh version 2",
-                "admin"
-        );
+        ReglaBaseline creada = service.crear(1L, " sec-ssh-01 ", datos("debe_contener", "ip ssh version 2", null), "admin");
 
         assertEquals("SEC-SSH-01", creada.codigo());
         assertEquals(TipoReglaConfiguracion.DEBE_CONTENER, creada.tipo());
         assertEquals(SeveridadRegla.ALTA, creada.severidad());
         assertEquals(EstadoRegla.ACTIVA, creada.estado());
+        assertEquals("Acceso administrativo sin cifrar", creada.impacto());
+        assertNull(creada.valorEsperado());
+        assertEquals(OperacionTransaccion.ALTA, transacciones.get(0).operacion());
+        assertEquals(2L, transacciones.get(0).organizacionId());
     }
 
     @Test
     void rechazaCodigoDuplicadoDentroDeLaMismaBaseline() {
-        FakeBaselineRepository baselines = new FakeBaselineRepository();
-        FakeReglaRepository reglas = new FakeReglaRepository();
-        reglas.items.add(new ReglaBaseline(
-                1L, 1L, "SEC-SSH-01", "SSH", "desc", TipoReglaConfiguracion.DEBE_CONTENER,
-                "ip ssh version 2", SeveridadRegla.ALTA, "recom", EstadoRegla.ACTIVA
-        ));
-        ReglaBaselineService service = new ReglaBaselineService(reglas, baselines, transaccion -> {});
+        service.crear(1L, "SEC-SSH-01", datos("DEBE_CONTENER", "ip ssh version 2", null), "admin");
 
-        assertThrows(IllegalStateException.class, () -> service.crear(
-                1L, "sec-ssh-01", "Otra", "desc", "DEBE_CONTENER", "ssh", "MEDIA", "recom", "admin"
-        ));
+        assertThrows(IllegalStateException.class, () ->
+                service.crear(1L, "sec-ssh-01", datos("DEBE_CONTENER", "otra cosa", null), "admin"));
     }
 
-    private static class FakeBaselineRepository implements BaselineRepository {
-        private final BaselineConfiguracion baseline = new BaselineConfiguracion(
-                1L, "Hardening Cisco IOS", "Base", 1, 1L, 2L, EstadoBaseline.ACTIVO
+    @Test
+    void reglaValorEsperadoRequiereElValorYLosDemasTiposNoLoAdmiten() {
+        ReglaBaseline creada = service.crear(1L, "LOG-01", datos("VALOR_ESPERADO", "logging buffered", " 16384 "), "admin");
+        assertEquals("16384", creada.valorEsperado());
+
+        assertThrows(IllegalArgumentException.class, () ->
+                service.crear(1L, "LOG-02", datos("VALOR_ESPERADO", "logging host", null), "admin"));
+        assertThrows(IllegalArgumentException.class, () ->
+                service.crear(1L, "SEC-02", datos("DEBE_CONTENER", "service password-encryption", "x"), "admin"));
+    }
+
+    @Test
+    void rechazaCondicionesQueElMotorNoPuedeInterpretar() {
+        assertThrows(IllegalArgumentException.class, () ->
+                service.crear(1L, "SEC-03", datos("DEBE_CONTENER", "linea 1\nlinea 2", null), "admin"));
+        assertThrows(IllegalArgumentException.class, () ->
+                service.crear(1L, "SEC-04", datos("CONTIENE_ALGO", "x", null), "admin"));
+        assertThrows(IllegalArgumentException.class, () ->
+                service.crear(1L, "con espacios", datos("DEBE_CONTENER", "x", null), "admin"));
+        ReglaBaselineService.DatosRegla sinImpacto = new ReglaBaselineService.DatosRegla(
+                "SSH", "desc", "DEBE_CONTENER", "ip ssh version 2", null, "ALTA", " ", "recom");
+        assertThrows(IllegalArgumentException.class, () -> service.crear(1L, "SEC-05", sinImpacto, "admin"));
+    }
+
+    @Test
+    void rechazaDosReglasActivasConLaMismaCondicion() {
+        service.crear(1L, "SEC-SSH-01", datos("DEBE_CONTENER", "ip ssh version 2", null), "admin");
+
+        assertThrows(IllegalStateException.class, () ->
+                service.crear(1L, "SEC-SSH-02", datos("DEBE_CONTENER", "IP SSH VERSION 2", null), "admin"));
+    }
+
+    @Test
+    void modificarRegistraValorAnteriorYNuevo() {
+        ReglaBaseline creada = service.crear(1L, "SEC-SSH-01", datos("DEBE_CONTENER", "ip ssh version 2", null), "admin");
+
+        ReglaBaseline modificada = service.modificar(creada.id(),
+                datos("VALOR_ESPERADO", "ip ssh version", "2"), "admin");
+
+        assertEquals("SEC-SSH-01", modificada.codigo());
+        assertEquals(TipoReglaConfiguracion.VALOR_ESPERADO, modificada.tipo());
+        Transaccion modificacion = transacciones.get(1);
+        assertEquals(OperacionTransaccion.MODIFICACION, modificacion.operacion());
+        assertEquals(creada, modificacion.valorAnterior());
+        assertEquals(modificada, modificacion.valorNuevo());
+    }
+
+    @Test
+    void noCreaNiModificaReglasDeUnaBaselineYaAuditada() {
+        ReglaBaseline creada = service.crear(1L, "SEC-SSH-01", datos("DEBE_CONTENER", "ip ssh version 2", null), "admin");
+        auditorias.porBaseline.put(1L, 2L);
+
+        IllegalStateException alCrear = assertThrows(IllegalStateException.class, () ->
+                service.crear(1L, "SEC-NEW", datos("DEBE_CONTENER", "aaa new-model", null), "admin"));
+        assertTrue(alCrear.getMessage().contains("nueva versión"));
+        assertThrows(IllegalStateException.class, () ->
+                service.modificar(creada.id(), datos("DEBE_CONTENER", "otro", null), "admin"));
+
+        // La baja lógica sí se permite: no sobrescribe la regla.
+        ReglaBaseline inactiva = service.cambiarEstado(creada.id(), "INACTIVA", "admin");
+        assertEquals(EstadoRegla.INACTIVA, inactiva.estado());
+        assertEquals(OperacionTransaccion.BAJA_LOGICA, transacciones.get(transacciones.size() - 1).operacion());
+        // Reactivarla agregaría un criterio a una baseline ya auditada.
+        assertThrows(IllegalStateException.class, () -> service.cambiarEstado(creada.id(), "ACTIVA", "admin"));
+    }
+
+    @Test
+    void rechazaReglasContradictoriasSobreElMismoPatron() {
+        service.crear(1L, "SEC-TEL-01", datos("NO_DEBE_CONTENER", "transport input telnet", null), "admin");
+
+        IllegalStateException error = assertThrows(IllegalStateException.class, () ->
+                service.crear(1L, "SEC-TEL-02", datos("DEBE_CONTENER", "transport input telnet", null), "admin"));
+        assertTrue(error.getMessage().contains("lo contrario"));
+    }
+
+    @Test
+    void noCreaReglasEnUnaBaselineInactiva() {
+        baselines.items.add(new BaselineConfiguracion(2L, "Vieja", "Base", 1, 1L, 2L, EstadoBaseline.INACTIVO));
+
+        assertThrows(IllegalStateException.class, () ->
+                service.crear(2L, "SEC-01", datos("DEBE_CONTENER", "x", null), "admin"));
+    }
+
+    private static ReglaBaselineService.DatosRegla datos(String tipo, String patron, String valorEsperado) {
+        return new ReglaBaselineService.DatosRegla(
+                "SSH versión 2",
+                "La configuración debe forzar SSH v2",
+                tipo,
+                patron,
+                valorEsperado,
+                "alta",
+                "Acceso administrativo sin cifrar",
+                "Configurar ip ssh version 2"
         );
-        @Override public BaselineConfiguracion guardar(BaselineConfiguracion b) { return b; }
-        @Override public List<BaselineConfiguracion> listar() { return List.of(baseline); }
-        @Override public List<BaselineConfiguracion> listarPorOrganizacion(Long id) { return id == 2L ? List.of(baseline) : List.of(); }
-        @Override public Optional<BaselineConfiguracion> buscarPorId(Long id) { return id == 1L ? Optional.of(baseline) : Optional.empty(); }
-        @Override public Optional<BaselineConfiguracion> buscarPorIdYOrganizacion(Long id, Long org) { return id == 1L && org == 2L ? Optional.of(baseline) : Optional.empty(); }
-        @Override public boolean existeNombreEnOrganizacion(String nombre, Long org) { return false; }
-    }
-
-    private static class FakeReglaRepository implements ReglaBaselineRepository {
-        private final List<ReglaBaseline> items = new ArrayList<>();
-        @Override public ReglaBaseline guardar(ReglaBaseline r) {
-            ReglaBaseline creada = new ReglaBaseline((long) items.size() + 1, r.baselineId(), r.codigo(), r.nombre(), r.descripcion(), r.tipo(), r.patron(), r.severidad(), r.recomendacion(), r.estado());
-            items.add(creada); return creada;
-        }
-        @Override public List<ReglaBaseline> listar() { return List.copyOf(items); }
-        @Override public List<ReglaBaseline> listarPorOrganizacion(Long id) { return List.copyOf(items); }
-        @Override public List<ReglaBaseline> listarPorBaseline(Long id) { return items.stream().filter(r -> r.baselineId().equals(id)).toList(); }
-        @Override public List<ReglaBaseline> listarPorBaselineYOrganizacion(Long id, Long org) { return listarPorBaseline(id); }
-        @Override public Optional<ReglaBaseline> buscarPorId(Long id) { return items.stream().filter(r -> r.id().equals(id)).findFirst(); }
-        @Override public Optional<ReglaBaseline> buscarPorIdYOrganizacion(Long id, Long org) { return buscarPorId(id); }
-        @Override public boolean existeCodigoEnBaseline(String codigo, Long baselineId) { return items.stream().anyMatch(r -> r.baselineId().equals(baselineId) && r.codigo().equalsIgnoreCase(codigo)); }
-        @Override public long contarPorBaseline(Long baselineId) { return listarPorBaseline(baselineId).size(); }
     }
 }

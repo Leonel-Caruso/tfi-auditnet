@@ -41,6 +41,7 @@ public class PanacheHallazgoRepository implements PanacheRepository<HallazgoEnti
         entity.severidad = hallazgo.severidad();
         entity.evidencia = hallazgo.evidencia();
         entity.recomendacion = hallazgo.recomendacion();
+        entity.impacto = hallazgo.impacto();
         entity.estado = hallazgo.estado();
         entity.fechaDeteccion = hallazgo.fechaDeteccion();
 
@@ -91,6 +92,7 @@ public class PanacheHallazgoRepository implements PanacheRepository<HallazgoEnti
                 entity.severidad,
                 entity.evidencia,
                 entity.recomendacion,
+                entity.impacto,
                 entity.estado,
                 entity.fechaDeteccion
         );

@@ -756,3 +756,24 @@ code, .code-text { font-family: var(--mono); }
   .log-filter-actions .terminal-search { flex-basis: 100%; }
   .log-heading-meta .technical-hint { display: none; }
 }
+
+/* Gestión de activos, baselines y reglas (Bloque 3) */
+.panel-heading-actions { display: flex; align-items: center; gap: 8px; }
+.inspector-actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; }
+.inspector-actions .button { flex: 1 1 auto; }
+.inspector-actions .button:disabled { cursor: not-allowed; opacity: .55; }
+.baseline-versions { display: grid; gap: 7px; }
+.baseline-versions > span { color: #7a828a; font-family: var(--mono); font-size: .63rem; text-transform: uppercase; }
+.baseline-version-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.baseline-version-item { display: inline-flex; align-items: center; gap: 6px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px; color: var(--muted); background: rgba(255,255,255,.7); font-size: .66rem; cursor: pointer; }
+.baseline-version-item code { color: var(--text-strong); font-weight: 800; }
+.baseline-version-item:hover { border-color: #c7b29f; }
+.baseline-version-item.is-current { border-color: #e5aa73; background: var(--accent-faint); box-shadow: inset 0 -2px var(--accent); }
+.rule-help em { font-style: normal; font-family: var(--mono); color: var(--text-strong); }
+.form-select:disabled, .field input:disabled { opacity: .65; cursor: not-allowed; }
+
+/* Las tablas anchas se desplazan dentro de su panel en lugar de ensanchar la página. */
+.device-workspace > .panel, .policy-workspace > .panel, .two-column > .panel { min-width: 0; }
+@media (max-width: 650px) {
+  .panel-heading { flex-wrap: wrap; }
+}

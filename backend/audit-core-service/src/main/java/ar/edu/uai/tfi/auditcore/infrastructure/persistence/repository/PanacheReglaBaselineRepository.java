@@ -24,17 +24,33 @@ public class PanacheReglaBaselineRepository implements PanacheRepository<ReglaBa
         ReglaBaselineEntity entity = new ReglaBaselineEntity();
         entity.baseline = baseline;
         entity.codigo = regla.codigo();
-        entity.nombre = regla.nombre();
-        entity.descripcion = regla.descripcion();
-        entity.tipo = regla.tipo();
-        entity.patron = regla.patron();
-        entity.severidad = regla.severidad();
-        entity.recomendacion = regla.recomendacion();
-        entity.estado = regla.estado();
+        copiarDatos(regla, entity);
 
         persist(entity);
         flush();
         return convertir(entity);
+    }
+
+    @Override
+    public ReglaBaseline actualizar(ReglaBaseline regla) {
+        ReglaBaselineEntity entity = findByIdOptional(regla.id())
+                .orElseThrow(() -> new NoSuchElementException("No existe la regla solicitada."));
+        copiarDatos(regla, entity);
+        flush();
+        return convertir(entity);
+    }
+
+    /** Copia los campos editables; la baseline y el código no cambian. */
+    private void copiarDatos(ReglaBaseline regla, ReglaBaselineEntity entity) {
+        entity.nombre = regla.nombre();
+        entity.descripcion = regla.descripcion();
+        entity.tipo = regla.tipo();
+        entity.patron = regla.patron();
+        entity.valorEsperado = regla.valorEsperado();
+        entity.severidad = regla.severidad();
+        entity.impacto = regla.impacto();
+        entity.recomendacion = regla.recomendacion();
+        entity.estado = regla.estado();
     }
 
     @Override
@@ -90,7 +106,9 @@ public class PanacheReglaBaselineRepository implements PanacheRepository<ReglaBa
                 entity.descripcion,
                 entity.tipo,
                 entity.patron,
+                entity.valorEsperado,
                 entity.severidad,
+                entity.impacto,
                 entity.recomendacion,
                 entity.estado
         );

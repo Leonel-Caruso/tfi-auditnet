@@ -7,6 +7,10 @@ import java.util.Optional;
 
 public interface ReglaBaselineRepository {
     ReglaBaseline guardar(ReglaBaseline regla);
+
+    /** Actualiza una regla existente (todos sus campos salvo id, baseline y código). */
+    ReglaBaseline actualizar(ReglaBaseline regla);
+
     List<ReglaBaseline> listar();
     List<ReglaBaseline> listarPorOrganizacion(Long organizacionId);
     List<ReglaBaseline> listarPorBaseline(Long baselineId);

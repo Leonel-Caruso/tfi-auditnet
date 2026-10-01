@@ -6,9 +6,10 @@ import jakarta.persistence.*;
 @Entity
 @Table(
         name = "baselines_configuracion",
+        // V2 (Bloque 3): una baseline se versiona; el nombre se repite en cada versión.
         uniqueConstraints = @UniqueConstraint(
-                name = "uk_baseline_org_nombre",
-                columnNames = {"id_organizacion", "nombre"}
+                name = "uk_baseline_org_nombre_version",
+                columnNames = {"id_organizacion", "nombre", "version"}
         )
 )
 public class BaselineEntity {

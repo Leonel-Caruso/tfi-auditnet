@@ -151,11 +151,74 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
   validación de fechas e id, limpiar, navegación por teclado y por URL, escape de HTML, perfil sin permisos con 403,
   pantalla de 390 px sin desplazamiento horizontal). Prueba manual local y en Azure con datos reales.
 
+## D-15 · Identificador de dispositivo único por organización (Bloque 3)
+
+- **Decisión:** el identificador (`RTR-CORE-01`) es único dentro de cada organización, no en toda la plataforma.
+  Motivo: AuditNet es B2B multicliente y dos clientes pueden nombrar igual a sus equipos (CU-002-001, regla 1).
+- **Código:** migración audit-core `V2__activos_baselines_reglas.sql` (`uk_dispositivos_red_org_identificador`),
+  `DispositivoService` y `PanacheDispositivoRepository.existeIdentificadorEnOrganizacion`.
+- **Prueba:** test "permite el mismo identificador en otra organización" y "rechaza duplicado en la misma"; la
+  migración se aplicó sobre una base con datos sin errores (la regla anterior era más estricta).
+
+## D-16 · Ciclo de vida del dispositivo (Bloque 3)
+
+- **Decisión:** `PUT /api/devices/{id}` modifica nombre, identificador, tipo, sede y criticidad; la organización no
+  cambia. `PATCH /api/devices/{id}/status` hace la baja lógica (INACTIVO) o la reactivación. Nunca hay borrado físico
+  (CU-002-001, reglas 4 y 5). Un dispositivo inactivo conserva su historial, pero no admite configuraciones nuevas
+  ni auditorías.
+- **Bitácora:** MODIFICACION, BAJA_LOGICA y CAMBIO_ESTADO con valor anterior y nuevo.
+- **Documentación:** RF-003 y CU-002-001 (renombrar a "Gestionar dispositivo de red" y agregar los flujos de
+  modificación y baja lógica).
+
+## D-17 · Versionado de baselines y una baseline activa por alcance (Bloque 3)
+
+- **Decisión:** el alcance de una baseline es organización + tipo de dispositivo, y solo una puede estar ACTIVA por
+  alcance (CU-003-001, regla 3). El nombre y el alcance la identifican; la descripción se puede editar
+  (`PUT /api/baselines/{id}`). Para cambiar los criterios se genera una versión nueva
+  (`POST /api/baselines/{id}/versions`): copia las reglas activas, queda ACTIVA y la vigente pasa a INACTIVA.
+  `PATCH /api/baselines/{id}/status` activa o desactiva.
+- **Evidencia:** una baseline usada en auditorías no se sobrescribe (CU-003-001, reglas 1 y 5): sus reglas quedan
+  congeladas y la API responde 409 con la indicación de versionar.
+- **Código:** migración V2 (`uk_baseline_org_nombre_version`, versión ≥ 1), `BaselineService`, `BaselineResource`;
+  `GET /api/baselines` informa `auditorias` por versión.
+- **Prueba:** tests de alta con alcance ocupado, versión nueva (numeración, copia de reglas, reemplazo de la vigente
+  y transacciones), activación con otra activa y edición de descripción.
+
+## D-18 · Reglas: valor esperado, impacto y edición controlada (Bloque 3)
+
+- **Decisión:** se agrega el tipo `VALOR_ESPERADO` (parámetro + valor esperado), previsto en la tesis: "criterios de
+  presencia, ausencia o valor esperado de comandos o parámetros críticos". Se agrega el campo obligatorio `impacto`
+  (RF-006 y RF-009); las reglas anteriores reciben un texto que indica que no lo tenían documentado.
+- **Motor:** VALOR_ESPERADO cumple si alguna línea que empieza con el parámetro (palabras completas, sin distinguir
+  mayúsculas ni espacios repetidos) tiene exactamente el valor esperado. La copia en evaluaciones y hallazgos guarda
+  `parámetro = valor` y el hallazgo guarda también el impacto.
+- **Validación de la condición** (CU-003-002, flujo 11): una sola línea, el valor esperado solo en VALOR_ESPERADO, y
+  no se permiten dos reglas activas con la misma condición en una baseline (409).
+- **Edición:** `PUT /api/rules/{id}` (código y baseline fijos) y `PATCH /api/rules/{id}/status` (baja lógica). No se
+  crean, modifican ni reactivan reglas de una baseline auditada (409: hay que versionar); la baja lógica sí se
+  permite porque no sobrescribe la regla (CU-003-002, flujo alternativo 6). Tampoco se permiten dos reglas activas
+  contradictorias (DEBE_CONTENER y NO_DEBE_CONTENER del mismo patrón).
+- **Rutas:** se mantienen `/api/rules` y `/api/baselines/{id}/rules`. **Documentación:** en CU-003-002 reemplazar
+  `/api/audit-rules` por estas rutas (es más barato alinear la tesis que duplicar endpoints).
+- **Prueba:** 5 tests nuevos del motor (valor esperado) y 6 del servicio de reglas.
+
+## D-19 · Altas de organización, sede y tipo de dispositivo desde la interfaz (Bloque 3)
+
+- **Decisión:** las pantallas permiten registrar organizaciones y sedes (RF-015, RF-016) y tipos de dispositivo,
+  usando endpoints que ya existían. El alta de tipo ahora valida duplicados (409), responde errores en JSON y se
+  registra en la bitácora de transacciones (`TIPO_DISPOSITIVO`, sin organización: es un catálogo común).
+- **Corrección incluida:** las tablas anchas ya no ensanchan la página en pantallas chicas (se desplazan dentro de su
+  panel).
+
 ## Pendientes detectados (para migraciones futuras)
 
-- Los CHECK generados por Hibernate limitan los estados (`hallazgos_auditoria.estado` solo admite `ABIERTO`;
-  `auditorias_configuracion.estado` solo admite `FINALIZADA`; los tipos de regla solo admiten
-  `DEBE_CONTENER`/`NO_DEBE_CONTENER`). Se amplían con migraciones en los Bloques 3 y 4.
-- `baselines_configuracion` tiene la restricción única `(id_organizacion, nombre)`, que impide versionar. Se resuelve en el Bloque 3.
-- `dispositivos_red.identificador` es único a nivel global, no por organización. Decisión pendiente en el Bloque 3.
-- La PK de `tipos_dispositivo` se llama `id` (el resto usa `id_<entidad>`). Se evalúa en el Bloque 3.
+- Los CHECK generados por Hibernate limitan los estados de `hallazgos_auditoria.estado` (solo `ABIERTO`) y
+  `auditorias_configuracion.estado` (solo `FINALIZADA`). Se amplían con migraciones en el Bloque 4 (seguimiento de
+  hallazgos). Los tipos de regla se resolvieron en el Bloque 3 (D-18).
+- La PK de `tipos_dispositivo` se llama `id` (el resto usa `id_<entidad>`). **Propuesta:** mantenerla; renombrarla
+  no aporta funcionalidad y obliga a recrear tres claves foráneas. Se documenta como excepción en el DER.
+- Desactivar la única baseline activa de un alcance está permitido (con confirmación en la interfaz): las auditorías
+  de ese tipo de dispositivo quedan sin baseline aplicable hasta activar otra.
+- "Una baseline activa por alcance" se controla en el servicio, no con una restricción de la base: dos solicitudes
+  exactamente simultáneas podrían dejar dos activas (el motor usa la de versión más alta). Se acepta por la escala
+  del prototipo. Las violaciones de unicidad por concurrencia (identificador, nombre y versión) responden 409.

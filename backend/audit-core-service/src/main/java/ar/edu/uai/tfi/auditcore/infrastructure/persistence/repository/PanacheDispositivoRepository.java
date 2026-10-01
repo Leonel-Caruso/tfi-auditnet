@@ -19,14 +19,6 @@ public class PanacheDispositivoRepository
 
     @Override
     public DispositivoRed guardar(DispositivoRed dispositivo) {
-        TipoDispositivoEntity tipo = getEntityManager().find(
-                TipoDispositivoEntity.class,
-                dispositivo.tipoDispositivoId()
-        );
-        if (tipo == null || !tipo.activo) {
-            throw new NoSuchElementException("El tipo de dispositivo seleccionado no existe o está inactivo.");
-        }
-
         OrganizacionReferenciaEntity organizacion = getEntityManager().find(
                 OrganizacionReferenciaEntity.class,
                 dispositivo.organizacionId()
@@ -35,31 +27,55 @@ public class PanacheDispositivoRepository
             throw new NoSuchElementException("La organización seleccionada no existe.");
         }
 
+        DispositivoEntity entity = new DispositivoEntity();
+        entity.organizacion = organizacion;
+        copiarDatos(dispositivo, entity);
+
+        persist(entity);
+        flush();
+
+        return convertirADominio(entity);
+    }
+
+    @Override
+    public DispositivoRed actualizar(DispositivoRed dispositivo) {
+        DispositivoEntity entity = findByIdOptional(dispositivo.id())
+                .orElseThrow(() -> new NoSuchElementException("No existe el dispositivo solicitado."));
+        copiarDatos(dispositivo, entity);
+        flush();
+        return convertirADominio(entity);
+    }
+
+    /** Copia los datos editables validando tipo y sede (la organización no cambia). */
+    private void copiarDatos(DispositivoRed dispositivo, DispositivoEntity entity) {
+        TipoDispositivoEntity tipo = getEntityManager().find(
+                TipoDispositivoEntity.class,
+                dispositivo.tipoDispositivoId()
+        );
+        boolean mismoTipo = entity.tipoDispositivo != null && entity.tipoDispositivo.id.equals(dispositivo.tipoDispositivoId());
+        // Un tipo dado de baja no se puede asignar, pero el dispositivo que ya lo tiene se puede editar o dar de baja.
+        if (tipo == null || (!tipo.activo && !mismoTipo)) {
+            throw new NoSuchElementException("El tipo de dispositivo seleccionado no existe o está inactivo.");
+        }
+
         SedeReferenciaEntity sede = null;
         if (dispositivo.sedeId() != null) {
             sede = getEntityManager().find(SedeReferenciaEntity.class, dispositivo.sedeId());
             if (sede == null) {
                 throw new NoSuchElementException("La sede seleccionada no existe.");
             }
-            if (!dispositivo.organizacionId().equals(sede.organizacionId)) {
-                throw new IllegalArgumentException("La sede seleccionada no pertenece a la organización indicada.");
+            if (!entity.organizacion.id.equals(sede.organizacionId)) {
+                throw new IllegalArgumentException("La sede seleccionada no pertenece a la organización del dispositivo.");
             }
         }
 
-        DispositivoEntity entity = new DispositivoEntity();
         entity.nombre = dispositivo.nombre();
         entity.identificador = dispositivo.identificador();
         entity.tipoDispositivo = tipo;
         entity.fabricante = dispositivo.fabricante();
-        entity.organizacion = organizacion;
         entity.sede = sede;
         entity.criticidad = dispositivo.criticidad();
         entity.estado = dispositivo.estado();
-
-        persist(entity);
-        flush();
-
-        return convertirADominio(entity);
     }
 
     @Override
@@ -91,8 +107,13 @@ public class PanacheDispositivoRepository
     }
 
     @Override
-    public boolean existePorIdentificador(String identificador) {
-        return count("lower(identificador) = ?1", identificador.toLowerCase()) > 0;
+    public boolean existeIdentificadorEnOrganizacion(String identificador, Long organizacionId, Long excluirId) {
+        if (excluirId == null) {
+            return count("lower(identificador) = ?1 and organizacion.id = ?2",
+                    identificador.toLowerCase(), organizacionId) > 0;
+        }
+        return count("lower(identificador) = ?1 and organizacion.id = ?2 and id <> ?3",
+                identificador.toLowerCase(), organizacionId, excluirId) > 0;
     }
 
     private DispositivoRed convertirADominio(DispositivoEntity entity) {

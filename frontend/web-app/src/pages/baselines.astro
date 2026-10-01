@@ -44,7 +44,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       <div class="panel-heading">
         <div>
           <span class="eyebrow">// expected state</span>
-          <h2>Modelos activos</h2>
+          <h2>Modelos y versiones</h2>
         </div>
         <span class="technical-hint">GET /api/baselines</span>
       </div>
@@ -58,11 +58,12 @@ import MasterLayout from '../layouts/MasterLayout.astro';
               <th>Tipo</th>
               <th>Versión</th>
               <th>Reglas</th>
+              <th>Uso</th>
               <th>Estado</th>
             </tr>
           </thead>
           <tbody id="baselines-body">
-            <tr><td colspan="6"><div class="skeleton-row"></div></td></tr>
+            <tr><td colspan="7"><div class="skeleton-row"></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -103,12 +104,24 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <div><dt>device.type</dt><dd id="baseline-inspector-type">—</dd></div>
           <div><dt>version</dt><dd id="baseline-inspector-version">—</dd></div>
           <div><dt>rules.count</dt><dd id="baseline-inspector-rules">—</dd></div>
+          <div><dt>audits.count</dt><dd id="baseline-inspector-audits">—</dd></div>
           <div><dt>resource.id</dt><dd id="baseline-inspector-id">—</dd></div>
         </dl>
 
         <div class="inspector-footnote">
-          <code>policy = baseline + rules</code>
-          <span>Este modelo será la referencia de cumplimiento utilizada por el motor de auditoría.</span>
+          <code id="baseline-inspector-policy">policy = baseline + rules</code>
+          <span id="baseline-inspector-policy-text">Este modelo será la referencia de cumplimiento utilizada por el motor de auditoría.</span>
+        </div>
+
+        <div class="baseline-versions">
+          <span>versiones</span>
+          <div id="baseline-inspector-versions" class="baseline-version-list"></div>
+        </div>
+
+        <div class="inspector-actions" data-roles="ADMINISTRADOR_SISTEMA,AUDITOR_TECNICO">
+          <button id="baseline-edit" class="button button-ghost button-small" type="button">Editar descripción</button>
+          <button id="baseline-version" class="button button-primary button-small" type="button">Nueva versión</button>
+          <button id="baseline-toggle" class="button button-ghost button-small" type="button">Desactivar</button>
         </div>
       </div>
     </aside>
@@ -147,7 +160,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
         <div class="device-form-context">
           <code>version = 1</code>
-          <span>La primera versión se asigna automáticamente.</span>
+          <span>La primera versión se asigna automáticamente. Solo puede haber una baseline activa por tipo de dispositivo y organización.</span>
         </div>
 
         <label class="field field-span-2">
@@ -164,9 +177,40 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     </form>
   </dialog>
 
+  <dialog id="baseline-change-dialog" class="technical-dialog">
+    <form id="baseline-change-form" class="device-form">
+      <div class="dialog-header">
+        <div>
+          <span id="baseline-change-eyebrow" class="eyebrow">{'// PUT /api/baselines/{id}'}</span>
+          <h2 id="baseline-change-title">Editar descripción</h2>
+          <p id="baseline-change-subtitle">—</p>
+        </div>
+        <button class="dialog-close" type="button" data-close-dialog aria-label="Cerrar">×</button>
+      </div>
+
+      <div class="device-form-grid">
+        <label class="field field-span-2">
+          <span>description *</span>
+          <textarea id="baseline-change-description" rows="4" maxlength="500" required></textarea>
+        </label>
+        <div id="baseline-change-context" class="device-form-context field-span-2">
+          <code id="baseline-change-code">—</code>
+          <span id="baseline-change-text">—</span>
+        </div>
+      </div>
+
+      <div id="baseline-change-error" class="alert alert-error is-hidden"></div>
+      <div class="dialog-actions">
+        <button class="button button-ghost" type="button" data-close-dialog>Cancelar</button>
+        <button id="baseline-change-submit" class="button button-primary" type="submit">Guardar</button>
+      </div>
+    </form>
+  </dialog>
+
   <script>
     import { auditFetch, authFetch } from '../lib/auth';
     import {
+      jsonRequest,
       readApiError,
       type BaselineRule,
       type ConfigurationBaseline,
@@ -179,6 +223,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       rules: [] as BaselineRule[],
       deviceTypes: [] as DeviceType[],
       organizations: [] as Organization[],
+      current: null as ConfigurationBaseline | null,
+      changeMode: 'description' as 'description' | 'version',
     };
 
     const body = document.querySelector<HTMLTableSectionElement>('#baselines-body');
@@ -192,17 +238,32 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     const message = document.querySelector<HTMLElement>('#baseline-message');
     const typeSelect = document.querySelector<HTMLSelectElement>('#baseline-device-type');
     const organizationSelect = document.querySelector<HTMLSelectElement>('#baseline-organization');
+    const changeDialog = document.querySelector<HTMLDialogElement>('#baseline-change-dialog');
+    const changeDescription = document.querySelector<HTMLTextAreaElement>('#baseline-change-description');
+    const changeError = document.querySelector<HTMLElement>('#baseline-change-error');
 
     function showMessage(text: string, kind: 'success' | 'error' = 'success'): void {
       if (!message) return;
       message.textContent = text;
       message.className = `alert ${kind === 'error' ? 'alert-error' : 'alert-success'}`;
-      window.setTimeout(() => message.classList.add('is-hidden'), 4200);
+      window.setTimeout(() => message.classList.add('is-hidden'), 5200);
     }
 
+    const setText = (selector: string, value: string) => {
+      const node = document.querySelector(selector);
+      if (node) node.textContent = value;
+    };
+
+    const code = (baseline: ConfigurationBaseline) => `BL-${String(baseline.id).padStart(3, '0')}`;
     const typeFor = (id: number) => state.deviceTypes.find((type) => type.id === id);
     const organizationFor = (id: number) => state.organizations.find((org) => org.id === id);
-    const ruleCountFor = (baselineId: number) => state.rules.filter((rule) => rule.baselineId === baselineId).length;
+    const activeRulesFor = (baselineId: number) =>
+      state.rules.filter((rule) => rule.baselineId === baselineId && rule.estado === 'ACTIVA');
+    const versionsOf = (baseline: ConfigurationBaseline) => state.baselines
+      .filter((item) => item.organizacionId === baseline.organizacionId
+        && item.nombre.toLowerCase() === baseline.nombre.toLowerCase())
+      .sort((a, b) => b.version - a.version);
+    const statusClass = (estado: ConfigurationBaseline['estado']) => estado === 'ACTIVO' ? 'status-ready' : 'status-next';
 
     function filteredBaselines(): ConfigurationBaseline[] {
       const query = search?.value.trim().toLowerCase() ?? '';
@@ -218,7 +279,9 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     function buildRow(baseline: ConfigurationBaseline): HTMLTableRowElement {
       const row = document.createElement('tr');
       row.className = 'policy-row';
+      row.classList.toggle('is-selected', state.current?.id === baseline.id);
       row.tabIndex = 0;
+      row.dataset.baselineId = String(baseline.id);
       const org = organizationFor(baseline.organizacionId);
       const type = typeFor(baseline.tipoDispositivoId);
 
@@ -226,7 +289,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const strong = document.createElement('strong');
       strong.textContent = baseline.nombre;
       const small = document.createElement('small');
-      small.textContent = `BL-${String(baseline.id).padStart(3, '0')}`;
+      small.textContent = code(baseline);
       name.append(strong, small);
 
       const organization = document.createElement('td');
@@ -241,16 +304,23 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       version.appendChild(versionCode);
 
       const rules = document.createElement('td');
-      rules.textContent = String(ruleCountFor(baseline.id));
+      rules.textContent = String(activeRulesFor(baseline.id).length);
+
+      const usage = document.createElement('td');
+      const usageText = document.createElement('small');
+      usageText.textContent = baseline.auditorias > 0
+        ? `${baseline.auditorias} ${baseline.auditorias === 1 ? 'auditoría' : 'auditorías'}`
+        : 'sin uso';
+      usage.appendChild(usageText);
 
       const status = document.createElement('td');
       const badge = document.createElement('span');
-      badge.className = 'status-badge status-ready';
+      badge.className = `status-badge ${statusClass(baseline.estado)}`;
       badge.textContent = baseline.estado;
       status.appendChild(badge);
 
-      row.append(name, organization, deviceType, version, rules, status);
-      const inspect = () => void inspectBaseline(baseline.id, row);
+      row.append(name, organization, deviceType, version, rules, usage, status);
+      const inspect = () => void inspectBaseline(baseline.id);
       row.addEventListener('click', inspect);
       row.addEventListener('keydown', (event) => {
         if (event.key === 'Enter' || event.key === ' ') inspect();
@@ -267,10 +337,25 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       document.querySelector('.policy-table')?.classList.toggle('is-hidden', baselines.length === 0);
     }
 
-    async function inspectBaseline(id: number, selectedRow?: HTMLElement): Promise<void> {
-      document.querySelectorAll('.policy-row').forEach((row) => row.classList.remove('is-selected'));
-      selectedRow?.classList.add('is-selected');
+    function renderVersions(baseline: ConfigurationBaseline): void {
+      const container = document.querySelector('#baseline-inspector-versions');
+      if (!container) return;
+      container.replaceChildren(...versionsOf(baseline).map((version) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'baseline-version-item';
+        button.classList.toggle('is-current', version.id === baseline.id);
+        const label = document.createElement('code');
+        label.textContent = `v${version.version}`;
+        const detail = document.createElement('span');
+        detail.textContent = `${version.estado.toLowerCase()} · ${version.auditorias} aud.`;
+        button.append(label, detail);
+        button.addEventListener('click', () => void inspectBaseline(version.id));
+        return button;
+      }));
+    }
 
+    async function inspectBaseline(id: number): Promise<void> {
       const [baselineResponse, rulesResponse] = await Promise.all([
         auditFetch(`/api/baselines/${id}`),
         auditFetch(`/api/baselines/${id}/rules`),
@@ -280,51 +365,67 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
       const baseline = await baselineResponse.json() as ConfigurationBaseline;
       const rules = await rulesResponse.json() as BaselineRule[];
+      state.current = baseline;
+      document.querySelectorAll<HTMLElement>('.policy-row').forEach((row) => {
+        row.classList.toggle('is-selected', row.dataset.baselineId === String(baseline.id));
+      });
+
       const org = organizationFor(baseline.organizacionId);
       const type = typeFor(baseline.tipoDispositivoId);
-      const set = (selector: string, value: string) => {
-        const node = document.querySelector(selector);
-        if (node) node.textContent = value;
-      };
+      const activeRules = rules.filter((rule) => rule.estado === 'ACTIVA').length;
+      const frozen = baseline.auditorias > 0;
 
-      set('#baseline-inspector-code', `BL-${String(baseline.id).padStart(3, '0')}`);
-      set('#baseline-inspector-name', baseline.nombre);
-      set('#baseline-inspector-status', baseline.estado);
-      set('#baseline-inspector-description', baseline.descripcion);
-      set('#baseline-inspector-organization', org?.razonSocial ?? `#${baseline.organizacionId}`);
-      set('#baseline-inspector-type', type ? `${type.nombre} / ${type.familia}` : `#${baseline.tipoDispositivoId}`);
-      set('#baseline-inspector-version', `v${baseline.version}`);
-      set('#baseline-inspector-rules', String(rules.length));
-      set('#baseline-inspector-id', String(baseline.id));
+      setText('#baseline-inspector-code', code(baseline));
+      setText('#baseline-inspector-name', baseline.nombre);
+      setText('#baseline-inspector-status', baseline.estado);
+      setText('#baseline-inspector-description', baseline.descripcion);
+      setText('#baseline-inspector-organization', org?.razonSocial ?? `#${baseline.organizacionId}`);
+      setText('#baseline-inspector-type', type ? `${type.nombre} / ${type.familia}` : `#${baseline.tipoDispositivoId}`);
+      setText('#baseline-inspector-version', `v${baseline.version}`);
+      setText('#baseline-inspector-rules', `${activeRules} activas · ${rules.length} en total`);
+      setText('#baseline-inspector-audits', String(baseline.auditorias));
+      setText('#baseline-inspector-id', String(baseline.id));
+      setText('#baseline-inspector-policy', frozen ? 'rules = congeladas' : 'policy = baseline + rules');
+      setText('#baseline-inspector-policy-text', frozen
+        ? 'Esta versión ya se usó en auditorías: sus reglas no se modifican para conservar la evidencia. Para cambiarlas, generá una nueva versión.'
+        : baseline.estado === 'ACTIVO'
+          ? 'Es la referencia de cumplimiento que usa el motor de auditoría para este tipo de dispositivo.'
+          : 'Versión inactiva: se conserva como historial y no se usa en auditorías nuevas.');
+      setText('#baseline-toggle', baseline.estado === 'ACTIVO' ? 'Desactivar' : 'Activar');
+
+      const status = document.querySelector('#baseline-inspector-status');
+      if (status) status.className = `status-badge ${statusClass(baseline.estado)}`;
+      renderVersions(baseline);
       document.querySelector('#baseline-inspector-empty')?.classList.add('is-hidden');
       document.querySelector('#baseline-inspector-content')?.classList.remove('is-hidden');
     }
 
     async function load(): Promise<void> {
-      try {
-        const [baselineResponse, rulesResponse, typesResponse, organizationsResponse] = await Promise.all([
-          auditFetch('/api/baselines'),
-          auditFetch('/api/rules'),
-          auditFetch('/api/device-types'),
-          authFetch('/api/client-organizations'),
-        ]);
-        for (const response of [baselineResponse, rulesResponse, typesResponse, organizationsResponse]) {
-          if (!response.ok) throw new Error(await readApiError(response));
-        }
-        state.baselines = await baselineResponse.json() as ConfigurationBaseline[];
-        state.rules = await rulesResponse.json() as BaselineRule[];
-        state.deviceTypes = (await typesResponse.json() as DeviceType[]).filter((type) => type.activo);
-        state.organizations = await organizationsResponse.json() as Organization[];
-
-        typeSelect?.replaceChildren(new Option('Seleccionar tipo...', ''));
-        state.deviceTypes.forEach((type) => typeSelect?.add(new Option(`${type.nombre} · ${type.fabricante} · ${type.familia}`, String(type.id))));
-        organizationSelect?.replaceChildren(new Option('Seleccionar organización...', ''));
-        state.organizations.forEach((org) => organizationSelect?.add(new Option(org.razonSocial, String(org.id))));
-        if (organizationSelect && state.organizations.length === 1) organizationSelect.value = String(state.organizations[0].id);
-        render();
-      } catch (error) {
-        showMessage(error instanceof Error ? error.message : 'No se pudieron cargar las baselines.', 'error');
+      const [baselineResponse, rulesResponse, typesResponse, organizationsResponse] = await Promise.all([
+        auditFetch('/api/baselines'),
+        auditFetch('/api/rules'),
+        auditFetch('/api/device-types'),
+        authFetch('/api/client-organizations'),
+      ]);
+      for (const response of [baselineResponse, rulesResponse, typesResponse, organizationsResponse]) {
+        if (!response.ok) throw new Error(await readApiError(response));
       }
+      state.baselines = await baselineResponse.json() as ConfigurationBaseline[];
+      state.rules = await rulesResponse.json() as BaselineRule[];
+      state.deviceTypes = (await typesResponse.json() as DeviceType[]).filter((type) => type.activo);
+      state.organizations = await organizationsResponse.json() as Organization[];
+
+      typeSelect?.replaceChildren(new Option('Seleccionar tipo...', ''));
+      state.deviceTypes.forEach((type) => typeSelect?.add(new Option(`${type.nombre} · ${type.fabricante} · ${type.familia}`, String(type.id))));
+      organizationSelect?.replaceChildren(new Option('Seleccionar organización...', ''));
+      state.organizations.forEach((org) => organizationSelect?.add(new Option(org.razonSocial, String(org.id))));
+      if (organizationSelect && state.organizations.length === 1) organizationSelect.value = String(state.organizations[0].id);
+      render();
+    }
+
+    async function reloadAndInspect(id: number): Promise<void> {
+      await load();
+      await inspectBaseline(id);
     }
 
     function openDialog(): void {
@@ -337,6 +438,9 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     document.querySelector('#open-baseline-dialog')?.addEventListener('click', openDialog);
     document.querySelector('#close-baseline-dialog')?.addEventListener('click', () => dialog?.close());
     document.querySelector('#cancel-baseline-dialog')?.addEventListener('click', () => dialog?.close());
+    document.querySelectorAll<HTMLButtonElement>('[data-close-dialog]').forEach((button) => {
+      button.addEventListener('click', () => button.closest('dialog')?.close());
+    });
     search?.addEventListener('input', render);
     statusFilter?.addEventListener('change', render);
 
@@ -350,11 +454,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         organizacionId: Number(organizationSelect?.value),
       };
 
-      const response = await auditFetch('/api/baselines', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      const response = await auditFetch('/api/baselines', jsonRequest('POST', payload));
       if (!response.ok) {
         if (formError) {
           formError.textContent = await readApiError(response);
@@ -364,15 +464,96 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       }
 
       const created = await response.json() as ConfigurationBaseline;
-      state.baselines.push(created);
       dialog?.close();
-      render();
       showMessage(`Baseline ${created.nombre} creada correctamente.`);
-      const row = document.querySelectorAll<HTMLElement>('.policy-row');
-      const selected = Array.from(row).find((node) => node.textContent?.includes(created.nombre));
-      await inspectBaseline(created.id, selected);
+      await reloadAndInspect(created.id);
     });
 
-    load();
+    // ---- Editar descripción / nueva versión -----------------------------
+    function openChangeDialog(mode: 'description' | 'version'): void {
+      const baseline = state.current;
+      if (!baseline || !changeDescription) return;
+      state.changeMode = mode;
+      changeError?.classList.add('is-hidden');
+      changeDescription.value = baseline.descripcion;
+
+      const next = Math.max(...versionsOf(baseline).map((item) => item.version)) + 1;
+      const copied = activeRulesFor(baseline.id).length;
+      const current = state.baselines.find((item) => item.estado === 'ACTIVO'
+        && item.organizacionId === baseline.organizacionId
+        && item.tipoDispositivoId === baseline.tipoDispositivoId);
+
+      if (mode === 'description') {
+        setText('#baseline-change-eyebrow', `// PUT /api/baselines/${baseline.id}`);
+        setText('#baseline-change-title', `Editar ${baseline.nombre} v${baseline.version}`);
+        setText('#baseline-change-subtitle', 'La descripción no cambia los criterios de auditoría: no genera versión.');
+        setText('#baseline-change-code', 'operacion = MODIFICACION');
+        setText('#baseline-change-text', 'El cambio queda en la bitácora de transacciones con el valor anterior y el nuevo.');
+        setText('#baseline-change-submit', 'Guardar descripción');
+      } else {
+        setText('#baseline-change-eyebrow', `// POST /api/baselines/${baseline.id}/versions`);
+        setText('#baseline-change-title', `Nueva versión: ${baseline.nombre} v${next}`);
+        setText('#baseline-change-subtitle', `Se genera a partir de v${baseline.version}. La versión anterior y sus auditorías no se modifican.`);
+        setText('#baseline-change-code', `reglas copiadas = ${copied}`);
+        setText('#baseline-change-text', current
+          ? `v${next} queda ACTIVA y reemplaza a ${current.nombre} v${current.version}, que pasa a INACTIVA.`
+          : `v${next} queda ACTIVA como referencia para este tipo de dispositivo.`);
+        setText('#baseline-change-submit', `Generar v${next}`);
+      }
+      changeDialog?.showModal();
+    }
+
+    document.querySelector('#baseline-edit')?.addEventListener('click', () => openChangeDialog('description'));
+    document.querySelector('#baseline-version')?.addEventListener('click', () => openChangeDialog('version'));
+
+    document.querySelector<HTMLFormElement>('#baseline-change-form')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const baseline = state.current;
+      if (!baseline) return;
+      changeError?.classList.add('is-hidden');
+      const descripcion = (changeDescription?.value ?? '').trim();
+
+      const response = state.changeMode === 'description'
+        ? await auditFetch(`/api/baselines/${baseline.id}`, jsonRequest('PUT', { descripcion }))
+        : await auditFetch(`/api/baselines/${baseline.id}/versions`, jsonRequest('POST', { descripcion }));
+      if (!response.ok) {
+        if (changeError) {
+          changeError.textContent = await readApiError(response);
+          changeError.classList.remove('is-hidden');
+        }
+        return;
+      }
+      const saved = await response.json() as ConfigurationBaseline;
+      changeDialog?.close();
+      showMessage(state.changeMode === 'description'
+        ? `Descripción de ${saved.nombre} v${saved.version} actualizada.`
+        : `Versión v${saved.version} de ${saved.nombre} generada y activa. Ya podés modificar sus reglas.`);
+      await reloadAndInspect(saved.id);
+    });
+
+    // ---- Activar / desactivar -------------------------------------------
+    document.querySelector('#baseline-toggle')?.addEventListener('click', async () => {
+      const baseline = state.current;
+      if (!baseline) return;
+      const deactivate = baseline.estado === 'ACTIVO';
+      const question = deactivate
+        ? `¿Desactivar ${baseline.nombre} v${baseline.version}? Si es la única activa para su tipo de dispositivo, las auditorías nuevas de ese tipo no tendrán baseline aplicable.`
+        : `¿Activar ${baseline.nombre} v${baseline.version}? Solo puede haber una baseline activa por tipo de dispositivo y organización.`;
+      if (!window.confirm(question)) return;
+
+      const response = await auditFetch(`/api/baselines/${baseline.id}/status`,
+        jsonRequest('PATCH', { estado: deactivate ? 'INACTIVO' : 'ACTIVO' }));
+      if (!response.ok) {
+        showMessage(await readApiError(response), 'error');
+        return;
+      }
+      const saved = await response.json() as ConfigurationBaseline;
+      showMessage(`${saved.nombre} v${saved.version} ahora está ${saved.estado}.`);
+      await reloadAndInspect(saved.id);
+    });
+
+    load().catch((error) => {
+      showMessage(error instanceof Error ? error.message : 'No se pudieron cargar las baselines.', 'error');
+    });
   </script>
 </MasterLayout>

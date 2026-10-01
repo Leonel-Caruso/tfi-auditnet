@@ -6,7 +6,9 @@ import ar.edu.uai.tfi.auditcore.infrastructure.persistence.entity.*;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -66,6 +68,23 @@ public class PanacheAuditoriaRepository implements PanacheRepository<AuditoriaEn
     public Optional<AuditoriaConfiguracion> buscarPorIdYOrganizacion(Long id, Long organizacionId) {
         return find("id = ?1 and organizacion.id = ?2", id, organizacionId)
                 .firstResultOptional().map(this::convertir);
+    }
+
+    @Override
+    public long contarPorBaseline(Long baselineId) {
+        return count("baseline.id = ?1", baselineId);
+    }
+
+    @Override
+    public Map<Long, Long> contarPorBaselines() {
+        List<Object[]> filas = getEntityManager()
+                .createQuery("select a.baseline.id, count(a) from AuditoriaEntity a group by a.baseline.id", Object[].class)
+                .getResultList();
+        Map<Long, Long> resultado = new HashMap<>();
+        for (Object[] fila : filas) {
+            resultado.put((Long) fila[0], (Long) fila[1]);
+        }
+        return resultado;
     }
 
     private AuditoriaConfiguracion convertir(AuditoriaEntity entity) {

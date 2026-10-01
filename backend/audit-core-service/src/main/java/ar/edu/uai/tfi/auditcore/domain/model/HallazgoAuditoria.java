@@ -16,6 +16,7 @@ public record HallazgoAuditoria(
         SeveridadRegla severidad,
         String evidencia,
         String recomendacion,
+        String impacto,
         EstadoHallazgo estado,
         Instant fechaDeteccion
 ) {

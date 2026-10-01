@@ -1,9 +1,7 @@
 package ar.edu.uai.tfi.auditcore.api.rest.dto.policy;
 
-public record ReglaResponse(
-        Long id,
-        Long baselineId,
-        String codigo,
+/** Cuerpo de PUT /api/rules/{id}. El código y la baseline no se modifican. */
+public record ModificarReglaRequest(
         String nombre,
         String descripcion,
         String tipo,
@@ -11,7 +9,6 @@ public record ReglaResponse(
         String valorEsperado,
         String severidad,
         String impacto,
-        String recomendacion,
-        String estado
+        String recomendacion
 ) {
 }

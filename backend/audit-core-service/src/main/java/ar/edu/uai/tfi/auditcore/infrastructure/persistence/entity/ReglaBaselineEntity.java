@@ -40,9 +40,16 @@ public class ReglaBaselineEntity {
     @Column(nullable = false, length = 500)
     public String patron;
 
+    /** Solo para reglas VALOR_ESPERADO (V2). */
+    @Column(name = "valor_esperado", length = 500)
+    public String valorEsperado;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     public SeveridadRegla severidad;
+
+    @Column(nullable = false, length = 500)
+    public String impacto;
 
     @Column(nullable = false, length = 500)
     public String recomendacion;
