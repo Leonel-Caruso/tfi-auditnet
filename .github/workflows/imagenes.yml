@@ -63,6 +63,8 @@ jobs:
     needs: [tests-backend, frontend]
     runs-on: ubuntu-latest
     strategy:
+      # Si una imagen falla (por ejemplo, una descarga momentánea), las otras terminan igual.
+      fail-fast: false
       matrix:
         include:
           - imagen: auditnet-management

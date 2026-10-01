@@ -11,6 +11,17 @@
 #   MANAGEMENT_UPSTREAM=https://ca-auditnet-management.internal.<dominio>
 # =====================================================================
 
+# Caché del navegador:
+# - /_astro/: archivos con hash en el nombre; cambian de nombre en cada build, se pueden guardar un año.
+# - Páginas HTML: siempre se revalidan. Si el navegador usara una página vieja, pediría archivos /_astro/
+#   que ya no existen después de un deploy y la pantalla se vería sin estilos ni scripts.
+# - /api/: no se agrega nada (valor vacío = sin encabezado).
+map $uri $auditnet_cache_control {
+    ~^/_astro/  "public, max-age=31536000, immutable";
+    ~^/api/     "";
+    default     "no-cache";
+}
+
 server {
     listen 8080;
     server_name _;
@@ -30,6 +41,7 @@ server {
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-Frame-Options "DENY" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Cache-Control $auditnet_cache_control always;
 
     # Identificador de correlación: nginx genera uno por solicitud ($request_id) y lo envía a los
     # servicios en X-Request-ID; las bitácoras lo guardan para seguir una operación de punta a punta.
