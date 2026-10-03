@@ -1,12 +1,19 @@
 package ar.edu.uai.tfi.auditcore.infrastructure.persistence.repository;
 
+import ar.edu.uai.tfi.auditcore.domain.model.EstadoHallazgo;
+import ar.edu.uai.tfi.auditcore.domain.model.FiltroHallazgos;
 import ar.edu.uai.tfi.auditcore.domain.model.HallazgoAuditoria;
 import ar.edu.uai.tfi.auditcore.domain.repository.HallazgoRepository;
 import ar.edu.uai.tfi.auditcore.infrastructure.persistence.entity.*;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
+import jakarta.persistence.LockModeType;
 import jakarta.enterprise.context.ApplicationScoped;
 
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
@@ -44,6 +51,8 @@ public class PanacheHallazgoRepository implements PanacheRepository<HallazgoEnti
         entity.impacto = hallazgo.impacto();
         entity.estado = hallazgo.estado();
         entity.fechaDeteccion = hallazgo.fechaDeteccion();
+        entity.fechaEstado = hallazgo.fechaEstado();
+        entity.usuarioEstado = hallazgo.usuarioEstado();
 
         persist(entity);
         flush();
@@ -77,6 +86,50 @@ public class PanacheHallazgoRepository implements PanacheRepository<HallazgoEnti
                 .firstResultOptional().map(this::convertir);
     }
 
+    @Override
+    public List<HallazgoAuditoria> buscar(FiltroHallazgos filtro) {
+        List<String> condiciones = new ArrayList<>();
+        Map<String, Object> parametros = new HashMap<>();
+        agregar(condiciones, parametros, "organizacion.id = :organizacion", "organizacion", filtro.organizacionId());
+        agregar(condiciones, parametros, "estado = :estado", "estado", filtro.estado());
+        agregar(condiciones, parametros, "severidad = :severidad", "severidad", filtro.severidad());
+        agregar(condiciones, parametros, "dispositivo.id = :dispositivo", "dispositivo", filtro.dispositivoId());
+        agregar(condiciones, parametros, "baseline.id = :baseline", "baseline", filtro.baselineId());
+        agregar(condiciones, parametros, "auditoria.id = :auditoria", "auditoria", filtro.auditoriaId());
+        agregar(condiciones, parametros, "fechaDeteccion >= :desde", "desde", filtro.desde());
+        agregar(condiciones, parametros, "fechaDeteccion <= :hasta", "hasta", filtro.hasta());
+
+        String orden = "order by fechaDeteccion desc, id desc";
+        String consulta = condiciones.isEmpty() ? orden : String.join(" and ", condiciones) + " " + orden;
+        return find(consulta, parametros).list().stream().map(this::convertir).toList();
+    }
+
+    @Override
+    public HallazgoAuditoria actualizarEstado(Long id, EstadoHallazgo estadoEsperado, EstadoHallazgo estado,
+                                              String usuario, Instant fecha) {
+        HallazgoEntity entity = findByIdOptional(id)
+                .orElseThrow(() -> new NoSuchElementException("No existe el hallazgo solicitado."));
+        // SELECT ... FOR UPDATE: relee el estado actual y espera si otra transacción lo está cambiando.
+        getEntityManager().refresh(entity, LockModeType.PESSIMISTIC_WRITE);
+        if (entity.estado != estadoEsperado) {
+            throw new IllegalStateException("Otro usuario cambió el hallazgo a " + entity.estado
+                    + " mientras tanto. Actualizá la pantalla y volvé a intentar.");
+        }
+        entity.estado = estado;
+        entity.usuarioEstado = usuario;
+        entity.fechaEstado = fecha;
+        flush();
+        return convertir(entity);
+    }
+
+    private static void agregar(List<String> condiciones, Map<String, Object> parametros,
+                                String condicion, String nombre, Object valor) {
+        if (valor != null) {
+            condiciones.add(condicion);
+            parametros.put(nombre, valor);
+        }
+    }
+
     private HallazgoAuditoria convertir(HallazgoEntity entity) {
         return new HallazgoAuditoria(
                 entity.id,
@@ -94,7 +147,9 @@ public class PanacheHallazgoRepository implements PanacheRepository<HallazgoEnti
                 entity.recomendacion,
                 entity.impacto,
                 entity.estado,
-                entity.fechaDeteccion
+                entity.fechaDeteccion,
+                entity.fechaEstado,
+                entity.usuarioEstado
         );
     }
 }

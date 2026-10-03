@@ -176,14 +176,70 @@ export type AuditFinding = {
   recomendacion: string;
   /** Copia del impacto de la regla; null en hallazgos anteriores a la Entrega 2. */
   impacto: string | null;
-  estado: 'ABIERTO';
+  estado: FindingStatus;
   fechaDeteccion: string;
+  /** Último cambio de estado de seguimiento (null si nunca cambió). */
+  fechaEstado: string | null;
+  usuarioEstado: string | null;
+  /** Criticidad actual del dispositivo, usada para priorizar (null en el detalle de auditoría). */
+  criticidadDispositivo: NetworkDevice['criticidad'] | null;
+};
+
+export type FindingStatus = 'ABIERTO' | 'EN_REVISION' | 'RESUELTO' | 'ACEPTADO';
+
+/** Transiciones permitidas (igual que EstadoHallazgo en audit-core-service). */
+export const FINDING_TRANSITIONS: Record<FindingStatus, FindingStatus[]> = {
+  ABIERTO: ['EN_REVISION', 'RESUELTO', 'ACEPTADO'],
+  EN_REVISION: ['ABIERTO', 'RESUELTO', 'ACEPTADO'],
+  RESUELTO: ['ABIERTO'],
+  ACEPTADO: ['ABIERTO'],
+};
+
+/** Cerrar (RESUELTO, ACEPTADO) o reabrir (ABIERTO) exige comentario. */
+export const findingStatusNeedsComment = (status: FindingStatus) => status !== 'EN_REVISION';
+
+export type FindingTracking = {
+  id: number;
+  hallazgoId: number;
+  estadoAnterior: FindingStatus;
+  estadoNuevo: FindingStatus;
+  comentario: string | null;
+  usuario: string;
+  fecha: string;
 };
 
 export type AuditDetail = {
   auditoria: AuditSummary;
   evaluaciones: RuleEvaluation[];
   hallazgos: AuditFinding[];
+  /** Configuración evaluada y baseline usada (null solo ante datos incompletos por un error previo). */
+  configuracion: {
+    id: number;
+    version: number;
+    formato: string;
+    nombreFuente: string;
+    fechaImportacion: string;
+    usuarioResponsable: string;
+  } | null;
+  baseline: { id: number; nombre: string; version: number; estado: string } | null;
+};
+
+export type RuleChangeCategory =
+  | 'NUEVO_HALLAZGO' | 'CORREGIDO' | 'PERSISTENTE' | 'SIN_CAMBIO' | 'REGLA_NUEVA' | 'REGLA_RETIRADA';
+
+export type AuditComparison = {
+  actual: AuditSummary;
+  /** null si es la primera auditoría del dispositivo. */
+  anterior: AuditSummary | null;
+  cambios: {
+    codigoRegla: string;
+    nombreRegla: string;
+    severidad: string | null;
+    cumpleAntes: boolean | null;
+    cumpleAhora: boolean | null;
+    categoria: RuleChangeCategory;
+  }[];
+  resumen: Record<RuleChangeCategory, number>;
 };
 
 

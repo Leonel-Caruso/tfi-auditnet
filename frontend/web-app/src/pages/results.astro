@@ -5,102 +5,131 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 <MasterLayout
   title="Hallazgos"
   section="Resultados y trazabilidad"
-  description="Desvíos detectados por el motor de auditoría, priorizados por severidad y asociados a evidencia técnica."
+  description="Desvíos detectados por el motor de auditoría, priorizados por estado, severidad y criticidad del dispositivo, con su seguimiento."
 >
-  <div id="finding-error" class="alert alert-error is-hidden"></div>
+  <div id="finding-error" class="alert alert-error is-hidden" role="alert"></div>
+  <div id="finding-success" class="alert alert-success is-hidden" role="status"></div>
 
-  <section class="panel compact-panel finding-toolbar">
-    <div class="device-toolbar-copy">
-      <span class="eyebrow">Finding registry</span>
-      <div>
-        <strong id="finding-count">0 hallazgos</strong>
-        <span>desvíos técnicos persistidos</span>
-      </div>
+  <form id="finding-filters" class="panel compact-panel log-filters" novalidate>
+    <div class="log-filter-grid">
+      <label class="log-filter">
+        <span>estado</span>
+        <select name="estado" class="technical-select">
+          <option value="">todos</option>
+          <option value="ABIERTO">ABIERTO</option>
+          <option value="EN_REVISION">EN_REVISION</option>
+          <option value="RESUELTO">RESUELTO</option>
+          <option value="ACEPTADO">ACEPTADO</option>
+        </select>
+      </label>
+      <label class="log-filter">
+        <span>severidad</span>
+        <select name="severidad" class="technical-select">
+          <option value="">todas</option>
+          <option value="CRITICA">CRITICA</option>
+          <option value="ALTA">ALTA</option>
+          <option value="MEDIA">MEDIA</option>
+          <option value="BAJA">BAJA</option>
+        </select>
+      </label>
+      <label class="log-filter">
+        <span>dispositivo</span>
+        <select name="dispositivoId" class="technical-select"><option value="">todos</option></select>
+      </label>
+      <label class="log-filter">
+        <span>baseline</span>
+        <select name="baselineId" class="technical-select"><option value="">todas</option></select>
+      </label>
+      <label class="log-filter">
+        <span>detectado desde</span>
+        <input name="desde" class="technical-input" type="datetime-local" />
+      </label>
+      <label class="log-filter">
+        <span>hasta</span>
+        <input name="hasta" class="technical-input" type="datetime-local" />
+      </label>
     </div>
-    <div class="device-toolbar-actions">
+    <div class="log-filter-actions">
       <div class="terminal-search">
         <span>&gt;</span>
-        <input id="finding-search" type="search" placeholder="buscar regla, dispositivo o evidencia..." />
+        <input id="finding-search" type="search" autocomplete="off" placeholder="buscar regla, dispositivo o evidencia en lo cargado..." />
       </div>
-      <select id="finding-severity" class="technical-select">
-        <option value="">severidad: todas</option>
-        <option value="CRITICA">CRITICA</option>
-        <option value="ALTA">ALTA</option>
-        <option value="MEDIA">MEDIA</option>
-        <option value="BAJA">BAJA</option>
-      </select>
+      <button type="button" id="finding-clear" class="button button-ghost button-small">Limpiar</button>
+      <button type="submit" class="button button-primary button-small">Consultar</button>
     </div>
-  </section>
+  </form>
 
   <section class="finding-summary-grid">
     <article class="metric-card">
-      <span class="metric-label">findings.total</span>
-      <strong id="metric-findings-total">0</strong>
-      <small>Hallazgos visibles</small>
+      <span class="metric-label">pendientes</span>
+      <strong id="metric-pending">0</strong>
+      <small>Abiertos y en revisión</small>
     </article>
     <article class="metric-card">
-      <span class="metric-label">severity.critical</span>
-      <strong id="metric-findings-critical">0</strong>
+      <span class="metric-label">críticos / altos pendientes</span>
+      <strong id="metric-critical">0</strong>
       <small>Requieren máxima prioridad</small>
     </article>
     <article class="metric-card">
-      <span class="metric-label">severity.high</span>
-      <strong id="metric-findings-high">0</strong>
-      <small>Desvíos de severidad alta</small>
+      <span class="metric-label">en revisión</span>
+      <strong id="metric-review">0</strong>
+      <small>Con alguien trabajando</small>
     </article>
     <article class="metric-card">
-      <span class="metric-label">status.open</span>
-      <strong id="metric-findings-open">0</strong>
-      <small>Seguimiento pendiente</small>
+      <span class="metric-label">cerrados</span>
+      <strong id="metric-closed">0</strong>
+      <small>Resueltos o con riesgo aceptado</small>
     </article>
   </section>
 
-  <section class="finding-workspace">
+  <section class="finding-workspace log-workspace">
     <article class="panel finding-list-panel">
       <div class="panel-heading">
         <div>
           <span class="eyebrow">Audit evidence</span>
           <h2>Hallazgos priorizados</h2>
         </div>
-        <span class="technical-hint">GET /api/findings</span>
+        <div class="log-heading-meta">
+          <span id="finding-endpoint" class="technical-hint">GET /api/findings</span>
+          <span id="finding-count" class="counter-chip">—</span>
+        </div>
       </div>
 
       <div class="table-wrap">
-        <table class="data-table finding-table">
+        <table class="data-table finding-table log-table">
           <thead>
             <tr>
               <th>FINDING</th>
               <th>REGLA</th>
               <th>DISPOSITIVO</th>
-              <th>BASELINE</th>
               <th>SEVERIDAD</th>
               <th>ESTADO</th>
-              <th>FECHA</th>
+              <th>DETECTADO</th>
             </tr>
           </thead>
           <tbody id="finding-table-body"></tbody>
         </table>
-        <div id="finding-empty" class="empty-state compact-empty">
+        <div id="finding-empty" class="empty-state compact-empty is-hidden">
           <div>
             <code>findings.count = 0</code>
-            <p>No hay hallazgos para los filtros actuales.</p>
+            <p id="finding-empty-text">No hay hallazgos para los filtros actuales.</p>
           </div>
         </div>
       </div>
     </article>
 
-    <aside class="panel finding-inspector">
+    <aside class="panel finding-inspector" aria-live="polite">
       <div class="panel-heading">
         <div>
           <span class="eyebrow">Finding inspector</span>
-          <h2>Detalle del hallazgo</h2>
+          <h2>Detalle y seguimiento</h2>
         </div>
         <span class="inspector-led"></span>
       </div>
 
       <div id="finding-inspector-empty" class="inspector-empty">
         <code>select finding;</code>
-        <p>Seleccioná un hallazgo para revisar evidencia, regla y recomendación.</p>
+        <p>Seleccioná un hallazgo para revisar la evidencia y actualizar su seguimiento.</p>
       </div>
 
       <div id="finding-inspector-content" class="inspector-content is-hidden"></div>
@@ -108,53 +137,74 @@ import MasterLayout from '../layouts/MasterLayout.astro';
   </section>
 
   <script>
-    import { auditFetch } from '../lib/auth';
-    import { readApiError } from '../lib/api';
-    import type { AuditFinding, ConfigurationBaseline, NetworkDevice } from '../lib/api';
+    import { auditFetch, hasRole } from '../lib/auth';
+    import {
+      FINDING_TRANSITIONS,
+      findingStatusNeedsComment,
+      jsonRequest,
+      readApiError,
+      type AuditFinding,
+      type ConfigurationBaseline,
+      type FindingStatus,
+      type FindingTracking,
+      type NetworkDevice,
+    } from '../lib/api';
+    import {
+      FINDING_STATUS_LABEL,
+      code,
+      escapeHtml,
+      findingStatusBadge,
+      formatDate,
+      localToIso,
+      severityClass,
+    } from '../lib/format';
 
     let findings: AuditFinding[] = [];
     let devices: NetworkDevice[] = [];
     let baselines: ConfigurationBaseline[] = [];
-    let selectedFindingId: number | null = null;
+    let selectedId: number | null = null;
+    // Filtro por auditoría cuando se llega desde el historial (/results?auditoria=ID).
+    let auditFilter = Number(new URLSearchParams(window.location.search).get('auditoria')) || null;
+    // Evita que una respuesta lenta pise a una más nueva (filtros o selección cambiados rápido).
+    let loadSeq = 0;
 
+    const canTrack = hasRole('ADMINISTRADOR_SISTEMA') || hasRole('ANALISTA_RED') || hasRole('AUDITOR_TECNICO');
+
+    const form = document.querySelector<HTMLFormElement>('#finding-filters');
     const search = document.querySelector<HTMLInputElement>('#finding-search');
-    const severity = document.querySelector<HTMLSelectElement>('#finding-severity');
-
-    const escapeHtml = (value: unknown) =>
-      String(value ?? '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#039;');
-
-    const formatDate = (value: string) => {
-      try {
-        return new Intl.DateTimeFormat('es-AR', {
-          dateStyle: 'short',
-          timeStyle: 'short',
-        }).format(new Date(value));
-      } catch {
-        return value;
-      }
-    };
-
-    const severityClass = (value: string) => ({
-      CRITICA: 'severity-critical',
-      ALTA: 'severity-high',
-      MEDIA: 'severity-medium',
-      BAJA: 'severity-low',
-    }[value] ?? 'severity-medium');
 
     const deviceById = (id: number) => devices.find((item) => item.id === id);
     const baselineById = (id: number) => baselines.find((item) => item.id === id);
 
-    const showError = (message: string) => {
-      const node = document.querySelector<HTMLElement>('#finding-error');
-      if (node) {
-        node.textContent = message;
-        node.classList.remove('is-hidden');
+    const show = (selector: string, message: string | null) => {
+      const node = document.querySelector<HTMLElement>(selector);
+      if (!node) return;
+      node.textContent = message ?? '';
+      node.classList.toggle('is-hidden', !message);
+    };
+    const showError = (message: string | null) => show('#finding-error', message);
+    const showSuccess = (message: string) => {
+      show('#finding-success', message);
+      window.setTimeout(() => show('#finding-success', null), 4200);
+    };
+
+    const buildQuery = () => {
+      const params = new URLSearchParams();
+      if (form) {
+        const data = new FormData(form);
+        for (const name of ['estado', 'severidad', 'dispositivoId', 'baselineId']) {
+          const value = String(data.get(name) ?? '');
+          if (value) params.set(name, value);
+        }
+        const desde = localToIso(String(data.get('desde') ?? ''));
+        const hasta = localToIso(String(data.get('hasta') ?? ''), true);
+        if (desde) params.set('desde', desde);
+        if (hasta) params.set('hasta', hasta);
+        if (desde && hasta && desde > hasta) throw new Error("La fecha 'desde' no puede ser posterior a 'hasta'.");
       }
+      if (auditFilter) params.set('auditoriaId', String(auditFilter));
+      const query = params.toString();
+      return query ? `?${query}` : '';
     };
 
     const renderMetrics = () => {
@@ -162,103 +212,143 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         const node = document.querySelector<HTMLElement>(selector);
         if (node) node.textContent = String(value);
       };
-      set('#metric-findings-total', findings.length);
-      set('#metric-findings-critical', findings.filter((f) => f.severidad === 'CRITICA').length);
-      set('#metric-findings-high', findings.filter((f) => f.severidad === 'ALTA').length);
-      set('#metric-findings-open', findings.filter((f) => f.estado === 'ABIERTO').length);
-
-      const count = document.querySelector<HTMLElement>('#finding-count');
-      if (count) count.textContent = `${findings.length} ${findings.length === 1 ? 'hallazgo' : 'hallazgos'}`;
+      const pending = findings.filter((f) => f.estado === 'ABIERTO' || f.estado === 'EN_REVISION');
+      set('#metric-pending', pending.length);
+      set('#metric-critical', pending.filter((f) => f.severidad === 'CRITICA' || f.severidad === 'ALTA').length);
+      set('#metric-review', findings.filter((f) => f.estado === 'EN_REVISION').length);
+      set('#metric-closed', findings.filter((f) => f.estado === 'RESUELTO' || f.estado === 'ACEPTADO').length);
     };
 
     const render = () => {
       const body = document.querySelector<HTMLTableSectionElement>('#finding-table-body');
-      const empty = document.querySelector<HTMLElement>('#finding-empty');
       if (!body) return;
-
       const term = search?.value.trim().toLowerCase() ?? '';
-      const severityFilter = severity?.value ?? '';
 
-      const filtered = findings.filter((finding) => {
+      const visible = findings.filter((finding) => {
+        if (!term) return true;
         const device = deviceById(finding.dispositivoId);
         const baseline = baselineById(finding.baselineId);
-        const haystack = [
-          finding.codigoRegla,
-          finding.nombreRegla,
-          finding.evidencia,
-          device?.identificador,
-          device?.nombre,
-          baseline?.nombre,
-        ].join(' ').toLowerCase();
-
-        return (!term || haystack.includes(term)) &&
-          (!severityFilter || finding.severidad === severityFilter);
+        return [finding.codigoRegla, finding.nombreRegla, finding.evidencia, device?.identificador, device?.nombre, baseline?.nombre]
+          .join(' ').toLowerCase().includes(term);
       });
 
-      body.innerHTML = filtered.map((finding) => {
+      body.innerHTML = visible.map((finding) => {
         const device = deviceById(finding.dispositivoId);
-        const baseline = baselineById(finding.baselineId);
-        const selected = finding.id === selectedFindingId ? 'is-selected' : '';
-
+        const classes = ['finding-row'];
+        if (finding.id === selectedId) classes.push('is-selected');
+        if (finding.severidad === 'CRITICA' && (finding.estado === 'ABIERTO' || finding.estado === 'EN_REVISION')) {
+          classes.push('is-critical');
+        }
+        if (finding.estado === 'RESUELTO' || finding.estado === 'ACEPTADO') classes.push('is-closed');
         return `
-          <tr class="finding-row ${selected}" data-finding-id="${finding.id}" tabindex="0">
-            <td><code>FND-${String(finding.id).padStart(3, '0')}</code></td>
+          <tr class="${classes.join(' ')}" data-finding-id="${finding.id}" tabindex="0">
+            <td><code>${code('FND', finding.id)}</code></td>
+            <td><strong>${escapeHtml(finding.codigoRegla)}</strong><small>${escapeHtml(finding.nombreRegla)}</small></td>
             <td>
-              <strong>${escapeHtml(finding.codigoRegla)}</strong>
-              <small>${escapeHtml(finding.nombreRegla)}</small>
+              <strong>${escapeHtml(device?.identificador ?? `#${finding.dispositivoId}`)}</strong>
+              <small>criticidad ${escapeHtml(finding.criticidadDispositivo ?? '—')}</small>
             </td>
-            <td>${escapeHtml(device?.identificador ?? `#${finding.dispositivoId}`)}</td>
-            <td>${escapeHtml(baseline?.nombre ?? `#${finding.baselineId}`)}</td>
             <td><span class="severity-badge ${severityClass(finding.severidad)}">${escapeHtml(finding.severidad)}</span></td>
-            <td><span class="status-badge status-strong">${escapeHtml(finding.estado)}</span></td>
-            <td>${escapeHtml(formatDate(finding.fechaDeteccion))}</td>
+            <td>${findingStatusBadge(finding.estado)}</td>
+            <td><span class="log-nowrap">${escapeHtml(formatDate(finding.fechaDeteccion))}</span></td>
           </tr>`;
       }).join('');
 
-      empty?.classList.toggle('is-hidden', filtered.length > 0);
+      const count = document.querySelector<HTMLElement>('#finding-count');
+      if (count) count.textContent = term ? `${visible.length}/${findings.length}` : String(findings.length);
+      const emptyText = document.querySelector<HTMLElement>('#finding-empty-text');
+      if (emptyText) {
+        emptyText.textContent = findings.length === 0 && !term
+          ? 'No hay desvíos registrados para los filtros actuales.'
+          : 'No se encontraron coincidencias.';
+      }
+      document.querySelector('#finding-empty')?.classList.toggle('is-hidden', visible.length > 0);
 
       body.querySelectorAll<HTMLElement>('[data-finding-id]').forEach((row) => {
-        const select = () => selectFinding(Number(row.dataset.findingId));
+        const select = () => void selectFinding(Number(row.dataset.findingId));
         row.addEventListener('click', select);
         row.addEventListener('keydown', (event) => {
-          if (event.key === 'Enter' || event.key === ' ') select();
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            select();
+          }
         });
       });
     };
 
+    const trackingHtml = (history: FindingTracking[]) => history.length === 0
+      ? '<p class="log-muted">Sin cambios de estado desde la detección.</p>'
+      : `<ol class="tracking-list">${history.map((item) => `
+          <li>
+            <div><code>${escapeHtml(item.estadoAnterior)} → ${escapeHtml(item.estadoNuevo)}</code>
+            <small>${escapeHtml(item.usuario)} · ${escapeHtml(formatDate(item.fecha))}</small></div>
+            ${item.comentario ? `<p>${escapeHtml(item.comentario)}</p>` : ''}
+          </li>`).join('')}</ol>`;
+
+    const trackingFormHtml = (finding: AuditFinding) => {
+      if (!canTrack) {
+        return '<p class="log-muted">Tu perfil puede consultar el seguimiento, pero no modificarlo.</p>';
+      }
+      const options = FINDING_TRANSITIONS[finding.estado]
+        .map((status) => `<option value="${status}">${status} · ${FINDING_STATUS_LABEL[status]}</option>`)
+        .join('');
+      return `
+        <form id="tracking-form" class="tracking-form" novalidate>
+          <label class="log-filter">
+            <span>nuevo estado</span>
+            <select id="tracking-status" class="technical-select">${options}</select>
+          </label>
+          <label class="log-filter">
+            <span id="tracking-comment-label">comentario</span>
+            <textarea id="tracking-comment" class="technical-input tracking-comment" rows="3" maxlength="1000"
+              placeholder="Qué se hizo o por qué se acepta el riesgo..."></textarea>
+          </label>
+          <div id="tracking-error" class="alert alert-error is-hidden"></div>
+          <button class="button button-primary button-small button-full" type="submit">Actualizar estado</button>
+        </form>`;
+    };
+
     const selectFinding = async (id: number) => {
-      selectedFindingId = id;
+      selectedId = id;
       render();
 
-      const response = await auditFetch(`/api/findings/${id}`);
-      if (!response.ok) {
-        showError(await readApiError(response));
-        return;
-      }
+      const [findingResponse, historyResponse] = await Promise.all([
+        auditFetch(`/api/findings/${id}`),
+        auditFetch(`/api/findings/${id}/history`),
+      ]);
+      if (id !== selectedId) return; // el usuario ya eligió otro hallazgo
+      if (!findingResponse.ok) return showError(await readApiError(findingResponse));
+      if (!historyResponse.ok) return showError(await readApiError(historyResponse));
 
-      const finding = await response.json() as AuditFinding;
+      const finding = await findingResponse.json() as AuditFinding;
+      const history = await historyResponse.json() as FindingTracking[];
+      if (id !== selectedId) return;
       const device = deviceById(finding.dispositivoId);
       const baseline = baselineById(finding.baselineId);
       document.querySelector('#finding-inspector-empty')?.classList.add('is-hidden');
 
       const content = document.querySelector<HTMLElement>('#finding-inspector-content');
       if (!content) return;
-
       content.innerHTML = `
         <div class="inspector-identity">
-          <span class="inspector-code">FND-${String(finding.id).padStart(3, '0')}</span>
+          <span class="inspector-code">${code('FND', finding.id)}</span>
           <h3>${escapeHtml(finding.nombreRegla)}</h3>
-          <span class="severity-badge ${severityClass(finding.severidad)}">${escapeHtml(finding.severidad)}</span>
+          <div class="badge-row">
+            <span class="severity-badge ${severityClass(finding.severidad)}">${escapeHtml(finding.severidad)}</span>
+            ${findingStatusBadge(finding.estado)}
+          </div>
         </div>
 
         <dl class="technical-definition-list">
           <div><dt>rule.code</dt><dd>${escapeHtml(finding.codigoRegla)}</dd></div>
           <div><dt>condition</dt><dd>${escapeHtml(finding.tipoRegla)}</dd></div>
-          <div><dt>device</dt><dd>${escapeHtml(device?.identificador ?? `#${finding.dispositivoId}`)}</dd></div>
-          <div><dt>baseline</dt><dd>${escapeHtml(baseline?.nombre ?? `#${finding.baselineId}`)}</dd></div>
-          <div><dt>audit.id</dt><dd>AUD-${String(finding.auditoriaId).padStart(3, '0')}</dd></div>
-          <div><dt>status</dt><dd>${escapeHtml(finding.estado)}</dd></div>
+          <div><dt>device</dt><dd>${escapeHtml(device?.identificador ?? `#${finding.dispositivoId}`)} · criticidad ${escapeHtml(finding.criticidadDispositivo ?? '—')}</dd></div>
+          <div><dt>baseline</dt><dd>${escapeHtml(baseline ? `${baseline.nombre} v${baseline.version}` : `#${finding.baselineId}`)}</dd></div>
+          <div><dt>audit.id</dt><dd><a class="inline-link" href="/history?auditoria=${finding.auditoriaId}">${code('AUD', finding.auditoriaId)} →</a></dd></div>
           <div><dt>detected.at</dt><dd>${escapeHtml(formatDate(finding.fechaDeteccion))}</dd></div>
+          <div><dt>status.changed</dt><dd>${finding.fechaEstado
+            ? `${escapeHtml(formatDate(finding.fechaEstado))} · ${escapeHtml(finding.usuarioEstado)}`
+            : 'sin cambios'}</dd></div>
         </dl>
 
         <div class="rule-expression-block">
@@ -282,35 +372,117 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <p>${escapeHtml(finding.recomendacion)}</p>
         </div>
 
-        <a class="button button-ghost button-full" href="/audits">Ver auditoría →</a>
+        <div class="baseline-versions">
+          <span>seguimiento</span>
+          ${trackingHtml(history)}
+        </div>
+
+        ${trackingFormHtml(finding)}
       `;
       content.classList.remove('is-hidden');
+      wireTrackingForm(finding);
     };
 
-    const load = async () => {
-      const [findingResponse, deviceResponse, baselineResponse] = await Promise.all([
-        auditFetch('/api/findings'),
-        auditFetch('/api/devices'),
-        auditFetch('/api/baselines'),
-      ]);
+    const wireTrackingForm = (finding: AuditFinding) => {
+      const trackingForm = document.querySelector<HTMLFormElement>('#tracking-form');
+      const status = document.querySelector<HTMLSelectElement>('#tracking-status');
+      const comment = document.querySelector<HTMLTextAreaElement>('#tracking-comment');
+      if (!trackingForm || !status || !comment) return;
 
-      for (const response of [findingResponse, deviceResponse, baselineResponse]) {
-        if (!response.ok) throw new Error(await readApiError(response));
+      const syncLabel = () => {
+        const needs = findingStatusNeedsComment(status.value as FindingStatus);
+        const label = document.querySelector('#tracking-comment-label');
+        if (label) label.textContent = needs ? 'comentario (obligatorio)' : 'comentario (opcional)';
+        comment.required = needs;
+      };
+      status.addEventListener('change', syncLabel);
+      syncLabel();
+
+      trackingForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        show('#tracking-error', null);
+        const nuevoEstado = status.value as FindingStatus;
+        if (findingStatusNeedsComment(nuevoEstado) && !comment.value.trim()) {
+          show('#tracking-error', `Para pasar a ${nuevoEstado} hay que indicar un comentario.`);
+          return;
+        }
+        const response = await auditFetch(`/api/findings/${finding.id}/status`, jsonRequest('PATCH', {
+          estado: nuevoEstado,
+          comentario: comment.value.trim() || null,
+        }));
+        if (!response.ok) {
+          show('#tracking-error', await readApiError(response));
+          return;
+        }
+        const updated = await response.json() as AuditFinding;
+        findings = findings.map((item) => item.id === updated.id ? updated : item);
+        showSuccess(`${code('FND', updated.id)} ahora está ${updated.estado}.`);
+        renderMetrics();
+        await selectFinding(updated.id);
+      });
+    };
+
+    const loadFindings = async () => {
+      showError(null);
+      let query: string;
+      try {
+        query = buildQuery();
+      } catch (error) {
+        showError(error instanceof Error ? error.message : 'Filtros inválidos.');
+        return;
       }
-
-      findings = await findingResponse.json() as AuditFinding[];
-      devices = await deviceResponse.json() as NetworkDevice[];
-      baselines = await baselineResponse.json() as ConfigurationBaseline[];
-
+      const seq = ++loadSeq;
+      const response = await auditFetch(`/api/findings${query}`);
+      if (seq !== loadSeq) return;
+      if (!response.ok) {
+        showError(await readApiError(response));
+        return;
+      }
+      const data = await response.json() as AuditFinding[];
+      if (seq !== loadSeq) return;
+      findings = data;
+      const endpoint = document.querySelector('#finding-endpoint');
+      if (endpoint) endpoint.textContent = `GET /api/findings${query}`;
       renderMetrics();
       render();
     };
 
-    search?.addEventListener('input', render);
-    severity?.addEventListener('change', render);
+    const loadReferences = async () => {
+      const [deviceResponse, baselineResponse] = await Promise.all([
+        auditFetch('/api/devices'),
+        auditFetch('/api/baselines'),
+      ]);
+      for (const response of [deviceResponse, baselineResponse]) {
+        if (!response.ok) throw new Error(await readApiError(response));
+      }
+      devices = await deviceResponse.json() as NetworkDevice[];
+      baselines = await baselineResponse.json() as ConfigurationBaseline[];
 
-    load().catch((error) => {
-      showError(error instanceof Error ? error.message : 'No se pudieron cargar los hallazgos.');
+      const deviceSelect = form?.querySelector<HTMLSelectElement>('[name=dispositivoId]');
+      devices.forEach((device) => deviceSelect?.add(new Option(`${device.identificador} · ${device.nombre}`, String(device.id))));
+      const baselineSelect = form?.querySelector<HTMLSelectElement>('[name=baselineId]');
+      baselines.forEach((baseline) => baselineSelect?.add(new Option(`${baseline.nombre} v${baseline.version}`, String(baseline.id))));
+    };
+
+    form?.addEventListener('submit', (event) => {
+      event.preventDefault();
+      void loadFindings();
     });
+    document.querySelector('#finding-clear')?.addEventListener('click', () => {
+      form?.reset();
+      if (search) search.value = '';
+      // "Limpiar" también quita el filtro por auditoría que venía en la URL (?auditoria=ID).
+      auditFilter = null;
+      window.history.replaceState(null, '', window.location.pathname);
+      void loadFindings();
+    });
+    search?.addEventListener('input', render);
+
+    loadReferences()
+      .then(loadFindings)
+      .then(() => {
+        if (auditFilter) showSuccess(`Mostrando los hallazgos de ${code('AUD', auditFilter)}.`);
+      })
+      .catch((error) => showError(error instanceof Error ? error.message : 'No se pudieron cargar los hallazgos.'));
   </script>
 </MasterLayout>

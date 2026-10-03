@@ -39,6 +39,7 @@ las tablas del primero, **sin saltear su V1**.
 | V2 | management-service | Bitácora de auditoría de sistema (`bitacora_sistema`, solo inserción) | 2.3a |
 | V3 | management-service | Bitácora de transacciones (`bitacora_transacciones`, compartida, solo inserción) | 2.3b |
 | V2 | audit-core-service | Identificador de dispositivo único por organización, versionado de baselines, reglas VALOR_ESPERADO e impacto | 3 |
+| V3 | audit-core-service | Seguimiento de hallazgos: estados, último cambio y `seguimientos_hallazgo` (solo inserción) | 4 |
 
 La V1 reproduce exactamente la estructura generada por Hibernate en la Entrega 1 (mismas columnas, tipos, nulabilidad,
 claves primarias, únicas y CHECK). Única diferencia deliberada: las claves foráneas tienen nombres legibles

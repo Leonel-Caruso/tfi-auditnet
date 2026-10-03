@@ -1,7 +1,7 @@
 package ar.edu.uai.tfi.auditcore.api.rest;
 
 import ar.edu.uai.tfi.auditcore.api.rest.dto.audit.*;
-import ar.edu.uai.tfi.auditcore.api.rest.dto.finding.HallazgoResponse;
+import ar.edu.uai.tfi.auditcore.api.rest.dto.finding.HallazgoMapper;
 import ar.edu.uai.tfi.auditcore.application.audit.AuditoriaDetalle;
 import ar.edu.uai.tfi.auditcore.application.audit.AuditoriaService;
 import ar.edu.uai.tfi.auditcore.domain.model.*;
@@ -13,9 +13,12 @@ import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import java.net.URI;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Path("/api/audits")
 @Produces(MediaType.APPLICATION_JSON)
@@ -29,6 +32,8 @@ import java.util.NoSuchElementException;
 public class AuditoriaResource {
 
     private static final String ADMIN = "ADMINISTRADOR_SISTEMA";
+    private static final Set<String> SEVERIDADES = new LinkedHashSet<>(List.of("NINGUNA", "BAJA", "MEDIA", "ALTA", "CRITICA"));
+    private static final Set<String> RESULTADOS = new LinkedHashSet<>(List.of("CUMPLE", "CON_HALLAZGOS"));
     private final AuditoriaService service;
     private final JsonWebToken jwt;
 
@@ -37,13 +42,63 @@ public class AuditoriaResource {
         this.jwt = jwt;
     }
 
+    /**
+     * Historial de auditorías (CU-005-002), de la más reciente a la más vieja. Filtros opcionales:
+     * dispositivoId, baselineId, severidad (máxima), resultado, ejecutadoPor, desde y hasta (ISO-8601).
+     */
     @GET
     @Path("/history")
-    public List<AuditoriaResumenResponse> historial() {
-        List<AuditoriaConfiguracion> auditorias = esAdministrador()
-                ? service.listarHistorial()
-                : service.listarHistorialPorOrganizacion(organizationIdActual());
-        return auditorias.stream().map(this::aResumen).toList();
+    public List<AuditoriaResumenResponse> historial(@QueryParam("dispositivoId") String dispositivoId,
+                                                    @QueryParam("baselineId") String baselineId,
+                                                    @QueryParam("severidad") String severidad,
+                                                    @QueryParam("resultado") String resultado,
+                                                    @QueryParam("ejecutadoPor") String ejecutadoPor,
+                                                    @QueryParam("desde") String desde,
+                                                    @QueryParam("hasta") String hasta) {
+        try {
+            FiltroAuditorias filtro = new FiltroAuditorias(
+                    esAdministrador() ? null : organizationIdActual(),
+                    FiltrosConsulta.id(dispositivoId, "dispositivoId"),
+                    FiltrosConsulta.id(baselineId, "baselineId"),
+                    FiltrosConsulta.opcion(severidad, SEVERIDADES, "severidad"),
+                    FiltrosConsulta.opcion(resultado, RESULTADOS, "resultado"),
+                    FiltrosConsulta.texto(ejecutadoPor),
+                    FiltrosConsulta.fecha(desde, "desde"),
+                    FiltrosConsulta.fecha(hasta, "hasta")
+            );
+            return service.buscarHistorial(filtro).stream().map(this::aResumen).toList();
+        } catch (IllegalArgumentException exception) {
+            throw error(Response.Status.BAD_REQUEST, exception.getMessage());
+        }
+    }
+
+    /** Compara la auditoría con la anterior del mismo dispositivo: desvíos nuevos, corregidos y persistentes. */
+    @GET
+    @Path("/{id}/comparison")
+    public ComparacionAuditoriaResponse comparar(@PathParam("id") Long id) {
+        try {
+            AuditoriaService.ComparacionAuditoria comparacion =
+                    service.compararConAnterior(id, esAdministrador() ? null : organizationIdActual());
+            Map<String, Long> resumen = new LinkedHashMap<>();
+            comparacion.resumen().forEach((categoria, cantidad) -> resumen.put(categoria.name(), cantidad));
+            return new ComparacionAuditoriaResponse(
+                    aResumen(comparacion.actual()),
+                    comparacion.anterior() == null ? null : aResumen(comparacion.anterior()),
+                    comparacion.cambios().stream().map(cambio -> new CambioReglaResponse(
+                            cambio.codigoRegla(),
+                            cambio.nombreRegla(),
+                            cambio.severidad() == null ? null : cambio.severidad().name(),
+                            cambio.cumpleAntes(),
+                            cambio.cumpleAhora(),
+                            cambio.categoria().name()
+                    )).toList(),
+                    resumen
+            );
+        } catch (IllegalArgumentException exception) {
+            throw error(Response.Status.BAD_REQUEST, exception.getMessage());
+        } catch (NoSuchElementException exception) {
+            throw error(Response.Status.NOT_FOUND, exception.getMessage());
+        }
     }
 
     @GET
@@ -88,10 +143,23 @@ public class AuditoriaResource {
     }
 
     private AuditoriaDetalleResponse aDetalle(AuditoriaDetalle detalle) {
+        ConfiguracionDispositivo configuracion = detalle.configuracion();
+        BaselineConfiguracion baseline = detalle.baseline();
         return new AuditoriaDetalleResponse(
                 aResumen(detalle.auditoria()),
                 detalle.evaluaciones().stream().map(this::aEvaluacion).toList(),
-                detalle.hallazgos().stream().map(this::aHallazgo).toList()
+                detalle.hallazgos().stream().map(hallazgo -> HallazgoMapper.aResponse(hallazgo, null)).toList(),
+                configuracion == null ? null : new ConfiguracionResumenResponse(
+                        configuracion.id(),
+                        configuracion.version(),
+                        configuracion.formato().name(),
+                        configuracion.nombreFuente(),
+                        configuracion.fechaImportacion(),
+                        configuracion.usuarioResponsable()
+                ),
+                baseline == null ? null : new BaselineResumenResponse(
+                        baseline.id(), baseline.nombre(), baseline.version(), baseline.estado().name()
+                )
         );
     }
 
@@ -125,27 +193,6 @@ public class AuditoriaResource {
                 evaluacion.severidad().name(),
                 evaluacion.cumple(),
                 evaluacion.evidencia()
-        );
-    }
-
-    private HallazgoResponse aHallazgo(HallazgoAuditoria hallazgo) {
-        return new HallazgoResponse(
-                hallazgo.id(),
-                hallazgo.auditoriaId(),
-                hallazgo.reglaId(),
-                hallazgo.dispositivoId(),
-                hallazgo.baselineId(),
-                hallazgo.organizacionId(),
-                hallazgo.codigoRegla(),
-                hallazgo.nombreRegla(),
-                hallazgo.tipoRegla().name(),
-                hallazgo.patron(),
-                hallazgo.severidad().name(),
-                hallazgo.evidencia(),
-                hallazgo.recomendacion(),
-                hallazgo.impacto(),
-                hallazgo.estado().name(),
-                hallazgo.fechaDeteccion()
         );
     }
 

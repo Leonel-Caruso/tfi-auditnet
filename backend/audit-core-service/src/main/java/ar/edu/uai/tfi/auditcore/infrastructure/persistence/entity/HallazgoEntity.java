@@ -75,4 +75,11 @@ public class HallazgoEntity {
 
     @Column(name = "fecha_deteccion", nullable = false)
     public Instant fechaDeteccion;
+
+    /** Último cambio de estado de seguimiento (V3); null si nunca cambió. */
+    @Column(name = "fecha_estado")
+    public Instant fechaEstado;
+
+    @Column(name = "usuario_estado", length = 120)
+    public String usuarioEstado;
 }

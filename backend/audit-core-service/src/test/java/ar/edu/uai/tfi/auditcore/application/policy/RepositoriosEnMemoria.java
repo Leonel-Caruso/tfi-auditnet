@@ -2,6 +2,7 @@ package ar.edu.uai.tfi.auditcore.application.policy;
 
 import ar.edu.uai.tfi.auditcore.domain.model.AuditoriaConfiguracion;
 import ar.edu.uai.tfi.auditcore.domain.model.BaselineConfiguracion;
+import ar.edu.uai.tfi.auditcore.domain.model.FiltroAuditorias;
 import ar.edu.uai.tfi.auditcore.domain.model.ReglaBaseline;
 import ar.edu.uai.tfi.auditcore.domain.repository.AuditoriaRepository;
 import ar.edu.uai.tfi.auditcore.domain.repository.BaselineRepository;
@@ -83,6 +84,7 @@ final class RepositoriosEnMemoria {
         @Override public List<AuditoriaConfiguracion> listarHistorialPorOrganizacion(Long id) { return List.of(); }
         @Override public Optional<AuditoriaConfiguracion> buscarPorId(Long id) { return Optional.empty(); }
         @Override public Optional<AuditoriaConfiguracion> buscarPorIdYOrganizacion(Long id, Long org) { return Optional.empty(); }
+        @Override public List<AuditoriaConfiguracion> buscarHistorial(FiltroAuditorias filtro) { return List.of(); }
         @Override public long contarPorBaseline(Long baselineId) { return porBaseline.getOrDefault(baselineId, 0L); }
         @Override public Map<Long, Long> contarPorBaselines() { return Map.copyOf(porBaseline); }
     }

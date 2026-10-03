@@ -1,13 +1,16 @@
 package ar.edu.uai.tfi.auditcore.infrastructure.persistence.repository;
 
 import ar.edu.uai.tfi.auditcore.domain.model.AuditoriaConfiguracion;
+import ar.edu.uai.tfi.auditcore.domain.model.FiltroAuditorias;
 import ar.edu.uai.tfi.auditcore.domain.repository.AuditoriaRepository;
 import ar.edu.uai.tfi.auditcore.infrastructure.persistence.entity.*;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -68,6 +71,33 @@ public class PanacheAuditoriaRepository implements PanacheRepository<AuditoriaEn
     public Optional<AuditoriaConfiguracion> buscarPorIdYOrganizacion(Long id, Long organizacionId) {
         return find("id = ?1 and organizacion.id = ?2", id, organizacionId)
                 .firstResultOptional().map(this::convertir);
+    }
+
+    @Override
+    public List<AuditoriaConfiguracion> buscarHistorial(FiltroAuditorias filtro) {
+        List<String> condiciones = new ArrayList<>();
+        Map<String, Object> parametros = new HashMap<>();
+        agregar(condiciones, parametros, "organizacion.id = :organizacion", "organizacion", filtro.organizacionId());
+        agregar(condiciones, parametros, "dispositivo.id = :dispositivo", "dispositivo", filtro.dispositivoId());
+        agregar(condiciones, parametros, "baseline.id = :baseline", "baseline", filtro.baselineId());
+        agregar(condiciones, parametros, "severidadMaxima = :severidad", "severidad", filtro.severidadMaxima());
+        agregar(condiciones, parametros, "resultado = :resultado", "resultado", filtro.resultado());
+        agregar(condiciones, parametros, "lower(ejecutadoPor) = :ejecutadoPor", "ejecutadoPor",
+                filtro.ejecutadoPor() == null ? null : filtro.ejecutadoPor().toLowerCase(Locale.ROOT));
+        agregar(condiciones, parametros, "fechaEjecucion >= :desde", "desde", filtro.desde());
+        agregar(condiciones, parametros, "fechaEjecucion <= :hasta", "hasta", filtro.hasta());
+
+        String orden = "order by fechaEjecucion desc, id desc";
+        String consulta = condiciones.isEmpty() ? orden : String.join(" and ", condiciones) + " " + orden;
+        return find(consulta, parametros).list().stream().map(this::convertir).toList();
+    }
+
+    private static void agregar(List<String> condiciones, Map<String, Object> parametros,
+                                String condicion, String nombre, Object valor) {
+        if (valor != null) {
+            condiciones.add(condicion);
+            parametros.put(nombre, valor);
+        }
     }
 
     @Override

@@ -467,7 +467,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <span class="eyebrow">Rule evaluation</span>
           ${evaluations}
         </div>
-        ${audit.totalHallazgos > 0 ? '<a class="button button-ghost button-full" href="/results">Ver hallazgos →</a>' : ''}
+        ${audit.totalHallazgos > 0 ? `<a class="button button-ghost button-full" href="/results?auditoria=${audit.id}">Ver hallazgos →</a>` : ''}
+        <a class="button button-ghost button-full" href="/history?auditoria=${audit.id}">Ver en el historial (evolución) →</a>
       `);
     };
 

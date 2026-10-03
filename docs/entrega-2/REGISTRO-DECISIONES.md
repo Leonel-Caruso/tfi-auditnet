@@ -210,11 +210,50 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
 - **Corrección incluida:** las tablas anchas ya no ensanchan la página en pantallas chicas (se desplazan dentro de su
   panel).
 
+## D-20 · Seguimiento de hallazgos (Bloque 4)
+
+- **Decisión:** el hallazgo tiene un estado de seguimiento (CU-005-001): ABIERTO, EN_REVISION, RESUELTO y ACEPTADO
+  (riesgo aceptado con justificación, por ejemplo una excepción o un falso positivo). La tesis no enumera los estados;
+  se eligieron los mínimos para distinguir pendiente, en curso y cerrado.
+- **Transiciones:** desde ABIERTO o EN_REVISION se puede pasar a cualquier otro estado; un hallazgo cerrado (RESUELTO
+  o ACEPTADO) solo se reabre. Cerrar o reabrir exige comentario.
+- **Trazabilidad:** el hallazgo guarda el último cambio (usuario y fecha) y la tabla `seguimientos_hallazgo` (solo
+  inserción) guarda cada cambio con su comentario. Además se registra CAMBIO_ESTADO en la bitácora de transacciones.
+  La evidencia, la severidad y la regla del hallazgo no se modifican nunca (CU-005-001, reglas 1, 4 y 7).
+- **Permisos:** `PATCH /api/findings/{id}/status` para administrador, analista de redes y auditor técnico; el
+  responsable de gestión IT solo consulta (403). Los no administradores operan solo sobre su organización.
+- **Concurrencia:** el cambio de estado bloquea la fila del hallazgo (`SELECT ... FOR UPDATE`) y verifica que siga en
+  el estado que vio el usuario; si otro usuario lo cambió antes, responde 409 y pide actualizar la pantalla. Así no se
+  pierde un cambio ni queda un seguimiento con un "estado anterior" incorrecto.
+- **Código:** migración audit-core `V3__seguimiento_hallazgos.sql`, `EstadoHallazgo`, `HallazgoService`,
+  `HallazgoResource`, `results.astro`.
+- **Prueba:** 6 tests del servicio (cambio con historial y bitácora, comentario obligatorio sin alterar la evidencia,
+  transiciones inválidas y reapertura, organización ajena, priorización, rango de fechas) y la migración V3 sobre
+  una base con datos (triggers de solo inserción verificados).
+
+## D-21 · Filtros y priorización del lado del servidor (Bloque 4)
+
+- **Decisión:** `GET /api/findings` filtra por estado, severidad, dispositivo, baseline, auditoría y fechas, y
+  `GET /api/audits/history` por dispositivo, baseline, severidad máxima, resultado, usuario y fechas (CU-005-001 y
+  CU-005-002, flujos 8 a 10). Los filtros solo leen; nunca modifican lo guardado.
+- **Priorización de hallazgos:** pendientes primero, luego severidad, luego **criticidad del dispositivo**
+  (CU-002-001, regla 3: la criticidad se usa para priorizar hallazgos) y por último la fecha.
+
+## D-22 · Historial de auditorías con evolución (Bloque 4)
+
+- **Decisión:** nueva pantalla `/history` (ítem HIS). El detalle de una auditoría muestra la configuración evaluada,
+  la baseline usada, las reglas aplicadas y el estado actual de sus hallazgos (CU-005-002). `GET /api/audits/{id}/comparison`
+  la compara con la auditoría anterior del mismo dispositivo regla por regla: desvíos nuevos, corregidos, persistentes,
+  reglas nuevas y retiradas ("comparar resultados en el tiempo", observaciones de CU-005-002; detección de drift).
+- **Base de la comparación:** las copias de cada evaluación (código, nombre, severidad, resultado), así que no la
+  afectan los cambios posteriores de reglas o baselines.
+- **Prueba:** 2 tests del comparador (todas las categorías y su orden; primera auditoría sin anterior).
+
 ## Pendientes detectados (para migraciones futuras)
 
-- Los CHECK generados por Hibernate limitan los estados de `hallazgos_auditoria.estado` (solo `ABIERTO`) y
-  `auditorias_configuracion.estado` (solo `FINALIZADA`). Se amplían con migraciones en el Bloque 4 (seguimiento de
-  hallazgos). Los tipos de regla se resolvieron en el Bloque 3 (D-18).
+- `auditorias_configuracion.estado` solo admite `FINALIZADA` (CHECK de Hibernate). Alcanza mientras la auditoría sea
+  sincrónica; se amplía si se agregan auditorías programadas o en curso. Los estados de hallazgo se resolvieron en el
+  Bloque 4 (D-20) y los tipos de regla en el Bloque 3 (D-18).
 - La PK de `tipos_dispositivo` se llama `id` (el resto usa `id_<entidad>`). **Propuesta:** mantenerla; renombrarla
   no aporta funcionalidad y obliga a recrear tres claves foráneas. Se documenta como excepción en el DER.
 - Desactivar la única baseline activa de un alcance está permitido (con confirmación en la interfaz): las auditorías
@@ -222,3 +261,5 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
 - "Una baseline activa por alcance" se controla en el servicio, no con una restricción de la base: dos solicitudes
   exactamente simultáneas podrían dejar dos activas (el motor usa la de versión más alta). Se acepta por la escala
   del prototipo. Las violaciones de unicidad por concurrencia (identificador, nombre y versión) responden 409.
+- Las consultas de hallazgos y del historial de auditorías no están paginadas (devuelven todo lo que cumple los
+  filtros). Alcanza para el volumen del prototipo; si crece, agregar `page`/`size` en Bloque 8.

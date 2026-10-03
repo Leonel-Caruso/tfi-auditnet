@@ -1,0 +1,395 @@
+---
+import MasterLayout from '../layouts/MasterLayout.astro';
+---
+
+<MasterLayout
+  title="Historial de auditorías"
+  section="Resultados y trazabilidad"
+  description="Auditorías anteriores con la configuración evaluada, la baseline usada, las reglas aplicadas y la evolución respecto de la auditoría previa del mismo dispositivo. Solo lectura."
+>
+  <div id="history-error" class="alert alert-error is-hidden" role="alert"></div>
+
+  <form id="history-filters" class="panel compact-panel log-filters" novalidate>
+    <div class="log-filter-grid">
+      <label class="log-filter">
+        <span>dispositivo</span>
+        <select name="dispositivoId" class="technical-select"><option value="">todos</option></select>
+      </label>
+      <label class="log-filter">
+        <span>baseline</span>
+        <select name="baselineId" class="technical-select"><option value="">todas</option></select>
+      </label>
+      <label class="log-filter">
+        <span>severidad máxima</span>
+        <select name="severidad" class="technical-select">
+          <option value="">todas</option>
+          <option value="CRITICA">CRITICA</option>
+          <option value="ALTA">ALTA</option>
+          <option value="MEDIA">MEDIA</option>
+          <option value="BAJA">BAJA</option>
+          <option value="NINGUNA">NINGUNA</option>
+        </select>
+      </label>
+      <label class="log-filter">
+        <span>resultado</span>
+        <select name="resultado" class="technical-select">
+          <option value="">todos</option>
+          <option value="CON_HALLAZGOS">CON_HALLAZGOS</option>
+          <option value="CUMPLE">CUMPLE</option>
+        </select>
+      </label>
+      <label class="log-filter">
+        <span>ejecutada por</span>
+        <input name="ejecutadoPor" class="technical-input" type="text" maxlength="120" autocomplete="off" placeholder="usuario" />
+      </label>
+      <label class="log-filter">
+        <span>desde</span>
+        <input name="desde" class="technical-input" type="datetime-local" />
+      </label>
+      <label class="log-filter">
+        <span>hasta</span>
+        <input name="hasta" class="technical-input" type="datetime-local" />
+      </label>
+    </div>
+    <div class="log-filter-actions">
+      <button type="button" id="history-clear" class="button button-ghost button-small">Limpiar</button>
+      <button type="submit" class="button button-primary button-small">Consultar</button>
+    </div>
+  </form>
+
+  <section class="finding-workspace log-workspace">
+    <article class="panel finding-list-panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Audit trail</span>
+          <h2>Auditorías registradas</h2>
+        </div>
+        <div class="log-heading-meta">
+          <span id="history-endpoint" class="technical-hint">GET /api/audits/history</span>
+          <span id="history-count" class="counter-chip">—</span>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table finding-table log-table">
+          <thead>
+            <tr>
+              <th>AUDIT</th>
+              <th>FECHA</th>
+              <th>DISPOSITIVO</th>
+              <th>BASELINE</th>
+              <th>REGLAS</th>
+              <th>HALLAZGOS</th>
+              <th>SEV. MÁX.</th>
+              <th>EJECUTÓ</th>
+            </tr>
+          </thead>
+          <tbody id="history-body"></tbody>
+        </table>
+        <div id="history-empty" class="empty-state compact-empty is-hidden">
+          <div>
+            <code>audits.count = 0</code>
+            <p>No se encontraron auditorías para los filtros actuales.</p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <aside class="panel finding-inspector" aria-live="polite">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Historical evidence</span>
+          <h2>Detalle de la auditoría</h2>
+        </div>
+        <span class="inspector-led"></span>
+      </div>
+
+      <div id="history-inspector-empty" class="inspector-empty">
+        <code>select audit;</code>
+        <p>Seleccioná una auditoría para ver la evidencia histórica y su evolución.</p>
+      </div>
+
+      <div id="history-inspector-content" class="inspector-content is-hidden"></div>
+    </aside>
+  </section>
+
+  <script>
+    import { auditFetch } from '../lib/auth';
+    import {
+      readApiError,
+      type AuditComparison,
+      type AuditDetail,
+      type AuditSummary,
+      type ConfigurationBaseline,
+      type DeviceConfiguration,
+      type NetworkDevice,
+      type RuleChangeCategory,
+    } from '../lib/api';
+    import { code, escapeHtml, findingStatusBadge, formatDate, localToIso, severityClass } from '../lib/format';
+
+    let audits: AuditSummary[] = [];
+    let devices: NetworkDevice[] = [];
+    let baselines: ConfigurationBaseline[] = [];
+    let selectedId: number | null = null;
+    // Evita que una respuesta lenta pise a una más nueva (filtros o selección cambiados rápido).
+    let loadSeq = 0;
+
+    const params = new URLSearchParams(window.location.search);
+    const initialAudit = Number(params.get('auditoria')) || null;
+    const initialDevice = Number(params.get('dispositivo')) || null;
+
+    const form = document.querySelector<HTMLFormElement>('#history-filters');
+    const deviceById = (id: number) => devices.find((item) => item.id === id);
+    const baselineById = (id: number) => baselines.find((item) => item.id === id);
+
+    const showError = (message: string | null) => {
+      const node = document.querySelector<HTMLElement>('#history-error');
+      if (!node) return;
+      node.textContent = message ?? '';
+      node.classList.toggle('is-hidden', !message);
+    };
+
+    const CATEGORY_LABEL: Record<RuleChangeCategory, string> = {
+      NUEVO_HALLAZGO: 'nuevos desvíos',
+      CORREGIDO: 'corregidos',
+      PERSISTENTE: 'persisten',
+      SIN_CAMBIO: 'sin cambios',
+      REGLA_NUEVA: 'reglas nuevas',
+      REGLA_RETIRADA: 'reglas retiradas',
+    };
+
+    const buildQuery = () => {
+      const query = new URLSearchParams();
+      if (!form) return '';
+      const data = new FormData(form);
+      for (const name of ['dispositivoId', 'baselineId', 'severidad', 'resultado', 'ejecutadoPor']) {
+        const value = String(data.get(name) ?? '').trim();
+        if (value) query.set(name, value);
+      }
+      const desde = localToIso(String(data.get('desde') ?? ''));
+      const hasta = localToIso(String(data.get('hasta') ?? ''), true);
+      if (desde) query.set('desde', desde);
+      if (hasta) query.set('hasta', hasta);
+      if (desde && hasta && desde > hasta) throw new Error("La fecha 'desde' no puede ser posterior a 'hasta'.");
+      const text = query.toString();
+      return text ? `?${text}` : '';
+    };
+
+    const render = () => {
+      const body = document.querySelector<HTMLTableSectionElement>('#history-body');
+      if (!body) return;
+      body.innerHTML = audits.map((audit) => {
+        const device = deviceById(audit.dispositivoId);
+        const baseline = baselineById(audit.baselineId);
+        return `
+          <tr class="finding-row ${audit.id === selectedId ? 'is-selected' : ''}" data-audit-id="${audit.id}" tabindex="0">
+            <td><code>${code('AUD', audit.id)}</code></td>
+            <td><span class="log-nowrap">${escapeHtml(formatDate(audit.fechaEjecucion))}</span></td>
+            <td><strong>${escapeHtml(device?.identificador ?? `#${audit.dispositivoId}`)}</strong><small>${escapeHtml(device?.nombre ?? '')}</small></td>
+            <td>${escapeHtml(baseline ? `${baseline.nombre} v${baseline.version}` : `#${audit.baselineId}`)}</td>
+            <td><code>${audit.reglasCumplidas}/${audit.totalReglas}</code></td>
+            <td><strong>${audit.totalHallazgos}</strong></td>
+            <td>${audit.severidadMaxima === 'NINGUNA'
+              ? '<span class="status-badge status-ready">NINGUNA</span>'
+              : `<span class="severity-badge ${severityClass(audit.severidadMaxima)}">${escapeHtml(audit.severidadMaxima)}</span>`}</td>
+            <td><small>${escapeHtml(audit.ejecutadoPor)}</small></td>
+          </tr>`;
+      }).join('');
+
+      const count = document.querySelector('#history-count');
+      if (count) count.textContent = String(audits.length);
+      document.querySelector('#history-empty')?.classList.toggle('is-hidden', audits.length > 0);
+
+      body.querySelectorAll<HTMLElement>('[data-audit-id]').forEach((row) => {
+        const select = () => void selectAudit(Number(row.dataset.auditId));
+        row.addEventListener('click', select);
+        row.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            select();
+          }
+        });
+      });
+    };
+
+    const comparisonHtml = (comparison: AuditComparison) => {
+      if (!comparison.anterior) {
+        return '<p class="log-muted">Es la primera auditoría de este dispositivo: no hay una anterior para comparar.</p>';
+      }
+      const chips = (Object.keys(CATEGORY_LABEL) as RuleChangeCategory[])
+        .filter((category) => (comparison.resumen[category] ?? 0) > 0)
+        .map((category) => `<span class="compare-chip compare-${category.toLowerCase()}">${comparison.resumen[category]} ${CATEGORY_LABEL[category]}</span>`)
+        .join('');
+      const relevant = comparison.cambios.filter((change) => change.categoria !== 'SIN_CAMBIO');
+      const items = relevant.map((change) => `
+        <li class="compare-item compare-${change.categoria.toLowerCase()}">
+          <code>${escapeHtml(change.codigoRegla)}</code>
+          <span>${escapeHtml(change.nombreRegla)}</span>
+          <small>${escapeHtml(CATEGORY_LABEL[change.categoria])}${change.severidad ? ` · ${escapeHtml(change.severidad)}` : ''}</small>
+        </li>`).join('');
+      return `
+        <p class="log-muted">Respecto de ${code('AUD', comparison.anterior.id)} del ${escapeHtml(formatDate(comparison.anterior.fechaEjecucion))}${
+          comparison.anterior.baselineId !== comparison.actual.baselineId ? ' (con otra versión de baseline)' : ''}:</p>
+        <div class="compare-chips">${chips}</div>
+        ${items ? `<ul class="compare-list">${items}</ul>` : '<p class="log-muted">Todas las reglas dieron el mismo resultado.</p>'}`;
+    };
+
+    const selectAudit = async (id: number) => {
+      selectedId = id;
+      render();
+      const [detailResponse, comparisonResponse] = await Promise.all([
+        auditFetch(`/api/audits/${id}`),
+        auditFetch(`/api/audits/${id}/comparison`),
+      ]);
+      if (id !== selectedId) return; // el usuario ya eligió otra auditoría
+      if (!detailResponse.ok) return showError(await readApiError(detailResponse));
+      if (!comparisonResponse.ok) return showError(await readApiError(comparisonResponse));
+      const detail = await detailResponse.json() as AuditDetail;
+      const comparison = await comparisonResponse.json() as AuditComparison;
+      if (id !== selectedId) return;
+      const audit = detail.auditoria;
+      const device = deviceById(audit.dispositivoId);
+
+      const evaluations = detail.evaluaciones.map((evaluation) => `
+        <div class="evaluation-item ${evaluation.cumple ? 'is-pass' : 'is-fail'}">
+          <div>
+            <code>${escapeHtml(evaluation.codigoRegla)}</code>
+            <strong>${escapeHtml(evaluation.nombreRegla)}</strong>
+          </div>
+          <span class="status-badge ${evaluation.cumple ? 'status-ready' : 'status-strong'}">${evaluation.cumple ? 'CUMPLE' : 'HALLAZGO'}</span>
+          <small>${escapeHtml(evaluation.patron)} — ${escapeHtml(evaluation.evidencia)}</small>
+        </div>`).join('');
+
+      const findings = detail.hallazgos.map((finding) => `
+        <li class="compare-item">
+          <code>${code('FND', finding.id)}</code>
+          <span>${escapeHtml(finding.codigoRegla)}</span>
+          ${findingStatusBadge(finding.estado)}
+        </li>`).join('');
+
+      const incomplete = !detail.configuracion || !detail.baseline;
+      const content = document.querySelector<HTMLElement>('#history-inspector-content');
+      if (!content) return;
+      document.querySelector('#history-inspector-empty')?.classList.add('is-hidden');
+      content.innerHTML = `
+        <div class="inspector-identity">
+          <span class="inspector-code">${code('AUD', audit.id)} · ${escapeHtml(formatDate(audit.fechaEjecucion))}</span>
+          <h3>${escapeHtml(device?.identificador ?? `Dispositivo #${audit.dispositivoId}`)}</h3>
+          <span class="status-badge ${audit.resultado === 'CUMPLE' ? 'status-ready' : 'status-strong'}">${escapeHtml(audit.resultado)}</span>
+        </div>
+        ${incomplete ? '<div class="alert alert-error">La auditoría tiene datos incompletos por un error previo; se muestra la evidencia disponible.</div>' : ''}
+        <dl class="technical-definition-list">
+          <div><dt>baseline</dt><dd>${detail.baseline ? `${escapeHtml(detail.baseline.nombre)} v${detail.baseline.version}` : `#${audit.baselineId}`}</dd></div>
+          <div><dt>config</dt><dd>${detail.configuracion
+            ? `${code('CFG', detail.configuracion.id)} · v${detail.configuracion.version} · ${escapeHtml(detail.configuracion.nombreFuente)}`
+            : code('CFG', audit.configuracionId)}</dd></div>
+          <div><dt>config.imported</dt><dd>${detail.configuracion
+            ? `${escapeHtml(formatDate(detail.configuracion.fechaImportacion))} · ${escapeHtml(detail.configuracion.usuarioResponsable)}`
+            : '—'}</dd></div>
+          <div><dt>rules.pass</dt><dd>${audit.reglasCumplidas}/${audit.totalReglas}</dd></div>
+          <div><dt>executed.by</dt><dd>${escapeHtml(audit.ejecutadoPor)}</dd></div>
+        </dl>
+
+        <div class="baseline-versions">
+          <span>evolución</span>
+          ${comparisonHtml(comparison)}
+        </div>
+
+        <div class="evaluation-list">
+          <span class="eyebrow">Reglas aplicadas</span>
+          ${evaluations}
+        </div>
+
+        ${findings ? `
+        <div class="baseline-versions">
+          <span>hallazgos generados (estado actual)</span>
+          <ul class="compare-list">${findings}</ul>
+          <a class="button button-ghost button-small button-full" href="/results?auditoria=${audit.id}">Ver hallazgos de esta auditoría →</a>
+        </div>` : ''}
+
+        ${detail.configuracion ? `
+        <button id="show-config" class="button button-ghost button-small button-full" type="button">Ver configuración evaluada</button>
+        <div id="config-block" class="config-preview is-hidden">
+          <span>normalized (${code('CFG', detail.configuracion.id)})</span>
+          <pre id="config-content">cargando...</pre>
+        </div>` : ''}
+        <button id="filter-device" class="button button-ghost button-small button-full" type="button">Ver solo el historial de este dispositivo</button>
+      `;
+      content.classList.remove('is-hidden');
+
+      document.querySelector('#show-config')?.addEventListener('click', async () => {
+        const block = document.querySelector('#config-block');
+        const pre = document.querySelector('#config-content');
+        block?.classList.toggle('is-hidden');
+        if (!detail.configuracion || !pre || pre.textContent !== 'cargando...') return;
+        const response = await auditFetch(`/api/configurations/${detail.configuracion.id}`);
+        pre.textContent = response.ok
+          ? (await response.json() as DeviceConfiguration).contenidoNormalizado
+          : await readApiError(response);
+      });
+      document.querySelector('#filter-device')?.addEventListener('click', () => {
+        const select = form?.querySelector<HTMLSelectElement>('[name=dispositivoId]');
+        if (select) select.value = String(audit.dispositivoId);
+        void load();
+      });
+    };
+
+    const load = async () => {
+      showError(null);
+      let query: string;
+      try {
+        query = buildQuery();
+      } catch (error) {
+        showError(error instanceof Error ? error.message : 'Filtros inválidos.');
+        return;
+      }
+      const seq = ++loadSeq;
+      const response = await auditFetch(`/api/audits/history${query}`);
+      if (seq !== loadSeq) return;
+      if (!response.ok) {
+        showError(await readApiError(response));
+        return;
+      }
+      const data = await response.json() as AuditSummary[];
+      if (seq !== loadSeq) return;
+      audits = data;
+      const endpoint = document.querySelector('#history-endpoint');
+      if (endpoint) endpoint.textContent = `GET /api/audits/history${query}`;
+      render();
+    };
+
+    const loadReferences = async () => {
+      const [deviceResponse, baselineResponse] = await Promise.all([
+        auditFetch('/api/devices'),
+        auditFetch('/api/baselines'),
+      ]);
+      for (const response of [deviceResponse, baselineResponse]) {
+        if (!response.ok) throw new Error(await readApiError(response));
+      }
+      devices = await deviceResponse.json() as NetworkDevice[];
+      baselines = await baselineResponse.json() as ConfigurationBaseline[];
+      const deviceSelect = form?.querySelector<HTMLSelectElement>('[name=dispositivoId]');
+      devices.forEach((device) => deviceSelect?.add(new Option(`${device.identificador} · ${device.nombre}`, String(device.id))));
+      const baselineSelect = form?.querySelector<HTMLSelectElement>('[name=baselineId]');
+      baselines.forEach((baseline) => baselineSelect?.add(new Option(`${baseline.nombre} v${baseline.version}`, String(baseline.id))));
+      if (initialDevice && deviceSelect) deviceSelect.value = String(initialDevice);
+    };
+
+    form?.addEventListener('submit', (event) => {
+      event.preventDefault();
+      void load();
+    });
+    document.querySelector('#history-clear')?.addEventListener('click', () => {
+      form?.reset();
+      window.history.replaceState(null, '', window.location.pathname);
+      void load();
+    });
+
+    loadReferences()
+      .then(load)
+      .then(() => {
+        if (initialAudit) void selectAudit(initialAudit);
+      })
+      .catch((error) => showError(error instanceof Error ? error.message : 'No se pudo cargar el historial.'));
+  </script>
+</MasterLayout>
