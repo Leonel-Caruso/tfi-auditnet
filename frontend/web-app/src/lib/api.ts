@@ -94,6 +94,31 @@ export type SecuritySummary = {
   desde: string;
 };
 
+// Bloque 7: repositorio de archivos y respaldos (audit-core-service, /api/system).
+export type StoredFile = {
+  id: number;
+  tipo: 'CONFIGURACION' | 'REPORTE' | 'RESPALDO';
+  entidadId: number | null;
+  organizacionId: number | null;
+  nombre: string;
+  tipoContenido: string;
+  tamanioBytes: number;
+  sha256: string;
+  fecha: string;
+  usuario: string;
+  detalle: string | null;
+};
+
+export type StorageStatus = {
+  configurado: boolean;
+  contenedor: string;
+  archivos: Record<'CONFIGURACION' | 'REPORTE' | 'RESPALDO', { cantidad: number; bytes: number }>;
+  configuracionesPendientes: number;
+  reportesPendientes: number;
+};
+
+export type StorageSyncResult = { configuraciones: number; reportes: number; pendientes: number };
+
 export const ROLE_LABEL: Record<string, string> = {
   ADMINISTRADOR_SISTEMA: 'Administrador del sistema',
   ANALISTA_RED: 'Analista de redes',

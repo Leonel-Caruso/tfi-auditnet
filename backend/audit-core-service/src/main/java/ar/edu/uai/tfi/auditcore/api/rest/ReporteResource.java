@@ -1,5 +1,8 @@
 package ar.edu.uai.tfi.auditcore.api.rest;
 
+import ar.edu.uai.tfi.auditcore.application.port.AlmacenArchivosPort;
+import ar.edu.uai.tfi.auditcore.application.storage.RepositorioArchivosService;
+import ar.edu.uai.tfi.auditcore.domain.model.TipoArchivo;
 import ar.edu.uai.tfi.auditcore.api.rest.dto.report.GenerarReporteRequest;
 import ar.edu.uai.tfi.auditcore.api.rest.dto.report.ReporteResponse;
 import ar.edu.uai.tfi.auditcore.api.rest.dto.report.ReporteResumenResponse;
@@ -40,10 +43,12 @@ public class ReporteResource {
 
     private final ReporteService service;
     private final JsonWebToken jwt;
+    private final RepositorioArchivosService repositorioArchivos;
 
-    public ReporteResource(ReporteService service, JsonWebToken jwt) {
+    public ReporteResource(ReporteService service, JsonWebToken jwt, RepositorioArchivosService repositorioArchivos) {
         this.service = service;
         this.jwt = jwt;
+        this.repositorioArchivos = repositorioArchivos;
     }
 
     /**
@@ -95,7 +100,20 @@ public class ReporteResource {
     public Response descargar(@PathParam("id") Long id) {
         return ejecutar(() -> {
             ReporteAuditoria reporte = service.buscar(id, UsuarioAutenticado.organizacion(jwt));
-            return Response.ok(ExportadorCsv.exportar(reporte))
+            // Bloque 7: si el CSV está en el repositorio de archivos se entrega ese (verificado contra su SHA-256);
+            // los reportes anteriores al repositorio se arman de nuevo con los mismos datos.
+            Optional<byte[]> guardado;
+            try {
+                guardado = repositorioArchivos.buscar(TipoArchivo.REPORTE, reporte.id())
+                        .map(archivo -> repositorioArchivos.descargar(TipoArchivo.REPORTE, reporte.id()).contenido());
+            } catch (AlmacenArchivosPort.AlmacenamientoException noDisponible) {
+                // Si el repositorio no responde, el reporte se sigue pudiendo descargar armado con los mismos datos.
+                guardado = Optional.empty();
+            }
+            Response.ResponseBuilder respuesta = guardado.isPresent()
+                    ? Response.ok(guardado.get()).header("X-AuditNet-Integridad", "VERIFICADO")
+                    : Response.ok(ExportadorCsv.exportar(reporte)).header("X-AuditNet-Integridad", "SIN_VERIFICAR");
+            return respuesta
                     .type("text/csv; charset=UTF-8")
                     .header("Content-Disposition",
                             "attachment; filename=\"reporte-" + String.format("REP-%03d", reporte.id()) + ".csv\"")

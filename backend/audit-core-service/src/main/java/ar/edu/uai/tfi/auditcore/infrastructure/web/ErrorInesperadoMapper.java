@@ -1,5 +1,7 @@
 package ar.edu.uai.tfi.auditcore.infrastructure.web;
 
+import ar.edu.uai.tfi.auditcore.application.port.AlmacenArchivosPort;
+import ar.edu.uai.tfi.auditcore.application.storage.RepositorioArchivosService;
 import ar.edu.uai.tfi.auditcore.application.port.BitacoraExcepcionesPort;
 import ar.edu.uai.tfi.auditcore.domain.model.NivelExcepcion;
 import jakarta.inject.Inject;
@@ -38,6 +40,25 @@ public class ErrorInesperadoMapper {
             return webError.getResponse();
         }
 
+        if (error instanceof AlmacenArchivosPort.AlmacenamientoException almacenamiento && almacenamiento.estadoHttp() == 409) {
+            // Ya hay un archivo distinto con ese nombre: no es un corte del servicio, reintentar no lo resuelve.
+            bitacora.registrar(error, NivelExcepcion.ERROR, 409);
+            return conMensaje(Response.Status.CONFLICT, "ARCHIVO_EXISTENTE", almacenamiento.getMessage());
+        }
+
+        if (error instanceof AlmacenArchivosPort.AlmacenamientoException almacenamiento) {
+            // Bloque 7: el repositorio de archivos no respondió. La operación se revirtió; se puede reintentar.
+            bitacora.registrar(error, NivelExcepcion.ERROR, 503);
+            return conMensaje(Response.Status.SERVICE_UNAVAILABLE, "REPOSITORIO_NO_DISPONIBLE",
+                    almacenamiento.getMessage() + " La operación no se guardó; intentá de nuevo en unos minutos.");
+        }
+
+        if (error instanceof RepositorioArchivosService.ArchivoAlteradoException alterado) {
+            // Bloque 7: el archivo no coincide con su hash (RNF-012). Es un incidente de integridad: nivel ERROR.
+            bitacora.registrar(error, NivelExcepcion.ERROR, 409);
+            return conMensaje(Response.Status.CONFLICT, "ARCHIVO_ALTERADO", alterado.getMessage());
+        }
+
         if (esViolacionDeRestriccion(error)) {
             // Dos solicitudes simultáneas pasaron la validación del servicio y la base rechazó la segunda
             // (por ejemplo, el mismo identificador en la misma organización): es un conflicto, no un error interno.
@@ -63,6 +84,14 @@ public class ErrorInesperadoMapper {
                 .type(MediaType.APPLICATION_JSON)
                 .entity(cuerpo)
                 .build();
+    }
+
+    private Response conMensaje(Response.Status estado, String codigo, String mensaje) {
+        Map<String, String> cuerpo = new LinkedHashMap<>();
+        cuerpo.put("error", codigo);
+        cuerpo.put("message", mensaje);
+        cuerpo.put("correlacion", contexto.correlacion());
+        return Response.status(estado).type(MediaType.APPLICATION_JSON).entity(cuerpo).build();
     }
 
     /** Busca en la cadena de causas una violación de restricción de Hibernate (única, FK o CHECK). */

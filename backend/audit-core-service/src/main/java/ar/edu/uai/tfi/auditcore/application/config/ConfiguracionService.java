@@ -1,5 +1,6 @@
 package ar.edu.uai.tfi.auditcore.application.config;
 
+import ar.edu.uai.tfi.auditcore.application.storage.RepositorioArchivosService;
 import ar.edu.uai.tfi.auditcore.domain.model.OperacionTransaccion;
 import ar.edu.uai.tfi.auditcore.domain.model.Transaccion;
 import ar.edu.uai.tfi.auditcore.application.port.TrazabilidadPort;
@@ -31,17 +32,20 @@ public class ConfiguracionService {
     private final DispositivoRepository dispositivoRepository;
     private final NormalizacionConfiguracionService normalizacionService;
     private final TrazabilidadPort trazabilidad;
+    private final RepositorioArchivosService repositorioArchivos;
 
     public ConfiguracionService(
             ConfiguracionRepository configuracionRepository,
             DispositivoRepository dispositivoRepository,
             NormalizacionConfiguracionService normalizacionService,
-            TrazabilidadPort trazabilidad
+            TrazabilidadPort trazabilidad,
+            RepositorioArchivosService repositorioArchivos
     ) {
         this.configuracionRepository = configuracionRepository;
         this.dispositivoRepository = dispositivoRepository;
         this.normalizacionService = normalizacionService;
         this.trazabilidad = trazabilidad;
+        this.repositorioArchivos = repositorioArchivos;
     }
 
     @Transactional
@@ -137,6 +141,9 @@ public class ConfiguracionService {
         );
 
         ConfiguracionDispositivo creada = configuracionRepository.guardar(nueva);
+        // Bloque 7: el archivo original va al repositorio de archivos en la misma operación. Si el repositorio falla,
+        // la importación se revierte para no dejar una configuración sin su evidencia.
+        repositorioArchivos.guardarConfiguracion(creada, actorSeguro(actor));
         // En la bitácora no se copia la configuración completa (puede ser extensa y sensible):
         // se registra un resumen con el hash SHA-256 del contenido original como evidencia de integridad.
         trazabilidad.registrar(new Transaccion(

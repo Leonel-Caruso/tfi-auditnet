@@ -1,5 +1,7 @@
 package ar.edu.uai.tfi.auditcore.api.rest;
 
+import ar.edu.uai.tfi.auditcore.application.storage.RepositorioArchivosService;
+import ar.edu.uai.tfi.auditcore.domain.model.TipoArchivo;
 import ar.edu.uai.tfi.auditcore.api.rest.dto.config.ConfiguracionResponse;
 import ar.edu.uai.tfi.auditcore.application.config.ConfiguracionService;
 import ar.edu.uai.tfi.auditcore.domain.model.ConfiguracionDispositivo;
@@ -29,10 +31,13 @@ public class ConfiguracionResource {
 
     private final ConfiguracionService service;
     private final JsonWebToken jwt;
+    private final RepositorioArchivosService repositorioArchivos;
 
-    public ConfiguracionResource(ConfiguracionService service, JsonWebToken jwt) {
+    public ConfiguracionResource(ConfiguracionService service, JsonWebToken jwt,
+                                 RepositorioArchivosService repositorioArchivos) {
         this.service = service;
         this.jwt = jwt;
+        this.repositorioArchivos = repositorioArchivos;
     }
 
     @GET
@@ -52,6 +57,33 @@ public class ConfiguracionResource {
                     ? service.buscarPorId(id)
                     : service.buscarPorIdYOrganizacion(id, organizationIdActual());
             return aResponse(configuracion);
+        } catch (IllegalArgumentException exception) {
+            throw error(Response.Status.BAD_REQUEST, exception.getMessage());
+        } catch (NoSuchElementException exception) {
+            throw error(Response.Status.NOT_FOUND, exception.getMessage());
+        }
+    }
+
+    /**
+     * Archivo original de la configuración, leído del repositorio de archivos y verificado contra su SHA-256
+     * (Bloque 7). Los encabezados X-AuditNet-SHA256 y X-AuditNet-Integridad informan el resultado.
+     */
+    @GET
+    @Path("/{id}/file")
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, MediaType.APPLICATION_JSON})
+    public Response descargarArchivo(@PathParam("id") Long id) {
+        try {
+            ConfiguracionDispositivo configuracion = esAdministrador()
+                    ? service.buscarPorId(id)
+                    : service.buscarPorIdYOrganizacion(id, organizationIdActual());
+            RepositorioArchivosService.ArchivoVerificado archivo =
+                    repositorioArchivos.descargar(TipoArchivo.CONFIGURACION, configuracion.id());
+            return Response.ok(archivo.contenido())
+                    .type(archivo.archivo().tipoContenido())
+                    .header("Content-Disposition", "attachment; filename=\"" + archivo.archivo().nombre() + "\"")
+                    .header("X-AuditNet-SHA256", archivo.archivo().sha256())
+                    .header("X-AuditNet-Integridad", "VERIFICADO")
+                    .build();
         } catch (IllegalArgumentException exception) {
             throw error(Response.Status.BAD_REQUEST, exception.getMessage());
         } catch (NoSuchElementException exception) {

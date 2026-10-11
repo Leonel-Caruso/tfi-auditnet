@@ -30,6 +30,18 @@ services:
       timeout: 5s
       retries: 10
 
+  # Bloque 7: emulador oficial de Azure Blob Storage para el repositorio de archivos (en Azure: Blob Storage).
+  # Usa la cuenta pública de desarrollo devstoreaccount1; audit-core se conecta solo en el perfil dev.
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite:3.33.0
+    container_name: tfi-azurite
+    command: ["azurite-blob", "--blobHost", "0.0.0.0", "--blobPort", "10000", "--location", "/data"]
+    ports:
+      - "${AZURITE_PORT:-10000}:10000"
+    volumes:
+      - tfi_azurite_data:/data
+
 volumes:
   tfi_postgres_data:
   tfi_mongo_data:
+  tfi_azurite_data:

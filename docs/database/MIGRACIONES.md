@@ -44,6 +44,7 @@ las tablas del primero, **sin saltear su V1**.
 | V5 | audit-core-service | Reportes de auditoría (`reportes_auditoria` y `reportes_auditoria_auditorias`, solo inserción) | 5 |
 | V6 | audit-core-service | Cierra las alertas duplicadas que dejó V4 (una vigente por dispositivo y regla, D-26) | 5 |
 | V4 | management-service | Seguridad de cuentas: intentos fallidos, bloqueo temporal, último acceso y `sesiones_validas_desde` en `usuarios`; descripciones de los cuatro perfiles (D-29 a D-31) | 6 |
+| V7 | audit-core-service | Repositorio de archivos: catálogo `archivos_repositorio` (configuraciones, reportes y respaldos con SHA-256, solo inserción) (D-35) | 7 |
 
 La V1 reproduce exactamente la estructura generada por Hibernate en la Entrega 1 (mismas columnas, tipos, nulabilidad,
 claves primarias, únicas y CHECK). Única diferencia deliberada: las claves foráneas tienen nombres legibles
@@ -65,3 +66,8 @@ Consultar el historial aplicado:
 SELECT version, description, installed_on, success FROM flyway_historial_management ORDER BY installed_rank;
 SELECT version, description, installed_on, success FROM flyway_historial_audit_core ORDER BY installed_rank;
 ```
+
+## Respaldos y recuperación (Bloque 7)
+
+El historial de Flyway permite reconstruir la **estructura** de cualquier versión (las migraciones están en Git). Los
+**datos** se recuperan con los respaldos lógicos que genera el panel de administración: ver `RESPALDOS.md`.

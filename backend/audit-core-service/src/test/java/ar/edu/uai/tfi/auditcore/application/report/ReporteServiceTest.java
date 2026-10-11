@@ -2,6 +2,8 @@ package ar.edu.uai.tfi.auditcore.application.report;
 
 import ar.edu.uai.tfi.auditcore.domain.model.*;
 import ar.edu.uai.tfi.auditcore.support.EnMemoria;
+import ar.edu.uai.tfi.auditcore.application.storage.RegistroArchivos;
+import ar.edu.uai.tfi.auditcore.application.storage.RepositorioArchivosService;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -27,8 +29,11 @@ class ReporteServiceTest {
     private final EnMemoria.Configuraciones configuraciones = new EnMemoria.Configuraciones();
     private final EnMemoria.Reportes reportes = new EnMemoria.Reportes();
     private final List<Transaccion> bitacora = new ArrayList<>();
+    private final EnMemoria.Almacen almacen = new EnMemoria.Almacen();
+    private final EnMemoria.Archivos archivos = new EnMemoria.Archivos(configuraciones, reportes);
     private final ReporteService service = new ReporteService(auditorias, hallazgos, dispositivos, baselines,
-            configuraciones, reportes, bitacora::add);
+            configuraciones, reportes, bitacora::add,
+            new RepositorioArchivosService(almacen, archivos, configuraciones, reportes, new RegistroArchivos(archivos, t -> {})));
 
     ReporteServiceTest() {
         dispositivos.items.add(dispositivo(10L, 2L, 1L, CriticidadDispositivo.ALTA));
@@ -139,5 +144,19 @@ class ReporteServiceTest {
         assertTrue(csv.contains("\"'=HYPERLINK(\"\"http://x\"\")\nlinea 2\""));
         assertEquals("'+1", ExportadorCsv.celda("+1"));
         assertEquals("texto", ExportadorCsv.celda("texto"));
+    }
+
+    @Test
+    void elCsvDelReporteQuedaEnElRepositorioDeArchivos() {
+        ReporteAuditoria reporte = service.generar(criterios(2L, List.of(), List.of(), DESDE, HASTA), "auditor", AHORA)
+                .orElseThrow();
+
+        ArchivoRepositorio archivo = archivos.items.get(0);
+        assertEquals(TipoArchivo.REPORTE, archivo.tipo());
+        assertEquals("REP-001.csv", archivo.nombre());
+        assertEquals("reportes/org-2/REP-001-" + archivo.sha256().substring(0, 12) + ".csv", archivo.ruta());
+        byte[] csv = ExportadorCsv.exportar(reporte).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        assertArrayEquals(csv, almacen.archivos.get(archivo.ruta()));
+        assertEquals(RepositorioArchivosService.sha256(csv), archivo.sha256());
     }
 }

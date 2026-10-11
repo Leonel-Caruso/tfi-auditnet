@@ -46,6 +46,63 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     </div>
   </section>
 
+  <section class="two-column dashboard-row">
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Almacenamiento</span>
+          <h2>Repositorio de archivos</h2>
+        </div>
+        <span id="storage-state" class="status-badge status-next">—</span>
+      </div>
+      <p id="storage-summary" class="log-muted">Configuraciones importadas y reportes generados, con su hash SHA-256.</p>
+      <div id="storage-totals" class="storage-totals"></div>
+      <div class="storage-pending">
+        <p id="storage-pending" class="log-muted"></p>
+        <button id="storage-sync" class="button button-ghost button-small" type="button" disabled>Subir pendientes</button>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Respaldos</span>
+          <h2>Copias de la base de datos</h2>
+        </div>
+        <button id="backup-create" class="button button-primary button-small" type="button">Generar respaldo</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table log-table">
+          <thead><tr><th>RESPALDO</th><th>TAMAÑO</th><th aria-label="Descargar"></th></tr></thead>
+          <tbody id="backup-list"></tbody>
+        </table>
+        <div id="backup-empty" class="empty-state compact-empty is-hidden">
+          <div><code>respaldos = 0</code><p>Todavía no se generó ningún respaldo.</p></div>
+        </div>
+      </div>
+      <p class="log-muted" style="margin-top: 12px;">
+        Cada respaldo trae los datos de todas las tablas, la versión del esquema y el guion de restauración
+        (docs/database/RESPALDOS.md). Azure conserva además copias automáticas: PostgreSQL 7 días y Cosmos DB cada 4 horas.
+      </p>
+    </article>
+  </section>
+
+  <dialog id="admin-confirm" class="technical-dialog" style="width: min(480px, calc(100vw - 32px));">
+    <form method="dialog" class="device-form">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">Respaldo</span>
+          <h2>Generar un respaldo ahora</h2>
+          <p>Se copian los datos de todas las tablas en un ZIP que queda en el repositorio de archivos. Incluye datos personales y hashes de contraseñas: descargalo solo a un lugar autorizado.</p>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button class="button button-ghost" value="cancel">Cancelar</button>
+        <button class="button button-primary" value="ok">Generar</button>
+      </div>
+    </form>
+  </dialog>
+
   <section class="metric-grid" id="admin-security-kpis">
     <article class="metric-card"><span class="metric-label">cargando</span><strong>—</strong><small>GET /api/admin/security</small></article>
   </section>
@@ -98,7 +155,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
   <script>
     import { auditFetch, authFetch } from '../lib/auth';
-    import { readApiError, type SecuritySummary, type ServiceHealth } from '../lib/api';
+    import { readApiError, type SecuritySummary, type ServiceHealth, type StorageStatus, type StorageSyncResult, type StoredFile } from '../lib/api';
+    import { formatBytes, saveResponse } from '../lib/download';
     import { escapeHtml, formatDate } from '../lib/format';
 
     const LABELS: Record<string, string> = {
@@ -228,12 +286,127 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     };
     const logLink = (params: string) => `/logs?${params}&desde=${encodeURIComponent(last24h())}#sistema`;
 
+    // ---- Bloque 7: repositorio de archivos y respaldos ---------------------------------
+    const STORAGE_LABEL: Record<string, string> = { CONFIGURACION: 'Configuraciones', REPORTE: 'Reportes', RESPALDO: 'Respaldos' };
+
+    const loadStorage = async () => {
+      const response = await auditFetch('/api/system/storage');
+      if (!response.ok) throw new Error(await readApiError(response));
+      const storage = await response.json() as StorageStatus;
+      const state = document.querySelector<HTMLElement>('#storage-state');
+      if (state) {
+        state.textContent = storage.configurado ? 'configurado' : 'no configurado';
+        state.className = `status-badge ${storage.configurado ? 'status-ready' : 'status-locked'}`;
+      }
+      const summary = document.querySelector('#storage-summary');
+      if (summary) {
+        summary.textContent = storage.configurado
+          ? `Contenedor privado ${storage.contenedor}. Cada archivo se verifica contra su SHA-256 al descargarlo.`
+          : 'Falta configurar el almacenamiento (AZURE_STORAGE_CONNECTION_STRING): los archivos quedan pendientes.';
+      }
+      const totals = document.querySelector('#storage-totals');
+      if (totals) {
+        totals.innerHTML = Object.entries(storage.archivos).map(([tipo, total]) => `
+          <div><span>${escapeHtml(STORAGE_LABEL[tipo] ?? tipo)}</span><strong>${total.cantidad}</strong><small>${formatBytes(total.bytes)}</small></div>`).join('');
+      }
+      const pending = storage.configuracionesPendientes + storage.reportesPendientes;
+      const pendingNode = document.querySelector('#storage-pending');
+      if (pendingNode) {
+        pendingNode.textContent = pending === 0
+          ? 'No hay archivos pendientes de subir.'
+          : `${storage.configuracionesPendientes} configuraciones y ${storage.reportesPendientes} reportes todavía no tienen su archivo en el repositorio.`;
+      }
+      const sync = document.querySelector<HTMLButtonElement>('#storage-sync');
+      if (sync) sync.disabled = pending === 0 || !storage.configurado;
+      const create = document.querySelector<HTMLButtonElement>('#backup-create');
+      if (create) create.disabled = !storage.configurado;
+    };
+
+    const loadBackups = async () => {
+      const response = await auditFetch('/api/system/backups');
+      if (!response.ok) throw new Error(await readApiError(response));
+      const backups = await response.json() as StoredFile[];
+      const body = document.querySelector('#backup-list');
+      if (body) {
+        body.innerHTML = backups.map((backup) => `
+          <tr>
+            <td class="backup-cell">
+              <strong>${escapeHtml(formatDate(backup.fecha))} · ${escapeHtml(backup.usuario)}</strong>
+              <small>${escapeHtml(backup.nombre)}</small>
+              <small title="SHA-256 ${escapeHtml(backup.sha256)}">${escapeHtml(backup.detalle ?? '')}</small>
+            </td>
+            <td class="log-nowrap">${formatBytes(backup.tamanioBytes)}</td>
+            <td><button class="button button-ghost button-small" type="button" data-backup-id="${backup.id}">Descargar</button></td>
+          </tr>`).join('');
+      }
+      document.querySelector('#backup-empty')?.classList.toggle('is-hidden', backups.length > 0);
+    };
+
+    const confirmDialog = document.querySelector<HTMLDialogElement>('#admin-confirm');
+    const confirmBackup = () => new Promise<boolean>((resolve) => {
+      if (!confirmDialog) return resolve(false);
+      confirmDialog.returnValue = 'cancel';
+      confirmDialog.addEventListener('close', () => resolve(confirmDialog.returnValue === 'ok'), { once: true });
+      confirmDialog.showModal();
+    });
+
+    const busy = async (button: HTMLButtonElement | null, label: string, action: () => Promise<void>) => {
+      if (!button) return;
+      const original = button.textContent;
+      button.disabled = true;
+      button.textContent = label;
+      try {
+        await action();
+      } catch (error) {
+        showError(error instanceof Error ? error.message : 'La operación no pudo completarse.');
+      } finally {
+        button.textContent = original;
+        button.disabled = false;
+      }
+    };
+
+    document.querySelector('#backup-create')?.addEventListener('click', async (event) => {
+      const button = event.currentTarget as HTMLButtonElement;
+      if (!await confirmBackup()) return;
+      await busy(button, 'Generando…', async () => {
+        showError(null);
+        const response = await auditFetch('/api/system/backups', { method: 'POST' });
+        if (!response.ok) throw new Error(await readApiError(response));
+        await Promise.all([loadBackups(), loadStorage()]);
+      });
+    });
+
+    document.querySelector('#storage-sync')?.addEventListener('click', async (event) => {
+      await busy(event.currentTarget as HTMLButtonElement, 'Subiendo…', async () => {
+        showError(null);
+        const response = await auditFetch('/api/system/storage/sync', { method: 'POST' });
+        if (!response.ok) throw new Error(await readApiError(response));
+        const result = await response.json() as StorageSyncResult;
+        await loadStorage();
+        const pendingNode = document.querySelector('#storage-pending');
+        if (pendingNode) {
+          pendingNode.textContent = `Se subieron ${result.configuraciones} configuraciones y ${result.reportes} reportes.`
+            + (result.pendientes > 0 ? ` Quedan ${result.pendientes}: volvé a tocar el botón.` : '');
+        }
+      });
+    });
+
+    document.querySelector('#backup-list')?.addEventListener('click', async (event) => {
+      const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-backup-id]');
+      if (!button) return;
+      await busy(button, 'Verificando…', async () => {
+        const response = await auditFetch(`/api/system/backups/${button.dataset.backupId}/download`);
+        if (!response.ok) throw new Error(await readApiError(response));
+        await saveResponse(response, 'auditnet-respaldo.zip');
+      });
+    });
+
     const refresh = async () => {
       showError(null);
       const button = document.querySelector<HTMLButtonElement>('#admin-refresh');
       if (button) button.disabled = true;
       try {
-        await Promise.all([loadHealth(), loadSecurity()]);
+        await Promise.all([loadHealth(), loadSecurity(), loadStorage(), loadBackups()]);
       } catch (error) {
         showError(error instanceof Error ? error.message : 'No se pudo obtener el estado de la plataforma.');
       } finally {

@@ -168,6 +168,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
   <script>
     import { auditFetch, getStoredUser, hasRole } from '../lib/auth';
     import { readApiError } from '../lib/api';
+    import { saveResponse } from '../lib/download';
     import type {
       AuditDetail,
       AuditSummary,
@@ -371,6 +372,29 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       }
     };
 
+    /** Bloque 7: baja el archivo original del repositorio; el servidor lo verifica contra su SHA-256. */
+    const downloadOriginal = async (id: number) => {
+      const box = document.querySelector<HTMLElement>('#config-file-status');
+      const message = document.querySelector<HTMLElement>('#config-file-message');
+      const button = document.querySelector<HTMLButtonElement>('#config-file-download');
+      if (button) button.disabled = true;
+      try {
+        const response = await auditFetch(`/api/configurations/${id}/file`);
+        if (!box || !message) return;
+        if (!response.ok) {
+          box.className = `file-integrity ${response.status === 409 ? 'is-bad' : ''}`;
+          message.textContent = await readApiError(response);
+          return;
+        }
+        const hash = response.headers.get('X-AuditNet-SHA256') ?? '';
+        await saveResponse(response, `CFG-${String(id).padStart(3, '0')}.txt`);
+        box.className = 'file-integrity is-ok';
+        message.innerHTML = `Integridad verificada: el archivo coincide con el registrado al importarlo.<br><code>SHA-256 ${escapeHtml(hash)}</code>`;
+      } finally {
+        if (button) button.disabled = false;
+      }
+    };
+
     const selectConfiguration = (id: number) => {
       selectedConfigurationId = id;
       selectedAuditId = null;
@@ -403,6 +427,10 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <span>normalized.preview</span>
           <pre>${escapeHtml(preview)}</pre>
         </div>
+        <div id="config-file-status" class="file-integrity">
+          <span id="config-file-message">Archivo original en el repositorio de archivos (con verificación SHA-256).</span>
+          <button id="config-file-download" class="button button-ghost button-small" type="button">Descargar archivo original</button>
+        </div>
         ${canOperate ? `
           <button id="execute-selected-audit" class="button button-primary button-full" type="button"
             ${!baseline || ruleCount === 0 ? 'disabled' : ''}>
@@ -412,6 +440,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       `);
 
       document.querySelector<HTMLButtonElement>('#execute-selected-audit')?.addEventListener('click', () => executeAudit(configuration.id));
+      document.querySelector<HTMLButtonElement>('#config-file-download')?.addEventListener('click', () => downloadOriginal(configuration.id));
     };
 
     const selectAudit = async (id: number) => {

@@ -5,6 +5,10 @@ import ar.edu.uai.tfi.auditcore.domain.model.Transaccion;
 import ar.edu.uai.tfi.auditcore.domain.model.*;
 import ar.edu.uai.tfi.auditcore.domain.repository.ConfiguracionRepository;
 import ar.edu.uai.tfi.auditcore.domain.repository.DispositivoRepository;
+import ar.edu.uai.tfi.auditcore.application.port.AlmacenArchivosPort;
+import ar.edu.uai.tfi.auditcore.application.storage.RegistroArchivos;
+import ar.edu.uai.tfi.auditcore.application.storage.RepositorioArchivosService;
+import ar.edu.uai.tfi.auditcore.support.EnMemoria;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -23,7 +27,8 @@ class ConfiguracionServiceTest {
                 new FakeConfiguracionRepository(),
                 new FakeDispositivoRepository(),
                 new NormalizacionConfiguracionService(),
-                transacciones::add
+                transacciones::add,
+                sinRepositorio()
         );
         String contenido = "hostname RTR-CORE-01\nenable secret 5 $1$abc$xyz\n";
 
@@ -49,7 +54,8 @@ class ConfiguracionServiceTest {
                 configuraciones,
                 dispositivos,
                 new NormalizacionConfiguracionService(),
-                transaccion -> {}
+                transaccion -> {},
+                sinRepositorio()
         );
 
         ConfiguracionDispositivo primera = service.importarParaOrganizacion(
@@ -81,7 +87,8 @@ class ConfiguracionServiceTest {
                 new FakeConfiguracionRepository(),
                 new FakeDispositivoRepository(),
                 new NormalizacionConfiguracionService(),
-                transaccion -> {}
+                transaccion -> {},
+                sinRepositorio()
         );
 
         assertThrows(
@@ -90,6 +97,50 @@ class ConfiguracionServiceTest {
                         1L, 99L, "hostname x", "TEXTO", null, "analista"
                 )
         );
+    }
+
+    @Test
+    void importacionGuardaElArchivoOriginalConElMismoHashQueLaBitacora() {
+        List<Transaccion> transacciones = new ArrayList<>();
+        EnMemoria.Almacen almacen = new EnMemoria.Almacen();
+        EnMemoria.Archivos archivos = new EnMemoria.Archivos(new EnMemoria.Configuraciones(), new EnMemoria.Reportes());
+        ConfiguracionService service = new ConfiguracionService(new FakeConfiguracionRepository(),
+                new FakeDispositivoRepository(), new NormalizacionConfiguracionService(), transacciones::add,
+                new RepositorioArchivosService(almacen, archivos, archivos.configuraciones, archivos.reportes, new RegistroArchivos(archivos, t -> {})));
+        String contenido = "hostname RTR-CORE-01\r\n! ñandú\r\n";
+
+        ConfiguracionDispositivo creada = service.importarParaOrganizacion(1L, 2L, contenido, "CFG", "rtr.cfg", "analista");
+
+        ArchivoRepositorio archivo = archivos.items.get(0);
+        assertEquals(TipoArchivo.CONFIGURACION, archivo.tipo());
+        assertEquals(creada.id(), archivo.entidadId());
+        assertEquals("CFG-001-v1.cfg", archivo.nombre());
+        assertEquals("configuraciones/org-2/dispositivo-1/CFG-001-v1-" + archivo.sha256().substring(0, 12) + ".cfg", archivo.ruta());
+        assertArrayEquals(contenido.getBytes(java.nio.charset.StandardCharsets.UTF_8), almacen.archivos.get(archivo.ruta()));
+        assertEquals(((Map<?, ?>) transacciones.get(0).valorNuevo()).get("sha256"), archivo.sha256(),
+                "El hash del archivo coincide con el registrado en la bitácora");
+        assertEquals("analista", archivo.usuario());
+    }
+
+    @Test
+    void siElRepositorioNoRespondeLaImportacionFalla() {
+        EnMemoria.Almacen almacen = new EnMemoria.Almacen();
+        almacen.caido = true;
+        EnMemoria.Archivos archivos = new EnMemoria.Archivos(new EnMemoria.Configuraciones(), new EnMemoria.Reportes());
+        ConfiguracionService service = new ConfiguracionService(new FakeConfiguracionRepository(),
+                new FakeDispositivoRepository(), new NormalizacionConfiguracionService(), t -> {},
+                new RepositorioArchivosService(almacen, archivos, archivos.configuraciones, archivos.reportes, new RegistroArchivos(archivos, t -> {})));
+
+        assertThrows(AlmacenArchivosPort.AlmacenamientoException.class,
+                () -> service.importarParaOrganizacion(1L, 2L, "hostname x", "TEXTO", null, "analista"));
+        assertTrue(archivos.items.isEmpty());
+    }
+
+    private static RepositorioArchivosService sinRepositorio() {
+        EnMemoria.Almacen almacen = new EnMemoria.Almacen();
+        almacen.configurado = false;
+        EnMemoria.Archivos archivos = new EnMemoria.Archivos(new EnMemoria.Configuraciones(), new EnMemoria.Reportes());
+        return new RepositorioArchivosService(almacen, archivos, archivos.configuraciones, archivos.reportes, new RegistroArchivos(archivos, t -> {}));
     }
 
     private static class FakeConfiguracionRepository implements ConfiguracionRepository {

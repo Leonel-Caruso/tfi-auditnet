@@ -24,6 +24,10 @@ MONGO_BASE="auditnet"
 # por eso se fija 4.2 y 04-crear-cosmos.sh verifica la versión real al terminar.
 MONGO_VERSION="4.2"
 
+# Bloque 7: repositorio de archivos (Blob Storage). Nombre único en todo Azure: 3 a 24 minúsculas y números.
+ST_CUENTA="stauditnetlcaruso"
+ST_CONTENEDOR="auditnet-archivos"
+
 # Container Apps
 ENTORNO="cae-auditnet"
 APP_MANAGEMENT="ca-auditnet-management"

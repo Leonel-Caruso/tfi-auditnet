@@ -7,5 +7,7 @@ public enum OperacionTransaccion {
     CAMBIO_ESTADO,
     BAJA_LOGICA,
     IMPORTACION,
-    EJECUCION
+    EJECUCION,
+    /** Respaldo de la base de datos (Bloque 7). */
+    EXPORTACION
 }

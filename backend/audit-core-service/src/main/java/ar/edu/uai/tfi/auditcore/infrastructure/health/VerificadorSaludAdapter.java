@@ -1,5 +1,6 @@
 package ar.edu.uai.tfi.auditcore.infrastructure.health;
 
+import ar.edu.uai.tfi.auditcore.application.port.AlmacenArchivosPort;
 import ar.edu.uai.tfi.auditcore.application.admin.ComponenteSalud;
 import ar.edu.uai.tfi.auditcore.application.admin.SaludPort;
 import com.mongodb.client.MongoClient;
@@ -30,22 +31,25 @@ public class VerificadorSaludAdapter implements SaludPort {
     private final Instance<MongoClient> mongoClient;
     private final String tablaFlyway;
     private final String baseMongo;
+    private final AlmacenArchivosPort almacen;
 
     public VerificadorSaludAdapter(Instance<DataSource> dataSource,
                                    Instance<MongoClient> mongoClient,
                                    @ConfigProperty(name = "quarkus.flyway.table", defaultValue = "flyway_schema_history")
                                    String tablaFlyway,
                                    @ConfigProperty(name = "auditnet.mongodb.base", defaultValue = "auditnet")
-                                   String baseMongo) {
+                                   String baseMongo,
+                                   AlmacenArchivosPort almacen) {
         this.dataSource = dataSource;
         this.mongoClient = mongoClient;
         this.tablaFlyway = tablaFlyway;
         this.baseMongo = baseMongo;
+        this.almacen = almacen;
     }
 
     @Override
     public List<ComponenteSalud> verificarComponentes() {
-        return List.of(postgres(), mongo());
+        return List.of(postgres(), mongo(), repositorioArchivos());
     }
 
     private ComponenteSalud postgres() {
@@ -75,6 +79,32 @@ public class VerificadorSaludAdapter implements SaludPort {
         } catch (Exception exception) {
             LOG.warnf("Salud: MongoDB no responde (%s)", exception.getClass().getSimpleName());
             return new ComponenteSalud("MongoDB", ComponenteSalud.DOWN, milisDesde(inicio),
+                    "No responde (" + exception.getClass().getSimpleName() + ")");
+        }
+    }
+
+    /** Bloque 7: repositorio de archivos (Blob Storage en Azure, Azurite en local). */
+    private ComponenteSalud repositorioArchivos() {
+        String nombre = "Repositorio de archivos";
+        if (!almacen.configurado()) {
+            return new ComponenteSalud(nombre, ComponenteSalud.DOWN, 0,
+                    "No configurado: las configuraciones y reportes quedan pendientes de subir");
+        }
+        long inicio = System.nanoTime();
+        try {
+            almacen.verificar();
+            return new ComponenteSalud(nombre, ComponenteSalud.UP, milisDesde(inicio),
+                    "Blob Storage · contenedor privado " + almacen.contenedor());
+        } catch (AlmacenArchivosPort.AlmacenamientoException exception) {
+            if (exception.estadoHttp() == 404) {
+                return new ComponenteSalud(nombre, ComponenteSalud.UP, milisDesde(inicio),
+                        "Blob Storage · el contenedor " + almacen.contenedor() + " se crea con el primer archivo");
+            }
+            LOG.warnf("Salud: repositorio de archivos no responde (%s)", exception.getMessage());
+            return new ComponenteSalud(nombre, ComponenteSalud.DOWN, milisDesde(inicio), exception.getMessage());
+        } catch (Exception exception) {
+            LOG.warnf("Salud: repositorio de archivos no responde (%s)", exception.getClass().getSimpleName());
+            return new ComponenteSalud(nombre, ComponenteSalud.DOWN, milisDesde(inicio),
                     "No responde (" + exception.getClass().getSimpleName() + ")");
         }
     }

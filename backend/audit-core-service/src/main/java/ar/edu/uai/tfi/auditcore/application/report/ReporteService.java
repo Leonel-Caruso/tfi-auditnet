@@ -1,5 +1,6 @@
 package ar.edu.uai.tfi.auditcore.application.report;
 
+import ar.edu.uai.tfi.auditcore.application.storage.RepositorioArchivosService;
 import ar.edu.uai.tfi.auditcore.application.port.TrazabilidadPort;
 import ar.edu.uai.tfi.auditcore.domain.model.AuditoriaConfiguracion;
 import ar.edu.uai.tfi.auditcore.domain.model.BaselineConfiguracion;
@@ -63,6 +64,7 @@ public class ReporteService {
     private final ConfiguracionRepository configuracionRepository;
     private final ReporteRepository reporteRepository;
     private final TrazabilidadPort trazabilidad;
+    private final RepositorioArchivosService repositorioArchivos;
 
     public ReporteService(AuditoriaRepository auditoriaRepository,
                           HallazgoRepository hallazgoRepository,
@@ -70,7 +72,8 @@ public class ReporteService {
                           BaselineRepository baselineRepository,
                           ConfiguracionRepository configuracionRepository,
                           ReporteRepository reporteRepository,
-                          TrazabilidadPort trazabilidad) {
+                          TrazabilidadPort trazabilidad,
+                          RepositorioArchivosService repositorioArchivos) {
         this.auditoriaRepository = auditoriaRepository;
         this.hallazgoRepository = hallazgoRepository;
         this.dispositivoRepository = dispositivoRepository;
@@ -78,6 +81,7 @@ public class ReporteService {
         this.configuracionRepository = configuracionRepository;
         this.reporteRepository = reporteRepository;
         this.trazabilidad = trazabilidad;
+        this.repositorioArchivos = repositorioArchivos;
     }
 
     /** Datos del reporte que van a la bitácora (sin el contenido completo). */
@@ -124,6 +128,8 @@ public class ReporteService {
                 usuario,
                 recortar(reporte.titulo() + ": " + reporte.totalAuditorias() + " auditorías, "
                         + reporte.totalHallazgos() + " hallazgos", 1000)));
+        // Bloque 7: el CSV del reporte se guarda en el repositorio de archivos tal como se generó.
+        repositorioArchivos.guardarReporte(reporte, usuario);
         return Optional.of(reporte);
     }
 

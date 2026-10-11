@@ -448,6 +448,53 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
   colores de la consola, en lugar del selector nativo del navegador. Se maneja con mouse y teclado y no cambia el
   formato de los valores que leen las pantallas.
 
+## D-35 · Repositorio de archivos en Azure Blob Storage (Bloque 7)
+
+- **Decisión:** el "repositorio seguro de archivos" del diagrama de despliegue (10.5.9) es un contenedor **privado**
+  de Azure Blob Storage (`stauditnetlcaruso` / `auditnet-archivos`). audit-core-service guarda ahí el archivo original
+  de cada configuración importada, el CSV de cada reporte y los respaldos de la base (D-36). PostgreSQL sigue teniendo
+  los datos que se consultan; el repositorio conserva el archivo como evidencia.
+- **Catálogo e integridad (RNF-012):** tabla `archivos_repositorio` (migración audit-core V7, solo inserción) con la
+  ruta, el tamaño y el SHA-256 de cada archivo. Al descargar se recalcula el hash: si no coincide, no se entrega (409)
+  y queda en la bitácora de excepciones. Los archivos nunca se reemplazan (la subida usa `If-None-Match: *`) y su nombre
+  lleva el comienzo del hash (`CFG-001-v1-3fa2b9c41d07.cfg`), así no chocan aunque un id se repita después de
+  restaurar un respaldo.
+- **Consistencia:** el archivo se sube en la misma operación que la importación o el reporte; si el repositorio no
+  responde, la operación se revierte (503) para no dejar evidencia sin archivo. Las configuraciones y reportes
+  anteriores al Bloque 7 se suben desde el panel ("Subir pendientes", bitácora ARCHIVO/ALTA).
+- **Implementación:** cliente REST propio con firma *Shared Key* (`BlobStorageAdapter`), sin el SDK de Azure: son
+  cuatro operaciones y se evita sumar dependencias pesadas. En local se usa **Azurite**, el emulador oficial, en el
+  docker compose. Sin configuración (pruebas), los archivos quedan pendientes y la salud lo informa. El catálogo se
+  registra en transacciones cortas: las subidas largas (respaldos, pendientes) quedan fuera de la transacción.
+- **Seguridad:** sin acceso anónimo, solo HTTPS con TLS 1.2, clave de la cuenta como secreto de Container Apps,
+  papelera de 7 días. **Limitación:** la autenticación es con la clave de la cuenta; una identidad administrada
+  sería más fina pero exige asignar roles RBAC en la suscripción de estudiante.
+- **Alternativas descartadas:** mantener todo en PostgreSQL (se aparta del diagrama de despliegue) y GridFS en
+  Cosmos DB (consume RU del plan gratuito y no es el uso habitual).
+- **Impacto financiero:** la cuenta de Azure incluye 5 GB de Blob Storage LRS (nivel Hot) los primeros 12 meses; el
+  volumen del prototipo (configuraciones de texto, CSV y respaldos de pocos MB) queda muy por debajo. Verificar el
+  consumo en *Cost Management* después del primer mes.
+- **Prueba:** `RepositorioArchivosServiceTest`, `FirmaSharedKeyTest`, casos en `ConfiguracionServiceTest` y
+  `ReporteServiceTest`; el adaptador se probó contra Azurite (subida, descarga, no reemplazo, clave incorrecta).
+
+## D-36 · Respaldos lógicos con restauración probada (Bloque 7)
+
+- **Decisión:** el administrador genera desde el panel un respaldo de la base: datos de todas las tablas en CSV
+  (COPY dentro de una transacción de solo lectura REPEATABLE READ, consistente aunque se esté usando el sistema), la
+  versión del esquema de cada servicio (Flyway), un manifiesto con el SHA-256 de cada archivo y el guion
+  `restaurar.sql`. Se guarda en el repositorio de archivos y se registra en la bitácora de transacciones
+  (RESPALDO/EXPORTACION, operación nueva en ambos servicios).
+- **Restauración:** `restaurar.sql` verifica que la base tenga la misma versión de esquema, desactiva los triggers de
+  solo inserción solo mientras carga, reemplaza los datos en orden de claves foráneas, ajusta las secuencias y
+  vuelve a activar los triggers, todo en una transacción. Procedimiento en `docs/database/RESPALDOS.md`.
+- **Estructura + datos a través del tiempo:** la estructura de cada versión está en las migraciones (Git + historial
+  de Flyway, D-05) y los datos en los respaldos, que indican a qué versión corresponden.
+- **Complementa** los respaldos automáticos de Azure (PostgreSQL 7 días, Cosmos DB cada 4 horas); no los reemplaza.
+- **Límite:** 100 MB por respaldo (el prototipo está muy por debajo); para bases más grandes se usaría pg_dump o la
+  restauración a un punto en el tiempo de Azure.
+- **Prueba:** `RespaldoServiceTest`, `GuionRestauracionTest`; exportación y restauración reales sobre PostgreSQL 16
+  (20 tablas idénticas, secuencias y triggers correctos, rechazo con versión distinta).
+
 ## Pendientes detectados (para migraciones futuras)
 
 - `auditorias_configuracion.estado` solo admite `FINALIZADA` (CHECK de Hibernate). Alcanza mientras la auditoría sea

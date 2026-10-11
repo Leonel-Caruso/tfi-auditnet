@@ -2,6 +2,7 @@ package ar.edu.uai.tfi.auditcore.support;
 
 import ar.edu.uai.tfi.auditcore.domain.model.*;
 import ar.edu.uai.tfi.auditcore.domain.repository.*;
+import ar.edu.uai.tfi.auditcore.application.port.AlmacenArchivosPort.AlmacenamientoException;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -223,5 +224,77 @@ public final class EnMemoria {
             return items.stream().filter(r -> org == null || org.equals(r.organizacionId()))
                     .sorted(java.util.Comparator.comparing(ReporteAuditoria::id).reversed()).toList();
         }
+    }
+
+    // ---- Bloque 7: repositorio de archivos ---------------------------------------------------------------
+
+    /** Catálogo en memoria. */
+    public static final class Archivos implements ArchivoRepository {
+        public final List<ArchivoRepositorio> items = new ArrayList<>();
+        public final Configuraciones configuraciones;
+        public final Reportes reportes;
+
+        public Archivos(Configuraciones configuraciones, Reportes reportes) {
+            this.configuraciones = configuraciones;
+            this.reportes = reportes;
+        }
+
+        @Override public ArchivoRepositorio guardar(ArchivoRepositorio a) {
+            if (items.stream().anyMatch(x -> x.ruta().equals(a.ruta()))) throw new IllegalStateException("ruta duplicada");
+            ArchivoRepositorio guardado = new ArchivoRepositorio((long) items.size() + 1, a.tipo(), a.entidadId(), a.organizacionId(),
+                    a.ruta(), a.nombre(), a.tipoContenido(), a.tamanioBytes(), a.sha256(), a.fecha(), a.usuario(), a.detalle());
+            items.add(guardado);
+            return guardado;
+        }
+        @Override public Optional<ArchivoRepositorio> buscarPorId(Long id) { return items.stream().filter(a -> a.id().equals(id)).findFirst(); }
+        @Override public Optional<ArchivoRepositorio> buscarPorEntidad(TipoArchivo tipo, Long id) {
+            return items.stream().filter(a -> a.tipo() == tipo && id.equals(a.entidadId())).findFirst();
+        }
+        @Override public List<ArchivoRepositorio> listar(TipoArchivo tipo, int limite) {
+            return items.stream().filter(a -> a.tipo() == tipo).sorted(java.util.Comparator.comparing(ArchivoRepositorio::id).reversed())
+                    .limit(limite).toList();
+        }
+        @Override public Map<TipoArchivo, long[]> totalesPorTipo() {
+            Map<TipoArchivo, long[]> totales = new java.util.EnumMap<>(TipoArchivo.class);
+            for (TipoArchivo t : TipoArchivo.values()) {
+                totales.put(t, new long[]{items.stream().filter(a -> a.tipo() == t).count(),
+                        items.stream().filter(a -> a.tipo() == t).mapToLong(ArchivoRepositorio::tamanioBytes).sum()});
+            }
+            return totales;
+        }
+        @Override public List<Long> configuracionesSinArchivo(int limite) {
+            return configuraciones.items.stream().map(ConfiguracionDispositivo::id)
+                    .filter(id -> buscarPorEntidad(TipoArchivo.CONFIGURACION, id).isEmpty()).limit(limite).toList();
+        }
+        @Override public List<Long> reportesSinArchivo(int limite) {
+            return reportes.items.stream().map(ReporteAuditoria::id)
+                    .filter(id -> buscarPorEntidad(TipoArchivo.REPORTE, id).isEmpty()).limit(limite).toList();
+        }
+        @Override public long contarConfiguracionesSinArchivo() { return configuracionesSinArchivo(Integer.MAX_VALUE).size(); }
+        @Override public long contarReportesSinArchivo() { return reportesSinArchivo(Integer.MAX_VALUE).size(); }
+    }
+
+    /** Almacenamiento en memoria con las mismas reglas que Blob Storage (no reemplaza archivos). */
+    public static final class Almacen implements ar.edu.uai.tfi.auditcore.application.port.AlmacenArchivosPort {
+        public final Map<String, byte[]> archivos = new java.util.LinkedHashMap<>();
+        public final Map<String, Map<String, String>> metadatos = new java.util.LinkedHashMap<>();
+        public boolean configurado = true;
+        public boolean caido;
+
+        @Override public boolean configurado() { return configurado; }
+        @Override public String contenedor() { return "auditnet-archivos"; }
+        @Override public void subir(String ruta, byte[] contenido, String tipo, Map<String, String> meta) {
+            if (caido) throw new AlmacenamientoException("El repositorio de archivos no responde (ConnectException).", 503, null);
+            if (archivos.containsKey(ruta)) throw new AlmacenamientoException("No se pudo guardar el archivo en el repositorio (BlobAlreadyExists).", 409, null);
+            archivos.put(ruta, contenido.clone());
+            metadatos.put(ruta, Map.copyOf(meta));
+        }
+        @Override public byte[] descargar(String ruta) {
+            if (caido) throw new AlmacenamientoException("El repositorio de archivos no responde (ConnectException).", 503, null);
+            byte[] contenido = archivos.get(ruta);
+            if (contenido == null) throw new AlmacenamientoException("No se pudo leer el archivo del repositorio (BlobNotFound).", 404, null);
+            return contenido.clone();
+        }
+        @Override public void verificar() { if (caido) throw new AlmacenamientoException("caído", 503, null); }
     }
 }
