@@ -924,3 +924,25 @@ code, .code-text { font-family: var(--mono); }
   .table-wrap { overflow: visible !important; }
 }
 .client-reports-heading { margin-top: 20px; }
+
+/* Ajuste visual · barra lateral en pantallas bajas y separación de métricas */
+/* El logo "A_" no se achica nunca (antes se comprimía cuando el menú no entraba en la altura de la pantalla). */
+.rail-brand { flex-shrink: 0; font-size: .86rem; }
+.rail-runtime { flex-shrink: 0; }
+.rail-nav { flex: 1 1 auto; min-height: 0; align-content: start; }
+@media (max-height: 820px) {
+  .rail-brand { margin-bottom: 10px; }
+  .rail-nav { gap: 3px; }
+  .rail-link { height: 36px; }
+  .rail-separator { margin: 4px 0; }
+}
+/* Si el menú igual no entra, se desplaza dentro de la barra (el resto de la página no cambia). La etiqueta
+   flotante se reemplaza por el title del enlace, porque quedaría recortada dentro del área con desplazamiento. */
+@media (max-height: 700px) {
+  .rail-nav { overflow-y: auto; overflow-x: hidden; margin-inline: -9px; padding: 0 9px 6px; scrollbar-width: thin; scrollbar-color: #2a3037 transparent; }
+  .rail-link { height: 32px; flex-shrink: 0; }
+  .rail-link::after { display: none; }
+  .rail-link::before { left: -8px; }
+  .rail-runtime { padding-top: 6px; }
+}
+.finding-summary-grid { margin-bottom: 18px; }
