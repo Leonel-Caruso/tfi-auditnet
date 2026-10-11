@@ -316,6 +316,10 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
   ("reemplazada") y la vigente pasa a ser la del hallazgo nuevo, para que se priorice como corresponde.
 - **Concurrencia:** la auditoría bloquea la fila del dispositivo, así dos auditorías simultáneas del mismo equipo se
   ejecutan en orden. Si otro usuario cambió un hallazgo en ese momento, la resolución automática no lo toca.
+- **Datos anteriores:** la migración V4 había creado una alerta por cada hallazgo existente, así que un equipo
+  auditado varias veces sin corregir quedaba con varias alertas vigentes para la misma regla. La migración V6 las
+  consolida: conserva una (la que está en atención, si no la más grave y más reciente) y cierra las demás con un
+  comentario que indica cuál quedó vigente.
 - **Alternativa descartada:** un estado REEMPLAZADO para los hallazgos repetidos (más prolijo, pero suma un estado,
   una migración y cambios en todas las pantallas).
 - **Prueba:** `ReauditoriaTest` (5 tests: auditar fallando y luego corregido; traslado y reactivación de la alerta;
