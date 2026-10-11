@@ -347,6 +347,107 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
   ven los de su organización. El administrador puede generar uno de todas las organizaciones.
 - **Prueba:** `ReporteServiceTest` (5 tests, incluye el CSV).
 
+## D-28 · Nombre del producto: AuditNet (Bloque 6)
+
+- **Decisión:** la interfaz usa el nombre **AuditNet** en todas las pantallas (título de la pestaña, barra superior,
+  login, menú lateral y reportes). Hasta el Bloque 5 algunas pantallas decían "AuditConfig", nombre de trabajo
+  anterior. El logo sigue siendo "A_" y sigue llevando al tablero.
+- **Alcance:** solo textos visibles. No cambian rutas, nombres de servicios, tablas ni variables.
+
+## D-29 · Perfiles fijos y matriz de permisos (Bloque 6)
+
+- **Decisión:** los cuatro perfiles de la tesis (administrador del sistema, analista de redes, auditor técnico y
+  responsable de gestión IT) son **fijos**. Sus permisos están aplicados en el código (`@RolesAllowed` en cada
+  endpoint) y se documentan en `MatrizPermisos`, que la pantalla de Usuarios muestra (`GET /api/roles/permissions`).
+  Desde la interfaz solo se edita la descripción de cada perfil (`PUT /api/roles/{id}`, evento ROL_MODIFICADO).
+- **Motivo:** un perfil nuevo creado desde la pantalla no tendría permisos en ningún endpoint; la matriz configurable
+  (tabla de permisos + chequeo dinámico) no la pide la tesis y agregaría complejidad sin uso. Se elimina
+  `POST /api/roles`.
+- **Reglas de protección:** nadie se deshabilita ni se quita el perfil de administrador a sí mismo, y siempre queda al
+  menos un administrador activo (409 si no). Los usuarios no se borran: se deshabilitan (baja lógica). El nombre de
+  usuario no se modifica porque identifica al actor en las bitácoras.
+
+## D-30 · Política de contraseñas y bloqueo por intentos fallidos (Bloque 6)
+
+- **Política** (`PoliticaContrasena`): entre 10 y 72 caracteres (72 es el límite de BCrypt), letras y números, y sin
+  contener el nombre de usuario. Se aplica al crear un usuario, al restablecer y al cambiar la propia contraseña. Las
+  contraseñas existentes no se invalidan: la política rige desde el próximo cambio.
+- **Bloqueo:** 5 contraseñas incorrectas seguidas bloquean la cuenta 15 minutos (403 con los minutos que faltan).
+  Mientras está bloqueada no se valida la contraseña. Un ingreso correcto reinicia el contador. El administrador puede
+  desbloquear antes (`POST /api/users/{id}/unlock`). Eventos: CUENTA_BLOQUEADA y CUENTA_DESBLOQUEADA.
+- **Cambio de la propia contraseña:** una contraseña actual incorrecta cuenta como intento fallido, para que con una
+  sesión robada no se pueda adivinar la contraseña sin límite.
+- **Recomendación operativa:** tener al menos dos administradores. El bloqueo es por cuenta: si alguien prueba
+  contraseñas contra el único administrador, este queda bloqueado 15 minutos y nadie más puede desbloquearlo.
+- **Persistencia:** columnas nuevas en `usuarios` (migración management V4): `intentos_fallidos`, `bloqueado_hasta`,
+  `ultimo_acceso`. El intento fallido se guarda en una transacción propia con bloqueo de fila, para que dos intentos
+  simultáneos no se pisen el contador.
+- **Respuesta al login:** usuario inexistente y contraseña incorrecta siguen respondiendo igual (401), para no revelar
+  qué usuarios existen. El bloqueo sí se informa (403), para que la persona sepa por qué no puede ingresar.
+- **Prueba:** `AuthServiceTest` (bloqueo, vencimiento, reinicio del contador, organización deshabilitada, cambio de la
+  propia contraseña) y `PoliticaContrasenaTest`.
+- **Alternativa descartada:** login con proveedor externo (OIDC). El login propio con JWT alcanza para la tesis.
+
+## D-31 · Verificación de la sesión en cada solicitud (Bloque 6)
+
+- **Decisión:** los dos servicios verifican en cada solicitud autenticada (un `SecurityIdentityAugmentor` con una
+  consulta JDBC a la base compartida) que el usuario y su organización sigan activos y que el token no sea anterior a
+  `usuarios.sesiones_validas_desde`. Si no, responden 401 y la consola vuelve al login.
+- **Efecto:** deshabilitar un usuario o su organización lo deja afuera **en el acto**, sin esperar a que venza el
+  token. Cambiar la contraseña (propia o restablecida), los perfiles o la organización de un usuario cierra sus
+  sesiones abiertas; al cambiar la propia contraseña se devuelve un token nuevo para seguir trabajando.
+- **Administrador:** no queda afuera si se deshabilita su organización (es el usuario de la plataforma, no del
+  cliente).
+- **Deshabilitar también cierra:** al deshabilitar un usuario o una organización se actualiza
+  `sesiones_validas_desde`, así que si después se vuelve a habilitar los tokens viejos no recuperan validez.
+- **Segundos:** el token guarda la emisión en segundos; `sesiones_validas_desde` se guarda truncado al segundo para
+  que el token nuevo emitido en el mismo segundo no quede rechazado.
+- **Cambios sobre la propia cuenta:** si el administrador se cambia el perfil o la organización, la pantalla avisa y
+  lo devuelve al login; su propia contraseña la cambia desde Mi cuenta.
+- **Falla segura:** si la base no responde, la sesión se rechaza.
+- **Costo:** una consulta por clave primaria por solicitud; aceptable para la escala del prototipo.
+- **Corrección incluida:** el token se emitía sin vencimiento explícito y en la nube vencía a los 5 minutos (valor por
+  defecto de SmallRye JWT), aunque el login informaba 60. Ahora se emite con 60 minutos.
+- **Prueba:** `ReglaSesionTest` (en los dos servicios) y `UsuarioServiceTest` (qué cambios cierran las sesiones).
+
+## D-32 · Panel de administración (Bloque 6)
+
+- **Decisión:** pantalla `/admin` (ítem ADM, solo administrador) que cubre el punto mandatorio "panel de administrador
+  web: seguridad, bitácoras, salud de servicios, colas":
+  - **Salud:** `GET /api/admin/health` (management) y `GET /api/system/health` (audit-core; no usa `/api/admin` porque
+    el gateway deriva esa ruta a management). Informan versión desplegada (`APP_VERSION`, la etiqueta de la imagen),
+    tiempo en línea, memoria, PostgreSQL (versión del esquema según Flyway) y MongoDB (ping). Estado UP o DEGRADADO.
+  - **Seguridad:** `GET /api/admin/security`: usuarios activos y deshabilitados, cuentas bloqueadas, eventos de las
+    últimas 24 h por tipo y últimos rechazos, con enlace a la bitácora filtrada.
+  - **Bitácoras:** accesos directos a las tres bitácoras.
+  - **Colas:** se muestra "no aplica": los servicios se comunican por REST sincrónico y comparten la base; no hay
+    mensajería asíncrona en la arquitectura.
+- Los errores de los componentes se informan por tipo, nunca con cadenas de conexión ni credenciales.
+- **Prueba:** `SeguridadResumenServiceTest`; la salud se verifica en el smoke test del deploy (CP-B6-14).
+
+## D-33 · Baja lógica de organizaciones y sedes (Bloque 6)
+
+- **Decisión:** organizaciones y sedes se modifican (`PUT`) y se habilitan o deshabilitan (`PATCH .../status`); no se
+  borran. Cada cambio queda en la bitácora de transacciones (MODIFICACION o CAMBIO_ESTADO, con valor anterior y
+  nuevo).
+- **Organización deshabilitada:** sus usuarios no ingresan ni operan (D-31) y no se le agregan sedes. Sus datos,
+  auditorías y reportes se conservan.
+- **Sede deshabilitada:** no se le asignan dispositivos nuevos (un dispositivo que ya estaba en esa sede conserva la
+  asignación y su historial).
+- Identificador y razón social siguen siendo únicos; el nombre de sede, único dentro de la organización (409).
+- **Prueba:** `OrganizacionClienteServiceTest`.
+
+## D-34 · Documento del reporte y calendario de la consola (Bloque 6)
+
+- **Reporte:** la vista y el PDF usan un formato de documento: encabezado con el logo y el nombre AuditNet, número de
+  reporte, tabla de datos de emisión y seis apartados numerados (resumen ejecutivo redactado a partir de los números,
+  alcance y criterios, distribución de hallazgos, auditorías incluidas, detalle de hallazgos y observaciones). El PDF
+  lleva en el pie "AuditNet · REP-NNN" y "Página X de Y" (Chrome y Edge). Sigue siendo la impresión del navegador:
+  no se agregan librerías al servidor (D-27).
+- **Calendario:** los campos de fecha (reportes, bitácoras, historial y hallazgos) usan un calendario propio con los
+  colores de la consola, en lugar del selector nativo del navegador. Se maneja con mouse y teclado y no cambia el
+  formato de los valores que leen las pantallas.
+
 ## Pendientes detectados (para migraciones futuras)
 
 - `auditorias_configuracion.estado` solo admite `FINALIZADA` (CHECK de Hibernate). Alcanza mientras la auditoría sea
@@ -361,5 +462,7 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
   del prototipo. Las violaciones de unicidad por concurrencia (identificador, nombre y versión) responden 409.
 - Las consultas de hallazgos y del historial de auditorías no están paginadas (devuelven todo lo que cumple los
   filtros). Alcanza para el volumen del prototipo; si crece, agregar `page`/`size` en Bloque 8.
+- La regla "siempre queda un administrador activo" se controla en el servicio: dos administradores que se deshabilitan
+  mutuamente en el mismo instante podrían dejar cero. Se acepta por la escala del prototipo (D-29).
 - Si se audita varias veces un equipo sin corregir, cada auditoría conserva su hallazgo (evidencia) y todos cuentan
   como pendientes hasta que la regla vuelve a cumplirse (D-26). Las alertas no se duplican.

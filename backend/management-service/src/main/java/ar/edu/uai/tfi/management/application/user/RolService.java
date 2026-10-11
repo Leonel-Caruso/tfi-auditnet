@@ -3,19 +3,23 @@ package ar.edu.uai.tfi.management.application.user;
 import ar.edu.uai.tfi.management.application.ErrorAplicacion;
 import ar.edu.uai.tfi.management.application.ExcepcionAplicacion;
 import ar.edu.uai.tfi.management.application.port.BitacoraSistemaPort;
-import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
 import ar.edu.uai.tfi.management.domain.model.EventoSistema;
-import ar.edu.uai.tfi.management.domain.model.TipoEventoSistema;
 import ar.edu.uai.tfi.management.domain.model.Rol;
+import ar.edu.uai.tfi.management.domain.model.TipoEventoSistema;
 import ar.edu.uai.tfi.management.domain.repository.RolRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
 import java.util.List;
-import java.util.Locale;
 
+/**
+ * Perfiles de acceso (CU-001-002). Son los cuatro perfiles fijos de la tesis (D-29): sus permisos están en el
+ * código ({@code @RolesAllowed}) y se documentan en {@link MatrizPermisos}. Desde el panel solo se edita la
+ * descripción; no se crean perfiles nuevos porque no tendrían permisos.
+ */
 @ApplicationScoped
 public class RolService {
+
     private final RolRepository repository;
     private final BitacoraSistemaPort bitacora;
 
@@ -29,25 +33,20 @@ public class RolService {
     }
 
     @Transactional
-    public Rol crear(String nombre, String descripcion) {
-        validarObligatorio(nombre, "nombre");
-        validarObligatorio(descripcion, "descripcion");
-        String nombreNormalizado = nombre.trim().toUpperCase(Locale.ROOT);
-
-        if (repository.buscarPorNombre(nombreNormalizado).isPresent()) {
-            throw new ExcepcionAplicacion(ErrorAplicacion.CONFLICTO, "Ya existe un rol con ese nombre.");
+    public Rol actualizarDescripcion(Long id, String descripcion) {
+        if (descripcion == null || descripcion.isBlank()) {
+            throw new ExcepcionAplicacion(ErrorAplicacion.SOLICITUD_INVALIDA, "La descripción es obligatoria.");
         }
-
-        Rol creado = repository.guardar(new Rol(null, nombreNormalizado, descripcion.trim(), EstadoRegistro.ACTIVO));
-        bitacora.registrar(EventoSistema.exito(TipoEventoSistema.ROL_CREADO, null, null, null,
-                "rolId=" + creado.id() + ", nombre=" + creado.nombre()));
-        return creado;
-    }
-
-    private void validarObligatorio(String valor, String campo) {
-        if (valor == null || valor.isBlank()) {
+        if (descripcion.trim().length() > 240) {
             throw new ExcepcionAplicacion(ErrorAplicacion.SOLICITUD_INVALIDA,
-                    "El campo " + campo + " es obligatorio.");
+                    "La descripción no puede superar los 240 caracteres.");
         }
+        Rol anterior = repository.buscarPorId(id)
+                .orElseThrow(() -> new ExcepcionAplicacion(ErrorAplicacion.NO_ENCONTRADO, "El perfil no fue encontrado."));
+        Rol actualizado = repository.actualizar(new Rol(anterior.id(), anterior.nombre(), descripcion.trim(),
+                anterior.estado()));
+        bitacora.registrar(EventoSistema.exito(TipoEventoSistema.ROL_MODIFICADO, null, null, null,
+                "rol=" + actualizado.nombre() + ", campo=descripcion"));
+        return actualizado;
     }
 }

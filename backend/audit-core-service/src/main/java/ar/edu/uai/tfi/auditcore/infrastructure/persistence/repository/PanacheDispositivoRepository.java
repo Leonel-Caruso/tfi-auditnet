@@ -68,6 +68,11 @@ public class PanacheDispositivoRepository
             if (!entity.organizacion.id.equals(sede.organizacionId)) {
                 throw new IllegalArgumentException("La sede seleccionada no pertenece a la organización del dispositivo.");
             }
+            // Una sede deshabilitada no admite dispositivos nuevos (CU-007-002); el que ya estaba en ella se puede editar.
+            boolean mismaSede = entity.sede != null && entity.sede.id.equals(sede.id);
+            if (!"ACTIVO".equals(sede.estado) && !mismaSede) {
+                throw new IllegalArgumentException("La sede seleccionada está deshabilitada.");
+            }
         }
 
         entity.nombre = dispositivo.nombre();

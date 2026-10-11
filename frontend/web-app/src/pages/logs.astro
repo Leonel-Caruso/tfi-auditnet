@@ -1,5 +1,6 @@
 ---
 import MasterLayout from '../layouts/MasterLayout.astro';
+import { SYSTEM_EVENTS } from '../lib/api';
 ---
 
 <MasterLayout
@@ -33,11 +34,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         <span>evento</span>
         <select name="evento" class="technical-select">
           <option value="">todos</option>
-          <option value="LOGIN_EXITOSO">LOGIN_EXITOSO</option>
-          <option value="LOGIN_RECHAZADO">LOGIN_RECHAZADO</option>
-          <option value="USUARIO_CREADO">USUARIO_CREADO</option>
-          <option value="ROLES_ASIGNADOS">ROLES_ASIGNADOS</option>
-          <option value="ROL_CREADO">ROL_CREADO</option>
+          {SYSTEM_EVENTS.map((event) => <option value={event}>{event}</option>)}
         </select>
       </label>
       <label class="log-filter" data-tabs="sistema">
@@ -107,7 +104,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       </label>
       <label class="log-filter">
         <span>hasta</span>
-        <input name="hasta" class="technical-input" type="datetime-local" />
+        <input name="hasta" class="technical-input" type="datetime-local" data-time="end" />
       </label>
       <label class="log-filter">
         <span>límite</span>
@@ -643,6 +640,17 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     });
 
     search?.addEventListener('input', render);
+
+    // Filtros que llegan desde el panel de administración (ej: /logs?evento=CUENTA_BLOQUEADA#sistema).
+    const urlFilters = new URLSearchParams(window.location.search);
+    ['evento', 'resultado'].forEach((name) => {
+      const value = urlFilters.get(name);
+      const field = form?.querySelector<HTMLSelectElement>(`[name=${name}]`);
+      if (field && value && Array.from(field.options).some((option) => option.value === value)) field.value = value;
+    });
+    const desdeUrl = urlFilters.get('desde');
+    const desdeField = form?.querySelector<HTMLInputElement>('[name=desde]');
+    if (desdeField && desdeUrl && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(desdeUrl)) desdeField.value = desdeUrl;
 
     activate(activeTab);
     loadOrganizations();

@@ -22,7 +22,7 @@ const {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <meta name="description" content={description} />
-    <title>{title} · AuditConfig</title>
+    <title>{title} · AuditNet</title>
   </head>
   <body class="app-body">
     <div id="session-loading" class="session-loading">
@@ -49,6 +49,10 @@ const {
 
     <script>
       import { getStoredUser, logout, verifySession } from '../lib/auth';
+      import { enhanceDateInputs } from '../lib/datepicker';
+
+      // Calendario con el estilo de la consola en todos los campos de fecha (reportes, bitácoras, historial, hallazgos).
+      enhanceDateInputs(document);
 
       async function initializeShell() {
         try {
@@ -125,7 +129,9 @@ const {
         hallazgos: '/results', hallazgo: '/results', resultados: '/results', log: '/results', findings: '/results',
         alertas: '/alerts', alerta: '/alerts', alr: '/alerts', alerts: '/alerts',
         reportes: '/reports', reporte: '/reports', rep: '/reports', reports: '/reports',
-        cliente: '/client-status', cli: '/client-status', estado: '/client-status', tablero: '/dashboard'
+        cliente: '/client-status', cli: '/client-status', estado: '/client-status', tablero: '/dashboard',
+        admin: '/admin', adm: '/admin', panel: '/admin', salud: '/admin',
+        cuenta: '/account', 'mi cuenta': '/account', contraseña: '/account', password: '/account'
       };
 
       commandPalette?.addEventListener('keydown', (event) => {

@@ -9,6 +9,7 @@ const railItems = [
   { href: '/organizations', label: 'Organizaciones y sedes', code: 'ORG', adminOnly: true },
   { href: '/users', label: 'Usuarios', code: 'USR', adminOnly: true },
   { href: '/logs', label: 'Bitácoras', code: 'BIT', adminOnly: true },
+  { href: '/admin', label: 'Panel de administración', code: 'ADM', adminOnly: true },
   { separator: true },
   { href: '/devices', label: 'Dispositivos', code: 'DEV' },
   { href: '/baselines', label: 'Baselines', code: 'BL' },
@@ -22,7 +23,7 @@ const railItems = [
 ---
 
 <aside class="command-rail" aria-label="Navegación principal">
-  <a class="rail-brand" href="/dashboard" aria-label="AuditConfig · Inicio" title="AuditConfig">
+  <a class="rail-brand" href="/dashboard" aria-label="AuditNet · Inicio" title="AuditNet">
     <span>A_</span>
   </a>
 
@@ -48,3 +49,30 @@ const railItems = [
     <span class="rail-runtime-label">LOC</span>
   </div>
 </aside>
+
+<script>
+  // En pantallas bajas el menú se desplaza sin barra: se marca si quedan ítems ocultos arriba o abajo (degradado)
+  // y el ítem de la pantalla actual queda a la vista. La consola se muestra recién al validar la sesión, por eso se
+  // calcula cuando el menú toma tamaño (ResizeObserver) y no al cargar.
+  const nav = document.querySelector<HTMLElement>('.rail-nav');
+  if (nav) {
+    let centered = false;
+    const sync = () => {
+      if (nav.clientHeight === 0) return;
+      if (!centered) {
+        centered = true;
+        const active = nav.querySelector<HTMLElement>('.rail-link.is-active');
+        if (active && nav.scrollHeight > nav.clientHeight) {
+          const offset = active.getBoundingClientRect().top - nav.getBoundingClientRect().top + nav.scrollTop;
+          nav.scrollTop = Math.max(0, offset - (nav.clientHeight - active.offsetHeight) / 2);
+        }
+      }
+      nav.classList.toggle('has-more-top', nav.scrollTop > 2);
+      nav.classList.toggle('has-more-bottom', nav.scrollTop + nav.clientHeight < nav.scrollHeight - 2);
+    };
+    nav.addEventListener('scroll', sync, { passive: true });
+    new ResizeObserver(sync).observe(nav);
+    // Los ítems solo de administrador se ocultan al validar la sesión: cambia el alto del contenido.
+    new MutationObserver(sync).observe(nav, { attributes: true, subtree: true, attributeFilter: ['hidden'] });
+  }
+</script>

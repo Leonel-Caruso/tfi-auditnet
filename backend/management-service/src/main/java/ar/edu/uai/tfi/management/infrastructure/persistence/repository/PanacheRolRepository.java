@@ -33,6 +33,20 @@ public class PanacheRolRepository implements PanacheRepository<RolEntity>, RolRe
                 .firstResultOptional().map(this::aDominio);
     }
 
+    @Override
+    public Optional<Rol> buscarPorId(Long id) {
+        return findByIdOptional(id).map(this::aDominio);
+    }
+
+    @Override
+    public Rol actualizar(Rol rol) {
+        RolEntity entity = findByIdOptional(rol.id())
+                .orElseThrow(() -> new java.util.NoSuchElementException("No existe el rol."));
+        entity.descripcion = rol.descripcion();
+        flush();
+        return aDominio(entity);
+    }
+
     private Rol aDominio(RolEntity entity) {
         return new Rol(entity.id, entity.nombre, entity.descripcion, entity.estado);
     }

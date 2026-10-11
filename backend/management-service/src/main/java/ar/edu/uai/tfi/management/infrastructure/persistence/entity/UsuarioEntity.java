@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.time.Instant;
 
 @Entity
 @Table(name = "usuarios",
@@ -37,6 +38,20 @@ public class UsuarioEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false, length = 30)
     public EstadoRegistro estado;
+
+    /** V4: contraseñas incorrectas seguidas desde el último acceso o bloqueo. */
+    @Column(name = "intentos_fallidos", nullable = false)
+    public int intentosFallidos;
+
+    @Column(name = "bloqueado_hasta")
+    public Instant bloqueadoHasta;
+
+    @Column(name = "ultimo_acceso")
+    public Instant ultimoAcceso;
+
+    /** Los tokens emitidos antes de este momento ya no valen. */
+    @Column(name = "sesiones_validas_desde")
+    public Instant sesionesValidasDesde;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "usuarios_roles",

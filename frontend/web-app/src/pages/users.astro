@@ -3,18 +3,39 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 ---
 
 <MasterLayout
-  title="Usuarios"
+  title="Usuarios y perfiles"
   section="Control de acceso"
-  description="Usuarios habilitados, organización asociada y perfil de acceso dentro de la plataforma."
+  description="Alta, modificación y baja lógica de usuarios, restablecimiento de contraseñas, desbloqueo de cuentas y perfiles de acceso (CU-001-002)."
 >
-  <section id="users-error" class="alert alert-error is-hidden"></section>
+  <div id="users-error" class="alert alert-error is-hidden" role="alert"></div>
+  <div id="users-message" class="alert alert-success is-hidden" role="status"></div>
+
   <section class="panel">
     <div class="panel-heading">
       <div>
         <span class="eyebrow">Accesos</span>
-        <h2>Usuarios y perfiles</h2>
+        <h2>Usuarios</h2>
       </div>
-      <span id="users-count" class="counter-chip">—</span>
+      <div class="panel-heading-actions">
+        <span id="users-count" class="counter-chip">—</span>
+        <button id="user-create" class="button button-primary button-small" type="button">+ usuario</button>
+      </div>
+    </div>
+
+    <div class="users-toolbar">
+      <label class="terminal-search">
+        <span>&gt;</span>
+        <input id="user-search" type="search" placeholder="buscar nombre, usuario o correo..." />
+      </label>
+      <label class="log-filter">
+        <span>estado</span>
+        <select id="user-status-filter" class="technical-select">
+          <option value="">todos</option>
+          <option value="ACTIVO">activos</option>
+          <option value="DESHABILITADO">deshabilitados</option>
+          <option value="BLOQUEADO">bloqueados</option>
+        </select>
+      </label>
     </div>
 
     <div class="table-wrap">
@@ -22,89 +43,495 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         <thead>
           <tr>
             <th>Usuario</th>
-            <th>Correo</th>
             <th>Organización</th>
             <th>Perfil</th>
             <th>Estado</th>
+            <th>Último acceso</th>
+            <th aria-label="Acciones"></th>
           </tr>
         </thead>
         <tbody id="users-body">
-          <tr><td colspan="5"><div class="skeleton-row"></div></td></tr>
+          <tr><td colspan="6"><div class="skeleton-row"></div></td></tr>
         </tbody>
       </table>
+      <div id="users-empty" class="empty-state compact-empty is-hidden">
+        <div><code>users.count = 0</code><p>No hay usuarios que coincidan con el filtro.</p></div>
+      </div>
     </div>
   </section>
 
+  <section class="two-column">
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Perfiles</span>
+          <h2>Perfiles de acceso</h2>
+        </div>
+      </div>
+      <p class="log-muted">Los cuatro perfiles de la tesis son fijos: sus permisos están aplicados en los servicios. Se puede ajustar la descripción.</p>
+      <div id="role-list" class="role-list" style="margin-top: 12px;"><div class="skeleton-row"></div></div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Permisos</span>
+          <h2>Matriz de permisos</h2>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table permission-table">
+          <thead>
+            <tr><th>Módulo · acción</th><th title="Administrador del sistema">ADM</th><th title="Analista de redes">ANL</th><th title="Auditor técnico">AUD</th><th title="Responsable de gestión IT">RSP</th></tr>
+          </thead>
+          <tbody id="permission-body"></tbody>
+        </table>
+      </div>
+    </article>
+  </section>
+
+  <dialog id="user-dialog" class="technical-dialog">
+    <form id="user-form" class="device-form" novalidate>
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow" id="user-dialog-eyebrow">Alta de usuario</span>
+          <h2 id="user-dialog-title">Registrar usuario</h2>
+          <p id="user-dialog-help">La cuenta queda activa con el perfil elegido.</p>
+        </div>
+        <button class="dialog-close" type="button" data-close-dialog aria-label="Cerrar">×</button>
+      </div>
+
+      <div class="device-form-grid">
+        <label class="field">
+          <span>nombre y apellido *</span>
+          <input id="form-user-name" type="text" maxlength="140" autocomplete="off" required />
+        </label>
+        <label class="field">
+          <span>correo *</span>
+          <input id="form-user-email" type="email" maxlength="160" autocomplete="off" required />
+        </label>
+        <label class="field">
+          <span>nombre de usuario *</span>
+          <input id="form-user-username" type="text" maxlength="60" autocomplete="off" placeholder="ej: ana.perez" required />
+        </label>
+        <label class="field">
+          <span>organización *</span>
+          <select id="form-user-organization" class="technical-select form-select" required></select>
+        </label>
+        <label class="field field-span-2" id="form-user-password-field">
+          <span>contraseña inicial *</span>
+          <input id="form-user-password" type="password" maxlength="72" autocomplete="new-password" required />
+        </label>
+        <ul id="form-user-password-rules" class="password-rules field-span-2"></ul>
+        <fieldset class="role-checks field-span-2" id="user-roles">
+          <legend>perfil *</legend>
+        </fieldset>
+      </div>
+
+      <div id="user-form-error" class="alert alert-error is-hidden"></div>
+      <div class="dialog-actions">
+        <button class="button button-ghost" type="button" data-close-dialog>Cancelar</button>
+        <button id="user-submit" class="button button-primary" type="submit">Registrar usuario</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="password-dialog" class="technical-dialog" style="width: min(520px, calc(100vw - 32px));">
+    <form id="password-form" class="device-form" novalidate>
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">Restablecer contraseña</span>
+          <h2 id="password-dialog-title">Nueva contraseña</h2>
+          <p>Se quita el bloqueo, si lo hubiera, y se cierran las sesiones abiertas del usuario. Comunicale la contraseña por un canal seguro.</p>
+        </div>
+        <button class="dialog-close" type="button" data-close-dialog aria-label="Cerrar">×</button>
+      </div>
+      <label class="field">
+        <span>contraseña nueva *</span>
+        <input id="reset-password" type="password" maxlength="72" autocomplete="new-password" required />
+      </label>
+      <ul id="reset-password-rules" class="password-rules"></ul>
+      <label class="field">
+        <span>repetir contraseña *</span>
+        <input id="reset-password-confirm" type="password" maxlength="72" autocomplete="new-password" required />
+      </label>
+      <div id="password-form-error" class="alert alert-error is-hidden"></div>
+      <div class="dialog-actions">
+        <button class="button button-ghost" type="button" data-close-dialog>Cancelar</button>
+        <button class="button button-primary" type="submit">Restablecer</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="role-dialog" class="technical-dialog" style="width: min(560px, calc(100vw - 32px));">
+    <form id="role-form" class="device-form" novalidate>
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">Perfil de acceso</span>
+          <h2 id="role-dialog-title">Editar descripción</h2>
+          <p>El nombre y los permisos del perfil no cambian.</p>
+        </div>
+        <button class="dialog-close" type="button" data-close-dialog aria-label="Cerrar">×</button>
+      </div>
+      <label class="field">
+        <span>descripción *</span>
+        <textarea id="role-description" rows="3" maxlength="240" required></textarea>
+      </label>
+      <div id="role-form-error" class="alert alert-error is-hidden"></div>
+      <div class="dialog-actions">
+        <button class="button button-ghost" type="button" data-close-dialog>Cancelar</button>
+        <button class="button button-primary" type="submit">Guardar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="confirm-dialog" class="technical-dialog" style="width: min(480px, calc(100vw - 32px));">
+    <form method="dialog" class="device-form">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">Confirmar</span>
+          <h2 id="confirm-title">¿Confirmás la operación?</h2>
+          <p id="confirm-text"></p>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button class="button button-ghost" value="cancel">Cancelar</button>
+        <button id="confirm-accept" class="button button-primary" value="ok">Confirmar</button>
+      </div>
+    </form>
+  </dialog>
+
   <script>
-    import { authFetch } from '../lib/auth';
-    import { readApiError, type Organization, type User } from '../lib/api';
+    import { authFetch, getStoredUser, logout } from '../lib/auth';
+    import { jsonRequest, readApiError, ROLE_LABEL, type Organization, type Permission, type Role, type User } from '../lib/api';
+    import { escapeHtml, formatDate } from '../lib/format';
+    import { passwordRulesHtml, updatePasswordRules } from '../lib/password';
 
-    function cell(text: string): HTMLTableCellElement {
-      const td = document.createElement('td');
-      td.textContent = text;
-      return td;
-    }
+    const PROFILE_ORDER = ['ADMINISTRADOR_SISTEMA', 'ANALISTA_RED', 'AUDITOR_TECNICO', 'RESPONSABLE_GESTION_IT'];
+    const me = getStoredUser();
 
-    function buildUserRow(user: User, organizations: Map<number, string>): HTMLTableRowElement {
-      const row = document.createElement('tr');
+    let users: User[] = [];
+    let organizations: Organization[] = [];
+    let roles: Role[] = [];
+    let editing: User | null = null;
+    let resetting: User | null = null;
+    let editingRole: Role | null = null;
 
-      const identity = document.createElement('td');
-      const name = document.createElement('strong');
-      name.textContent = user.nombre;
-      const username = document.createElement('small');
-      username.textContent = `@${user.nombreUsuario}`;
-      identity.append(name, username);
+    const $ = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector);
+    const userDialog = $<HTMLDialogElement>('#user-dialog');
+    const passwordDialog = $<HTMLDialogElement>('#password-dialog');
+    const roleDialog = $<HTMLDialogElement>('#role-dialog');
+    const confirmDialog = $<HTMLDialogElement>('#confirm-dialog');
 
-      const roles = document.createElement('td');
-      user.roles.forEach((role) => {
-        const chip = document.createElement('span');
-        chip.className = 'role-chip';
-        chip.textContent = role.toLowerCase();
-        roles.appendChild(chip);
+    const show = (selector: string, message: string | null) => {
+      const node = $(selector);
+      if (!node) return;
+      node.textContent = message ?? '';
+      node.classList.toggle('is-hidden', !message);
+    };
+    const notify = (message: string) => {
+      show('#users-message', message);
+      window.setTimeout(() => show('#users-message', null), 4500);
+    };
+    const value = (selector: string) => ($<HTMLInputElement>(selector)?.value ?? '').trim();
+    const orgName = (id: number) => organizations.find((org) => org.id === id)?.razonSocial ?? `organización #${id}`;
+    const isLocked = (user: User) => Boolean(user.bloqueadoHasta && new Date(user.bloqueadoHasta).getTime() > Date.now());
+    const timeOnly = (iso: string) => new Intl.DateTimeFormat('es-AR', { hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
+
+    /** Pide confirmación con el diálogo de la consola (en lugar del confirm del navegador). */
+    const confirmAction = (title: string, text: string, accept: string) => new Promise<boolean>((resolve) => {
+      if (!confirmDialog) return resolve(false);
+      $('#confirm-title')!.textContent = title;
+      $('#confirm-text')!.textContent = text;
+      $('#confirm-accept')!.textContent = accept;
+      confirmDialog.returnValue = 'cancel';
+      confirmDialog.addEventListener('close', () => resolve(confirmDialog.returnValue === 'ok'), { once: true });
+      confirmDialog.showModal();
+    });
+
+    const statusBadge = (user: User) => {
+      if (user.estado !== 'ACTIVO') return '<span class="status-badge status-off">deshabilitado</span>';
+      if (isLocked(user)) {
+        return `<span class="status-badge status-locked" title="Bloqueada por intentos fallidos">bloqueado hasta ${escapeHtml(timeOnly(user.bloqueadoHasta!))}</span>`;
+      }
+      return '<span class="status-badge status-ready">activo</span>';
+    };
+
+    const renderUsers = () => {
+      const body = $<HTMLTableSectionElement>('#users-body');
+      if (!body) return;
+      const term = value('#user-search').toLowerCase();
+      const status = $<HTMLSelectElement>('#user-status-filter')?.value ?? '';
+      const visible = users.filter((user) => {
+        if (term && ![user.nombre, user.nombreUsuario, user.email].some((field) => field.toLowerCase().includes(term))) return false;
+        if (status === 'BLOQUEADO') return isLocked(user);
+        return !status || user.estado === status;
       });
 
-      const status = document.createElement('td');
-      const badge = document.createElement('span');
-      badge.className = 'status-badge status-ready';
-      badge.textContent = user.estado.toLowerCase();
-      status.appendChild(badge);
+      body.innerHTML = visible.map((user) => {
+        const self = user.id === me?.userId;
+        const active = user.estado === 'ACTIVO';
+        return `
+          <tr class="user-row ${active ? '' : 'is-disabled'}" data-user-id="${user.id}">
+            <td><strong>${escapeHtml(user.nombre)}${self ? ' <span class="role-chip">vos</span>' : ''}</strong><small>@${escapeHtml(user.nombreUsuario)} · ${escapeHtml(user.email)}</small></td>
+            <td>${escapeHtml(orgName(user.organizationId))}</td>
+            <td>${user.roles.map((role) => `<span class="role-chip" title="${escapeHtml(role)}">${escapeHtml(ROLE_LABEL[role] ?? role)}</span>`).join('')}</td>
+            <td>${statusBadge(user)}</td>
+            <td><span class="log-nowrap">${user.ultimoAcceso ? escapeHtml(formatDate(user.ultimoAcceso)) : '<span class="log-muted">nunca ingresó</span>'}</span></td>
+            <td>
+              <div class="row-actions">
+                <button class="button button-ghost button-small" type="button" data-action="edit">Editar</button>
+                ${self
+                  ? '<a class="button button-ghost button-small" href="/account" title="Tu contraseña se cambia desde Mi cuenta">Contraseña</a>'
+                  : '<button class="button button-ghost button-small" type="button" data-action="password">Contraseña</button>'}
+                ${isLocked(user) ? '<button class="button button-ghost button-small" type="button" data-action="unlock">Desbloquear</button>' : ''}
+                ${self ? '' : `<button class="button button-ghost button-small" type="button" data-action="${active ? 'disable' : 'enable'}">${active ? 'Deshabilitar' : 'Habilitar'}</button>`}
+              </div>
+            </td>
+          </tr>`;
+      }).join('');
 
-      const organizationName = organizations.get(user.organizationId) ?? `org#${user.organizationId}`;
-      row.append(identity, cell(user.email), cell(organizationName), roles, status);
-      return row;
-    }
+      const count = $('#users-count');
+      if (count) count.textContent = String(users.length);
+      $('#users-empty')?.classList.toggle('is-hidden', visible.length > 0);
+    };
 
-    async function loadUsers(): Promise<void> {
-      const [usersResponse, organizationsResponse] = await Promise.all([
-        authFetch('/api/users'),
-        authFetch('/api/client-organizations'),
-      ]);
+    const renderRoles = () => {
+      const list = $('#role-list');
+      if (!list) return;
+      const ordered = [...roles].sort((a, b) => PROFILE_ORDER.indexOf(a.nombre) - PROFILE_ORDER.indexOf(b.nombre));
+      list.innerHTML = ordered.map((role) => `
+        <div class="role-item">
+          <div>
+            <strong>${escapeHtml(ROLE_LABEL[role.nombre] ?? role.nombre)}</strong>
+            <code class="log-muted"> ${escapeHtml(role.nombre)}</code>
+            <p>${escapeHtml(role.descripcion)}</p>
+          </div>
+          <button class="button button-ghost button-small" type="button" data-role-id="${role.id}">Editar</button>
+        </div>`).join('');
 
-      const body = document.querySelector<HTMLTableSectionElement>('#users-body');
-      const error = document.querySelector<HTMLElement>('#users-error');
+      const checks = $('#user-roles');
+      if (checks) {
+        checks.innerHTML = `<legend>perfil *</legend>${ordered.map((role) => `
+          <label class="role-check">
+            <input type="checkbox" name="roles" value="${escapeHtml(role.nombre)}" />
+            <strong>${escapeHtml(ROLE_LABEL[role.nombre] ?? role.nombre)}</strong>
+            <small>${escapeHtml(role.descripcion)}</small>
+          </label>`).join('')}`;
+      }
+    };
 
-      if (!usersResponse.ok) {
-        body?.replaceChildren();
-        if (error) {
-          error.textContent = await readApiError(usersResponse);
-          error.classList.remove('is-hidden');
-        }
+    const renderPermissions = (permissions: Permission[]) => {
+      const body = $('#permission-body');
+      if (!body) return;
+      body.innerHTML = permissions.map((permission) => `
+        <tr>
+          <td><strong>${escapeHtml(permission.modulo)}</strong><small>${escapeHtml(permission.accion)}</small></td>
+          ${PROFILE_ORDER.map((profile) => permission.perfiles.includes(profile)
+            ? `<td><span class="perm-yes" aria-label="permitido">✓</span></td>`
+            : `<td><span class="perm-no" aria-label="no permitido">—</span></td>`).join('')}
+        </tr>`).join('');
+    };
+
+    const loadUsers = async () => {
+      const response = await authFetch('/api/users');
+      if (!response.ok) {
+        show('#users-error', await readApiError(response));
+        $('#users-body')?.replaceChildren();
         return;
       }
+      users = await response.json() as User[];
+      renderUsers();
+    };
 
-      const users = await usersResponse.json() as User[];
-      const organizations = organizationsResponse.ok
-        ? await organizationsResponse.json() as Organization[]
-        : [];
-      const organizationNames = new Map(organizations.map((organization) => [organization.id, organization.razonSocial]));
+    const loadAll = async () => {
+      const [orgResponse, roleResponse, permissionResponse] = await Promise.all([
+        authFetch('/api/client-organizations'),
+        authFetch('/api/roles'),
+        authFetch('/api/roles/permissions'),
+      ]);
+      if (orgResponse.ok) organizations = await orgResponse.json() as Organization[];
+      if (roleResponse.ok) roles = await roleResponse.json() as Role[];
+      if (permissionResponse.ok) renderPermissions(await permissionResponse.json() as Permission[]);
+      renderRoles();
+      const select = $<HTMLSelectElement>('#form-user-organization');
+      if (select) {
+        select.replaceChildren(...organizations.map((org) => {
+          const option = new Option(`${org.razonSocial}${org.estado === 'ACTIVO' ? '' : ' (deshabilitada)'}`, String(org.id));
+          return option;
+        }));
+      }
+      await loadUsers();
+    };
 
-      const count = document.querySelector<HTMLSpanElement>('#users-count');
-      if (count) count.textContent = String(users.length);
-      if (!body) return;
+    // ---- Alta y modificación ------------------------------------------
+    const syncPasswordRules = () => updatePasswordRules($('#form-user-password-rules'), $<HTMLInputElement>('#form-user-password')?.value ?? '', value('#form-user-username'));
 
-      body.replaceChildren(...users.map((user) => buildUserRow(user, organizationNames)));
-    }
+    const openUserDialog = (user: User | null) => {
+      editing = user;
+      const form = $<HTMLFormElement>('#user-form');
+      form?.reset();
+      show('#user-form-error', null);
+      $('#user-dialog-eyebrow')!.textContent = user ? 'Modificar usuario' : 'Alta de usuario';
+      $('#user-dialog-title')!.textContent = user ? user.nombre : 'Registrar usuario';
+      $('#user-dialog-help')!.textContent = user
+        ? 'Si cambiás el perfil o la organización, las sesiones abiertas de este usuario se cierran.'
+        : 'La cuenta queda activa con el perfil elegido.';
+      $('#user-submit')!.textContent = user ? 'Guardar cambios' : 'Registrar usuario';
+      const username = $<HTMLInputElement>('#form-user-username')!;
+      username.disabled = Boolean(user);
+      $('#form-user-password-field')?.classList.toggle('is-hidden', Boolean(user));
+      $('#form-user-password-rules')?.classList.toggle('is-hidden', Boolean(user));
+      $('#form-user-password-rules')!.innerHTML = passwordRulesHtml();
+      if (user) {
+        $<HTMLInputElement>('#form-user-name')!.value = user.nombre;
+        $<HTMLInputElement>('#form-user-email')!.value = user.email;
+        username.value = user.nombreUsuario;
+        $<HTMLSelectElement>('#form-user-organization')!.value = String(user.organizationId);
+        document.querySelectorAll<HTMLInputElement>('#user-roles input[name=roles]').forEach((check) => {
+          check.checked = user.roles.includes(check.value);
+        });
+      }
+      syncPasswordRules();
+      userDialog?.showModal();
+    };
 
-    loadUsers().catch(() => {});
+    $('#user-create')?.addEventListener('click', () => openUserDialog(null));
+    $('#form-user-password')?.addEventListener('input', syncPasswordRules);
+    $('#form-user-username')?.addEventListener('input', syncPasswordRules);
+
+    $<HTMLFormElement>('#user-form')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      show('#user-form-error', null);
+      const selectedRoles = Array.from(document.querySelectorAll<HTMLInputElement>('#user-roles input[name=roles]:checked')).map((check) => check.value);
+      if (!value('#form-user-name') || !value('#form-user-email') || (!editing && !value('#form-user-username'))) {
+        return show('#user-form-error', 'Completá nombre, correo y nombre de usuario.');
+      }
+      if (selectedRoles.length === 0) return show('#user-form-error', 'Elegí al menos un perfil.');
+      if (!editing && !syncPasswordRules()) return show('#user-form-error', 'La contraseña inicial no cumple la política.');
+
+      const base = {
+        organizationId: Number($<HTMLSelectElement>('#form-user-organization')?.value),
+        nombre: value('#form-user-name'),
+        email: value('#form-user-email'),
+        roles: selectedRoles,
+      };
+      // Cambiar los perfiles o la organización propios cierra la sesión actual (D-31): se avisa antes.
+      const selfSessionCloses = editing !== null && editing.id === me?.userId && (
+        base.organizationId !== editing.organizationId
+        || selectedRoles.length !== editing.roles.length
+        || selectedRoles.some((role) => !editing!.roles.includes(role)));
+      if (selfSessionCloses) {
+        userDialog?.close();
+        const accepted = await confirmAction('Cambiar tu propia cuenta',
+          'Al cambiar tus perfiles o tu organización se cierra tu sesión y vas a tener que volver a ingresar.', 'Guardar y salir');
+        if (!accepted) return userDialog?.showModal();
+      }
+      const response = editing
+        ? await authFetch(`/api/users/${editing.id}`, jsonRequest('PUT', base))
+        : await authFetch('/api/users', jsonRequest('POST', {
+          ...base,
+          nombreUsuario: value('#form-user-username'),
+          password: $<HTMLInputElement>('#form-user-password')?.value ?? '',
+        }));
+      if (!response.ok) return show('#user-form-error', await readApiError(response));
+      const saved = await response.json() as User;
+      userDialog?.close();
+      if (selfSessionCloses) return logout();
+      notify(editing ? `Usuario @${saved.nombreUsuario} actualizado.` : `Usuario @${saved.nombreUsuario} registrado.`);
+      await loadUsers();
+    });
+
+    // ---- Contraseña ----------------------------------------------------
+    const syncResetRules = () => updatePasswordRules($('#reset-password-rules'), $<HTMLInputElement>('#reset-password')?.value ?? '', resetting?.nombreUsuario ?? '');
+    $('#reset-password')?.addEventListener('input', syncResetRules);
+
+    $<HTMLFormElement>('#password-form')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!resetting) return;
+      show('#password-form-error', null);
+      const password = $<HTMLInputElement>('#reset-password')?.value ?? '';
+      if (!syncResetRules()) return show('#password-form-error', 'La contraseña no cumple la política.');
+      if (password !== $<HTMLInputElement>('#reset-password-confirm')?.value) {
+        return show('#password-form-error', 'Las contraseñas no coinciden.');
+      }
+      const response = await authFetch(`/api/users/${resetting.id}/password`, jsonRequest('POST', { password }));
+      if (!response.ok) return show('#password-form-error', await readApiError(response));
+      passwordDialog?.close();
+      notify(`Contraseña de @${resetting.nombreUsuario} restablecida. Sus sesiones abiertas se cerraron.`);
+      await loadUsers();
+    });
+
+    // ---- Acciones por fila ---------------------------------------------
+    $('#users-body')?.addEventListener('click', async (event) => {
+      const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-action]');
+      const row = button?.closest<HTMLElement>('[data-user-id]');
+      const user = users.find((item) => item.id === Number(row?.dataset.userId));
+      if (!button || !user) return;
+      show('#users-error', null);
+
+      if (button.dataset.action === 'edit') return openUserDialog(user);
+      if (button.dataset.action === 'password') {
+        resetting = user;
+        $<HTMLFormElement>('#password-form')?.reset();
+        $('#reset-password-rules')!.innerHTML = passwordRulesHtml();
+        show('#password-form-error', null);
+        $('#password-dialog-title')!.textContent = `Nueva contraseña para @${user.nombreUsuario}`;
+        syncResetRules();
+        return passwordDialog?.showModal();
+      }
+
+      let response: Response | null = null;
+      if (button.dataset.action === 'unlock') {
+        response = await authFetch(`/api/users/${user.id}/unlock`, { method: 'POST' });
+        if (response.ok) notify(`Cuenta @${user.nombreUsuario} desbloqueada.`);
+      } else {
+        const disable = button.dataset.action === 'disable';
+        const accepted = await confirmAction(
+          disable ? `Deshabilitar a @${user.nombreUsuario}` : `Habilitar a @${user.nombreUsuario}`,
+          disable
+            ? 'No va a poder ingresar y sus sesiones abiertas se cierran en el acto. Su historial se conserva (baja lógica).'
+            : 'Va a poder volver a ingresar con su contraseña actual.',
+          disable ? 'Deshabilitar' : 'Habilitar');
+        if (!accepted) return;
+        response = await authFetch(`/api/users/${user.id}/status`, jsonRequest('PATCH', { estado: disable ? 'DESHABILITADO' : 'ACTIVO' }));
+        if (response.ok) notify(`Usuario @${user.nombreUsuario} ${disable ? 'deshabilitado' : 'habilitado'}.`);
+      }
+      if (!response.ok) return show('#users-error', await readApiError(response));
+      await loadUsers();
+    });
+
+    // ---- Perfiles ------------------------------------------------------
+    $('#role-list')?.addEventListener('click', (event) => {
+      const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-role-id]');
+      editingRole = roles.find((role) => role.id === Number(button?.dataset.roleId)) ?? null;
+      if (!editingRole) return;
+      show('#role-form-error', null);
+      $('#role-dialog-title')!.textContent = ROLE_LABEL[editingRole.nombre] ?? editingRole.nombre;
+      $<HTMLTextAreaElement>('#role-description')!.value = editingRole.descripcion;
+      roleDialog?.showModal();
+    });
+
+    $<HTMLFormElement>('#role-form')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!editingRole) return;
+      const descripcion = ($<HTMLTextAreaElement>('#role-description')?.value ?? '').trim();
+      if (!descripcion) return show('#role-form-error', 'La descripción es obligatoria.');
+      const response = await authFetch(`/api/roles/${editingRole.id}`, jsonRequest('PUT', { descripcion }));
+      if (!response.ok) return show('#role-form-error', await readApiError(response));
+      const saved = await response.json() as Role;
+      roles = roles.map((role) => (role.id === saved.id ? saved : role));
+      renderRoles();
+      roleDialog?.close();
+      notify(`Descripción de ${ROLE_LABEL[saved.nombre] ?? saved.nombre} actualizada.`);
+    });
+
+    document.querySelectorAll<HTMLButtonElement>('[data-close-dialog]').forEach((button) => {
+      button.addEventListener('click', () => button.closest('dialog')?.close());
+    });
+    $('#user-search')?.addEventListener('input', renderUsers);
+    $('#user-status-filter')?.addEventListener('change', renderUsers);
+
+    loadAll().catch((error) => show('#users-error', error instanceof Error ? error.message : 'No se pudieron cargar los usuarios.'));
   </script>
 </MasterLayout>

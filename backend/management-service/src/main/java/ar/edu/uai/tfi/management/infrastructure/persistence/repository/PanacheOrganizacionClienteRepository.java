@@ -46,6 +46,17 @@ public class PanacheOrganizacionClienteRepository
                 .firstResultOptional().map(this::aDominio);
     }
 
+    @Override
+    public OrganizacionCliente actualizar(OrganizacionCliente organizacion) {
+        OrganizacionClienteEntity entity = findByIdOptional(organizacion.id())
+                .orElseThrow(() -> new java.util.NoSuchElementException("No existe la organización."));
+        entity.identificador = organizacion.identificador();
+        entity.razonSocial = organizacion.razonSocial();
+        entity.estado = organizacion.estado();
+        flush();
+        return aDominio(entity);
+    }
+
     private OrganizacionCliente aDominio(OrganizacionClienteEntity entity) {
         return new OrganizacionCliente(entity.id, entity.identificador, entity.razonSocial, entity.estado);
     }

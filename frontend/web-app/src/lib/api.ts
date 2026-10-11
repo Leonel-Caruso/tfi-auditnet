@@ -46,6 +46,59 @@ export type User = {
   nombreUsuario: string;
   estado: string;
   roles: string[];
+  /** Fin del bloqueo por intentos fallidos; null si la cuenta no está bloqueada. */
+  bloqueadoHasta: string | null;
+  /** Último inicio de sesión exitoso; null si nunca ingresó. */
+  ultimoAcceso: string | null;
+};
+
+/** Perfil de acceso fijo (D-29): solo se edita la descripción. */
+export type Role = {
+  id: number;
+  nombre: string;
+  descripcion: string;
+  estado: string;
+};
+
+export type Permission = {
+  modulo: string;
+  accion: string;
+  perfiles: string[];
+};
+
+export type HealthComponent = {
+  nombre: string;
+  estado: 'UP' | 'DOWN';
+  latenciaMs: number;
+  detalle: string;
+};
+
+export type ServiceHealth = {
+  servicio: string;
+  estado: 'UP' | 'DEGRADADO';
+  version: string;
+  inicio: string;
+  segundosEnLinea: number;
+  memoriaUsadaMb: number;
+  memoriaMaximaMb: number;
+  componentes: HealthComponent[];
+  verificado: string;
+};
+
+export type SecuritySummary = {
+  usuariosActivos: number;
+  usuariosDeshabilitados: number;
+  cuentasBloqueadas: number;
+  eventosUltimas24h: Record<string, number>;
+  ultimosRechazos: SystemLogRecord[];
+  desde: string;
+};
+
+export const ROLE_LABEL: Record<string, string> = {
+  ADMINISTRADOR_SISTEMA: 'Administrador del sistema',
+  ANALISTA_RED: 'Analista de redes',
+  AUDITOR_TECNICO: 'Auditor técnico',
+  RESPONSABLE_GESTION_IT: 'Responsable de gestión IT',
 };
 
 /** Opciones de fetch para enviar JSON (POST, PUT, PATCH). */
@@ -244,10 +297,17 @@ export type AuditComparison = {
 
 
 // Bloque 2.3d: registros de las tres bitácoras (GET /api/admin/bitacoras/...).
+export const SYSTEM_EVENTS = [
+  'LOGIN_EXITOSO', 'LOGIN_RECHAZADO', 'CUENTA_BLOQUEADA', 'CUENTA_DESBLOQUEADA',
+  'USUARIO_CREADO', 'USUARIO_MODIFICADO', 'USUARIO_HABILITADO', 'USUARIO_DESHABILITADO', 'ROLES_ASIGNADOS',
+  'CONTRASENA_CAMBIADA', 'CONTRASENA_RESTABLECIDA', 'ROL_CREADO', 'ROL_MODIFICADO',
+] as const;
+export type SystemEvent = typeof SYSTEM_EVENTS[number];
+
 export type SystemLogRecord = {
   id: number;
   fecha: string;
-  evento: 'LOGIN_EXITOSO' | 'LOGIN_RECHAZADO' | 'USUARIO_CREADO' | 'ROLES_ASIGNADOS' | 'ROL_CREADO';
+  evento: SystemEvent;
   resultado: 'EXITO' | 'FALLO';
   actor: string | null;
   usuarioAfectadoId: number | null;

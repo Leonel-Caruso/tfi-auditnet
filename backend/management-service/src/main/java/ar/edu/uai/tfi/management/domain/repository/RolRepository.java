@@ -9,4 +9,9 @@ public interface RolRepository {
     Rol guardar(Rol rol);
     List<Rol> listar();
     Optional<Rol> buscarPorNombre(String nombre);
+
+    Optional<Rol> buscarPorId(Long id);
+
+    /** Actualiza la descripción (los nombres y permisos de los perfiles son fijos, D-29). */
+    Rol actualizar(Rol rol);
 }

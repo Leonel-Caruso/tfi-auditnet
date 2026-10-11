@@ -4,6 +4,7 @@ import ar.edu.uai.tfi.management.application.ErrorAplicacion;
 import ar.edu.uai.tfi.management.application.ExcepcionAplicacion;
 import ar.edu.uai.tfi.management.application.port.TrazabilidadPort;
 import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
+import ar.edu.uai.tfi.management.domain.model.OperacionTransaccion;
 import ar.edu.uai.tfi.management.domain.model.Transaccion;
 import ar.edu.uai.tfi.management.domain.model.Sede;
 import ar.edu.uai.tfi.management.domain.repository.OrganizacionClienteRepository;
@@ -43,6 +44,10 @@ public class SedeService {
     @Transactional
     public Sede crear(Long organizacionId, String nombre, String ubicacion) {
         validarOrganizacion(organizacionId);
+        if (organizacionRepository.buscarPorId(organizacionId).map(o -> o.estado() != EstadoRegistro.ACTIVO).orElse(false)) {
+            throw new ExcepcionAplicacion(ErrorAplicacion.CONFLICTO,
+                    "La organización está deshabilitada: no se le pueden agregar sedes.");
+        }
         validarObligatorio(nombre, "nombre");
         validarObligatorio(ubicacion, "ubicacion");
 
@@ -61,6 +66,43 @@ public class SedeService {
 
         trazabilidad.registrar(Transaccion.alta("SEDE", creada.id(), organizacionId, creada));
         return creada;
+    }
+
+    /** Modifica nombre y ubicación (PUT /api/sites/{id}); el nombre sigue siendo único dentro de la organización. */
+    @Transactional
+    public Sede actualizar(Long id, String nombre, String ubicacion) {
+        Sede anterior = buscarPorId(id);
+        validarObligatorio(nombre, "nombre");
+        validarObligatorio(ubicacion, "ubicacion");
+        String nombreNormalizado = nombre.trim();
+        if (sedeRepository.buscarPorOrganizacionYNombre(anterior.organizacionId(), nombreNormalizado)
+                .filter(otra -> !otra.id().equals(id)).isPresent()) {
+            throw new ExcepcionAplicacion(ErrorAplicacion.CONFLICTO,
+                    "Ya existe otra sede con ese nombre en la organización.");
+        }
+        Sede actualizada = sedeRepository.actualizar(new Sede(id, anterior.organizacionId(), nombreNormalizado,
+                ubicacion.trim(), anterior.estado()));
+        trazabilidad.registrar(new Transaccion("SEDE", id, OperacionTransaccion.MODIFICACION,
+                anterior.organizacionId(), anterior, actualizada, null, null));
+        return actualizada;
+    }
+
+    /**
+     * Habilita o deshabilita la sede (baja lógica, CU-007-002 regla 5). Una sede deshabilitada no admite nuevos
+     * dispositivos; los que ya tenía conservan su historial.
+     */
+    @Transactional
+    public Sede cambiarEstado(Long id, String estado) {
+        Sede anterior = buscarPorId(id);
+        EstadoRegistro nuevo = OrganizacionClienteService.parsearEstado(estado);
+        if (anterior.estado() == nuevo) {
+            throw new ExcepcionAplicacion(ErrorAplicacion.CONFLICTO, "La sede ya está " + nuevo + ".");
+        }
+        Sede actualizada = sedeRepository.actualizar(new Sede(id, anterior.organizacionId(), anterior.nombre(),
+                anterior.ubicacion(), nuevo));
+        trazabilidad.registrar(new Transaccion("SEDE", id, OperacionTransaccion.CAMBIO_ESTADO,
+                anterior.organizacionId(), anterior, actualizada, null, anterior.estado() + " -> " + nuevo));
+        return actualizada;
     }
 
     private void validarOrganizacion(Long organizacionId) {

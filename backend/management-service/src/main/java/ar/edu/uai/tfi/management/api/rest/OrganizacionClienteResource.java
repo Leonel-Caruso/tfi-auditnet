@@ -1,6 +1,7 @@
 package ar.edu.uai.tfi.management.api.rest;
 
 import ar.edu.uai.tfi.management.api.rest.dto.b2b.CrearOrganizacionRequest;
+import ar.edu.uai.tfi.management.api.rest.dto.common.CambiarEstadoRequest;
 import ar.edu.uai.tfi.management.api.rest.dto.b2b.OrganizacionResponse;
 import ar.edu.uai.tfi.management.application.b2b.OrganizacionClienteService;
 import ar.edu.uai.tfi.management.domain.model.OrganizacionCliente;
@@ -59,6 +60,27 @@ public class OrganizacionClienteResource {
     public OrganizacionResponse buscar(@PathParam("id") Long id) {
         validarAccesoOrganizacion(id);
         return aResponse(service.buscarPorId(id));
+    }
+
+    @PUT
+    @Path("/{id}")
+    @RolesAllowed(ADMIN)
+    public OrganizacionResponse modificar(@PathParam("id") Long id, CrearOrganizacionRequest request) {
+        if (request == null) {
+            throw new BadRequestException("El cuerpo de la solicitud es obligatorio.");
+        }
+        return aResponse(service.actualizar(id, request.identificador(), request.razonSocial()));
+    }
+
+    /** Habilitar o deshabilitar (baja lógica): sus usuarios dejan de poder ingresar mientras esté deshabilitada. */
+    @PATCH
+    @Path("/{id}/status")
+    @RolesAllowed(ADMIN)
+    public OrganizacionResponse cambiarEstado(@PathParam("id") Long id, CambiarEstadoRequest request) {
+        if (request == null) {
+            throw new BadRequestException("El cuerpo de la solicitud es obligatorio.");
+        }
+        return aResponse(service.cambiarEstado(id, request.estado()));
     }
 
     private boolean esAdministrador() {

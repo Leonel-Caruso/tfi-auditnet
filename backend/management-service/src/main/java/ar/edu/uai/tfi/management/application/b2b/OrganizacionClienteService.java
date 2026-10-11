@@ -4,12 +4,16 @@ import ar.edu.uai.tfi.management.application.ErrorAplicacion;
 import ar.edu.uai.tfi.management.application.ExcepcionAplicacion;
 import ar.edu.uai.tfi.management.application.port.TrazabilidadPort;
 import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
+import ar.edu.uai.tfi.management.domain.model.OperacionTransaccion;
 import ar.edu.uai.tfi.management.domain.model.Transaccion;
 import ar.edu.uai.tfi.management.domain.model.OrganizacionCliente;
 import ar.edu.uai.tfi.management.domain.repository.OrganizacionClienteRepository;
+import ar.edu.uai.tfi.management.domain.repository.UsuarioRepository;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
+import java.time.Clock;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
 
@@ -17,10 +21,14 @@ import java.util.Locale;
 public class OrganizacionClienteService {
     private final OrganizacionClienteRepository repository;
     private final TrazabilidadPort trazabilidad;
+    private final UsuarioRepository usuarioRepository;
+    Clock reloj = Clock.systemUTC();
 
-    public OrganizacionClienteService(OrganizacionClienteRepository repository, TrazabilidadPort trazabilidad) {
+    public OrganizacionClienteService(OrganizacionClienteRepository repository, TrazabilidadPort trazabilidad,
+                                      UsuarioRepository usuarioRepository) {
         this.repository = repository;
         this.trazabilidad = trazabilidad;
+        this.usuarioRepository = usuarioRepository;
     }
 
     public List<OrganizacionCliente> listar() {
@@ -59,6 +67,62 @@ public class OrganizacionClienteService {
 
         trazabilidad.registrar(Transaccion.alta("ORGANIZACION", creada.id(), creada.id(), creada));
         return creada;
+    }
+
+    /**
+     * Modifica identificador y razón social (PUT /api/client-organizations/{id}). Ambos siguen siendo únicos en la
+     * plataforma (CU-007-001, regla 1).
+     */
+    @Transactional
+    public OrganizacionCliente actualizar(Long id, String identificador, String razonSocial) {
+        OrganizacionCliente anterior = buscarPorId(id);
+        validarObligatorio(identificador, "identificador");
+        validarObligatorio(razonSocial, "razonSocial");
+        String identificadorNormalizado = identificador.trim().toUpperCase(Locale.ROOT);
+        String razonSocialNormalizada = razonSocial.trim();
+        boolean duplicada = repository.buscarPorIdentificador(identificadorNormalizado)
+                .filter(otra -> !otra.id().equals(id)).isPresent()
+                || repository.buscarPorRazonSocial(razonSocialNormalizada)
+                .filter(otra -> !otra.id().equals(id)).isPresent();
+        if (duplicada) {
+            throw new ExcepcionAplicacion(ErrorAplicacion.CONFLICTO,
+                    "Ya existe otra organización cliente con el mismo identificador o razón social.");
+        }
+        OrganizacionCliente actualizada = repository.actualizar(new OrganizacionCliente(id, identificadorNormalizado,
+                razonSocialNormalizada, anterior.estado()));
+        trazabilidad.registrar(new Transaccion("ORGANIZACION", id, OperacionTransaccion.MODIFICACION, id,
+                anterior, actualizada, null, null));
+        return actualizada;
+    }
+
+    /**
+     * Habilita o deshabilita la organización (baja lógica, CU-007-001 reglas 2 y 6). Mientras está deshabilitada,
+     * sus usuarios no pueden ingresar ni operar (D-31); sus datos se conservan.
+     */
+    @Transactional
+    public OrganizacionCliente cambiarEstado(Long id, String estado) {
+        OrganizacionCliente anterior = buscarPorId(id);
+        EstadoRegistro nuevo = parsearEstado(estado);
+        if (anterior.estado() == nuevo) {
+            throw new ExcepcionAplicacion(ErrorAplicacion.CONFLICTO, "La organización ya está " + nuevo + ".");
+        }
+        OrganizacionCliente actualizada = repository.actualizar(new OrganizacionCliente(id, anterior.identificador(),
+                anterior.razonSocial(), nuevo));
+        if (nuevo == EstadoRegistro.DESHABILITADO) {
+            // Si después se vuelve a habilitar, los tokens emitidos antes de la baja no recuperan validez (D-31).
+            usuarioRepository.invalidarSesionesDeOrganizacion(id, reloj.instant().truncatedTo(ChronoUnit.SECONDS));
+        }
+        trazabilidad.registrar(new Transaccion("ORGANIZACION", id, OperacionTransaccion.CAMBIO_ESTADO, id,
+                anterior, actualizada, null, anterior.estado() + " -> " + nuevo));
+        return actualizada;
+    }
+
+    static EstadoRegistro parsearEstado(String estado) {
+        try {
+            return EstadoRegistro.valueOf(estado == null ? "" : estado.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException exception) {
+            throw new ExcepcionAplicacion(ErrorAplicacion.SOLICITUD_INVALIDA, "El estado debe ser ACTIVO o DESHABILITADO.");
+        }
     }
 
     private void validarObligatorio(String valor, String campo) {

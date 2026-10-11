@@ -19,7 +19,7 @@ import PublicLayout from '../layouts/PublicLayout.astro';
             <span class="terminal-dot is-accent"></span>
             <span class="terminal-dot"></span>
             <span class="terminal-dot"></span>
-            <span>auditconfig://pipeline</span>
+            <span>auditnet://pipeline</span>
           </div>
           <div class="terminal-lines">
             <span>source = <b>running-config</b></span>
@@ -76,7 +76,7 @@ import PublicLayout from '../layouts/PublicLayout.astro';
 
     const reason = new URLSearchParams(window.location.search).get('reason');
     if (reason === 'expired' && errorBox) {
-      errorBox.textContent = 'Tu sesión expiró. Volvé a iniciar sesión para continuar.';
+      errorBox.textContent = 'Tu sesión terminó (venció o cambiaron los datos de tu cuenta). Volvé a iniciar sesión para continuar.';
       errorBox.classList.remove('is-hidden');
       window.history.replaceState({}, '', '/login');
     }

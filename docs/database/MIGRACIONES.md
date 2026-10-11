@@ -43,6 +43,7 @@ las tablas del primero, **sin saltear su V1**.
 | V4 | audit-core-service | Alertas críticas (`alertas_criticas`, sin borrado) y alta de las alertas de los hallazgos CRITICA/ALTA existentes | 5 |
 | V5 | audit-core-service | Reportes de auditoría (`reportes_auditoria` y `reportes_auditoria_auditorias`, solo inserción) | 5 |
 | V6 | audit-core-service | Cierra las alertas duplicadas que dejó V4 (una vigente por dispositivo y regla, D-26) | 5 |
+| V4 | management-service | Seguridad de cuentas: intentos fallidos, bloqueo temporal, último acceso y `sesiones_validas_desde` en `usuarios`; descripciones de los cuatro perfiles (D-29 a D-31) | 6 |
 
 La V1 reproduce exactamente la estructura generada por Hibernate en la Entrega 1 (mismas columnas, tipos, nulabilidad,
 claves primarias, únicas y CHECK). Única diferencia deliberada: las claves foráneas tienen nombres legibles

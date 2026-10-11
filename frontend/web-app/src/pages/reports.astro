@@ -94,7 +94,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       type ReportSummary,
       type Site,
     } from '../lib/api';
-    import { code, escapeHtml, findingStatusBadge, formatDate, severityClass } from '../lib/format';
+    import { code, escapeHtml, formatDate } from '../lib/format';
+    import { printPageStyle, reportDocumentHtml } from '../lib/report-document';
     import { loadVisibleSites } from '../lib/sites';
 
     const isAdmin = hasRole('ADMINISTRADOR_SISTEMA');
@@ -165,109 +166,45 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       });
     };
 
-    const criteriaText = (report: AuditReport) => {
-      const criteria = report.criterios;
-      const parts = [
-        `organización: ${orgName(criteria.organizacionId)}`,
-        criteria.desde || criteria.hasta
-          ? `período: ${criteria.desde ? formatDate(criteria.desde) : '—'} a ${criteria.hasta ? formatDate(criteria.hasta) : '—'}`
-          : null,
-        criteria.auditoriaIds.length ? `auditorías: ${criteria.auditoriaIds.map((id) => code('AUD', id)).join(', ')}` : null,
-        criteria.dispositivoIds.length
-          ? `dispositivos: ${criteria.dispositivoIds.map((id) => devices.find((device) => device.id === id)?.identificador ?? `#${id}`).join(', ')}`
-          : 'dispositivos: todos',
-        `severidades: ${criteria.severidades.length ? criteria.severidades.join(', ') : 'todas'}`,
-        `estados: ${criteria.estados.length ? criteria.estados.join(', ') : 'todos'}`,
-      ];
-      return parts.filter(Boolean).map((part) => `<li>${escapeHtml(part)}</li>`).join('');
+    const reportContext = {
+      orgName,
+      siteName,
+      deviceName: (id: number) => devices.find((device) => device.id === id)?.identificador ?? `#${id}`,
     };
 
     const renderReport = (report: AuditReport) => {
       if (!view) return;
-      const { resumen, auditorias, hallazgos, inconsistencias } = report.contenido;
-      const severityRows = Object.entries(resumen.hallazgosPorSeveridad)
-        .map(([severity, total]) => `<span class="severity-badge ${severityClass(severity)}">${escapeHtml(severity)}: ${total}</span>`)
-        .join('');
+      const rep = code('REP', report.id);
       view.innerHTML = `
-        <header class="report-header">
+        <div class="report-toolbar report-no-print">
           <div>
-            <span class="eyebrow">Reporte de auditoría · ${code('REP', report.id)}</span>
-            <h2>${escapeHtml(report.titulo)}</h2>
-            <p>Generado el ${escapeHtml(formatDate(report.fechaGeneracion))} por <strong>${escapeHtml(report.generadoPor)}</strong> · AuditNet</p>
+            <span class="eyebrow">Vista del documento</span>
+            <strong>${rep}</strong>
           </div>
-          <div class="report-actions report-no-print">
+          <div class="report-actions">
             <button id="report-print" type="button" class="button button-primary button-small">Descargar PDF</button>
             <button id="report-csv" type="button" class="button button-ghost button-small">Descargar CSV</button>
           </div>
-        </header>
-
-        <section class="report-section">
-          <h3>Criterios</h3>
-          <ul class="report-criteria-list">${criteriaText(report)}</ul>
-        </section>
-
-        <section class="report-section">
-          <h3>Resumen</h3>
-          <div class="report-kpis">
-            <div><span>resultado general</span><strong class="${resumen.resultadoGeneral === 'CON_DESVIOS' ? 'is-alert' : ''}">${resumen.resultadoGeneral === 'CON_DESVIOS' ? 'Con desvíos' : 'Sin desvíos'}</strong></div>
-            <div><span>auditorías</span><strong>${resumen.auditorias}</strong></div>
-            <div><span>dispositivos</span><strong>${resumen.dispositivos}</strong></div>
-            <div><span>cumplimiento</span><strong>${resumen.cumplimiento == null ? '—' : `${resumen.cumplimiento}%`}</strong><small>${resumen.reglasCumplidas}/${resumen.reglasEvaluadas} reglas</small></div>
-            <div><span>hallazgos</span><strong>${resumen.hallazgos}</strong><small>${resumen.hallazgosPendientes} pendientes</small></div>
-            <div><span>severidad máxima</span><strong>${escapeHtml(resumen.severidadMaxima)}</strong></div>
-          </div>
-          <div class="badge-row report-severity">${severityRows}</div>
-        </section>
-
-        ${inconsistencias.length ? `
-        <section class="report-section">
-          <div class="alert alert-error"><strong>Datos incompletos:</strong> ${inconsistencias.map(escapeHtml).join(' ')}</div>
-        </section>` : ''}
-
-        <section class="report-section">
-          <h3>Auditorías incluidas</h3>
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead><tr><th>AUDITORÍA</th><th>FECHA</th><th>DISPOSITIVO</th><th>BASELINE</th><th>CONFIG.</th><th>REGLAS</th><th>HALLAZGOS</th><th>RESULTADO</th></tr></thead>
-              <tbody>${auditorias.map((audit) => `
-                <tr>
-                  <td><a class="inline-link" href="/history?auditoria=${audit.id}">${code('AUD', audit.id)}</a><small>${escapeHtml(audit.ejecutadoPor)}</small></td>
-                  <td><span class="log-nowrap">${escapeHtml(formatDate(audit.fechaEjecucion))}</span></td>
-                  <td><strong>${escapeHtml(audit.dispositivoIdentificador ?? `#${audit.dispositivoId}`)}</strong><small>${escapeHtml(audit.criticidadDispositivo ?? '')} · ${escapeHtml(siteName(audit.sedeId))}</small></td>
-                  <td>${escapeHtml(audit.baselineNombre ?? `#${audit.baselineId}`)}${audit.baselineVersion ? ` v${audit.baselineVersion}` : ''}</td>
-                  <td>${code('CFG', audit.configuracionId)}${audit.configuracionVersion ? ` · v${audit.configuracionVersion}` : ''}</td>
-                  <td>${audit.reglasCumplidas}/${audit.totalReglas}</td>
-                  <td>${audit.totalHallazgos}</td>
-                  <td>${escapeHtml(audit.resultado)}</td>
-                </tr>`).join('')}</tbody>
-            </table>
-          </div>
-        </section>
-
-        <section class="report-section">
-          <h3>Hallazgos (${hallazgos.length})</h3>
-          ${hallazgos.length === 0 ? '<p class="log-muted">No hay hallazgos que cumplan los criterios.</p>' : hallazgos.map((finding) => `
-            <article class="report-finding">
-              <div class="report-finding-head">
-                <span class="severity-badge ${severityClass(finding.severidad)}">${escapeHtml(finding.severidad)}</span>
-                <strong>${escapeHtml(finding.codigoRegla)} · ${escapeHtml(finding.nombreRegla)}</strong>
-                ${findingStatusBadge(finding.estado)}
-              </div>
-              <p class="report-finding-meta">${code('FND', finding.id)} · ${escapeHtml(finding.dispositivoIdentificador ?? `#${finding.dispositivoId}`)} · ${code('AUD', finding.auditoriaId)} · detectado ${escapeHtml(formatDate(finding.fechaDeteccion))}</p>
-              ${finding.impacto ? `<p><span>Impacto:</span> ${escapeHtml(finding.impacto)}</p>` : ''}
-              <p><span>Evidencia:</span></p>
-              <pre>${escapeHtml(finding.evidencia)}</pre>
-              <p><span>Recomendación:</span> ${escapeHtml(finding.recomendacion)}</p>
-            </article>`).join('')}
-        </section>
-
-        <footer class="report-footer">
-          Foto fija generada el ${escapeHtml(formatDate(report.fechaGeneracion))}: el estado de los hallazgos es el de ese momento
-          y el reporte no cambia aunque cambien los datos de origen.
-        </footer>`;
+        </div>
+        ${reportDocumentHtml(report, reportContext)}`;
       view.classList.remove('is-hidden');
 
-      document.querySelector('#report-print')?.addEventListener('click', () => window.print());
+      // Pie de página del PDF con el número de reporte (se reemplaza al abrir otro reporte).
+      let printStyle = document.querySelector<HTMLStyleElement>('#report-print-style');
+      if (!printStyle) {
+        printStyle = document.createElement('style');
+        printStyle.id = 'report-print-style';
+        document.head.append(printStyle);
+      }
+      printStyle.textContent = printPageStyle(report);
+
+      document.querySelector('#report-print')?.addEventListener('click', () => {
+        // El título de la página es el nombre sugerido del PDF al guardarlo.
+        const previous = document.title;
+        document.title = `AuditNet ${rep} - ${report.fechaGeneracion.slice(0, 10)}`;
+        window.addEventListener('afterprint', () => { document.title = previous; }, { once: true });
+        window.print();
+      });
       document.querySelector('#report-csv')?.addEventListener('click', () => void downloadCsv(report.id));
     };
 

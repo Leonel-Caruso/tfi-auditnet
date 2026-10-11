@@ -10,4 +10,7 @@ public interface SedeRepository {
     List<Sede> listarPorOrganizacion(Long organizacionId);
     Optional<Sede> buscarPorId(Long id);
     Optional<Sede> buscarPorOrganizacionYNombre(Long organizacionId, String nombre);
+
+    /** Actualiza nombre, ubicación y estado. */
+    Sede actualizar(Sede sede);
 }

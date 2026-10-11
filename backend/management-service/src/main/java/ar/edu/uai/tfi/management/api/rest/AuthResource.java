@@ -1,5 +1,6 @@
 package ar.edu.uai.tfi.management.api.rest;
 
+import ar.edu.uai.tfi.management.api.rest.dto.auth.CambiarPasswordRequest;
 import ar.edu.uai.tfi.management.api.rest.dto.auth.LoginRequest;
 import ar.edu.uai.tfi.management.api.rest.dto.auth.LoginResponse;
 import ar.edu.uai.tfi.management.api.rest.dto.auth.UsuarioActualResponse;
@@ -33,7 +34,10 @@ public class AuthResource {
         if (request == null) {
             throw new BadRequestException("El cuerpo de la solicitud es obligatorio.");
         }
-        AuthResult result = authService.login(request.identidad(), request.password());
+        return aLoginResponse(authService.login(request.identidad(), request.password()));
+    }
+
+    private static LoginResponse aLoginResponse(AuthResult result) {
         var usuario = result.usuario();
         return new LoginResponse(
                 result.token(),
@@ -45,6 +49,26 @@ public class AuthResource {
                 usuario.nombreUsuario(),
                 usuario.email(),
                 usuario.roles());
+    }
+
+    /**
+     * El usuario autenticado cambia su contraseña. Responde un token nuevo: las demás sesiones abiertas quedan sin
+     * efecto (D-31).
+     */
+    @POST
+    @Path("/password")
+    @Authenticated
+    public LoginResponse cambiarPassword(CambiarPasswordRequest request) {
+        if (request == null) {
+            throw new BadRequestException("El cuerpo de la solicitud es obligatorio.");
+        }
+        Long usuarioId;
+        try {
+            usuarioId = Long.valueOf(jwt.getSubject());
+        } catch (NumberFormatException exception) {
+            throw new ForbiddenException("La sesión no identifica a un usuario válido.");
+        }
+        return aLoginResponse(authService.cambiarPasswordPropia(usuarioId, request.actual(), request.nueva()));
     }
 
     @GET

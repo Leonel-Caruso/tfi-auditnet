@@ -18,4 +18,8 @@ public class SedeReferenciaEntity {
 
     @Column(name = "id_organizacion", nullable = false)
     public Long organizacionId;
+
+    /** ACTIVO o DESHABILITADO (la administra management-service; acá solo se lee). */
+    @Column(name = "estado", nullable = false, length = 30)
+    public String estado;
 }

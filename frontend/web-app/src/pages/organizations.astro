@@ -5,7 +5,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 <MasterLayout
   title="Organizaciones y sedes"
   section="Control de acceso"
-  description="Clientes registrados y sus sedes operativas asociadas."
+  description="Clientes registrados y sus sedes operativas. Se modifican y se deshabilitan sin borrar su historial (baja lógica)."
 >
   <section id="organization-access-error" class="alert alert-error is-hidden"></section>
   <section id="organization-message" class="alert is-hidden" role="status"></section>
@@ -36,10 +36,17 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <span class="eyebrow">Sedes asociadas</span>
           <h2 id="site-title">Seleccioná una organización</h2>
         </div>
-        <button id="open-site-dialog" class="button button-primary button-small" type="button" data-admin-only="true" disabled>
-          + sede
-        </button>
+        <div class="panel-heading-actions" data-admin-only="true">
+          <button id="edit-organization" class="button button-ghost button-small" type="button" disabled>Editar</button>
+          <button id="toggle-organization" class="button button-ghost button-small" type="button" disabled>Deshabilitar</button>
+          <button id="open-site-dialog" class="button button-primary button-small" type="button" disabled>
+            + sede
+          </button>
+        </div>
       </div>
+      <p id="organization-disabled-note" class="alert alert-error is-hidden" style="margin-bottom: 14px;">
+        Organización deshabilitada: sus usuarios no pueden ingresar ni operar y no se le agregan sedes. Sus datos e historial se conservan.
+      </p>
       <div id="site-list" class="data-list empty-state">
         <p>Elegí una organización para consultar sus sedes.</p>
       </div>
@@ -50,9 +57,9 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <form id="organization-form" class="device-form">
       <div class="dialog-header">
         <div>
-          <span class="eyebrow">// POST /api/client-organizations</span>
-          <h2>Registrar organización</h2>
-          <p>Incorporá un cliente a la plataforma (RF-015).</p>
+          <span class="eyebrow" id="organization-dialog-eyebrow">Alta de organización</span>
+          <h2 id="organization-dialog-title">Registrar organización</h2>
+          <p id="organization-dialog-help">Incorporá un cliente a la plataforma (RF-015).</p>
         </div>
         <button class="dialog-close" type="button" data-close-dialog aria-label="Cerrar">×</button>
       </div>
@@ -67,7 +74,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <input id="organization-name" type="text" maxlength="160" placeholder="Cliente Norte SA" required />
         </label>
         <div class="device-form-context field-span-2">
-          <code>estado = ACTIVO</code>
+          <code id="organization-dialog-state">estado = ACTIVO</code>
           <span>El identificador se guarda en mayúsculas y debe ser único, igual que la razón social.</span>
         </div>
       </div>
@@ -75,7 +82,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       <div id="organization-form-error" class="alert alert-error is-hidden"></div>
       <div class="dialog-actions">
         <button class="button button-ghost" type="button" data-close-dialog>Cancelar</button>
-        <button class="button button-primary" type="submit">Registrar organización</button>
+        <button id="organization-submit" class="button button-primary" type="submit">Registrar organización</button>
       </div>
     </form>
   </dialog>
@@ -84,8 +91,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <form id="site-form" class="device-form">
       <div class="dialog-header">
         <div>
-          <span class="eyebrow">{'// POST /api/client-organizations/{id}/sites'}</span>
-          <h2>Registrar sede</h2>
+          <span class="eyebrow" id="site-dialog-eyebrow">Alta de sede</span>
+          <h2 id="site-dialog-title">Registrar sede</h2>
           <p id="site-dialog-context">Sede de la organización seleccionada (RF-016).</p>
         </div>
         <button class="dialog-close" type="button" data-close-dialog aria-label="Cerrar">×</button>
@@ -105,13 +112,29 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       <div id="site-form-error" class="alert alert-error is-hidden"></div>
       <div class="dialog-actions">
         <button class="button button-ghost" type="button" data-close-dialog>Cancelar</button>
-        <button class="button button-primary" type="submit">Registrar sede</button>
+        <button id="site-submit" class="button button-primary" type="submit">Registrar sede</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="org-confirm-dialog" class="technical-dialog" style="width: min(480px, calc(100vw - 32px));">
+    <form method="dialog" class="device-form">
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">Confirmar</span>
+          <h2 id="org-confirm-title">¿Confirmás la operación?</h2>
+          <p id="org-confirm-text"></p>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button class="button button-ghost" value="cancel">Cancelar</button>
+        <button id="org-confirm-accept" class="button button-primary" value="ok">Confirmar</button>
       </div>
     </form>
   </dialog>
 
   <script>
-    import { authFetch } from '../lib/auth';
+    import { authFetch, hasRole } from '../lib/auth';
     import { jsonRequest, readApiError, type Organization, type Site } from '../lib/api';
 
     const orgList = document.querySelector<HTMLDivElement>('#organization-list');
@@ -125,6 +148,23 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     const siteDialog = document.querySelector<HTMLDialogElement>('#site-dialog');
 
     let selectedOrganization: Organization | null = null;
+    let editingOrganization: Organization | null = null;
+    let editingSite: Site | null = null;
+    let currentSites: Site[] = [];
+    const isAdmin = hasRole('ADMINISTRADOR_SISTEMA');
+    const confirmDialog = document.querySelector<HTMLDialogElement>('#org-confirm-dialog');
+
+    const confirmAction = (title: string, text: string, accept: string) => new Promise<boolean>((resolve) => {
+      if (!confirmDialog) return resolve(false);
+      document.querySelector('#org-confirm-title')!.textContent = title;
+      document.querySelector('#org-confirm-text')!.textContent = text;
+      document.querySelector('#org-confirm-accept')!.textContent = accept;
+      confirmDialog.returnValue = 'cancel';
+      confirmDialog.addEventListener('close', () => resolve(confirmDialog.returnValue === 'ok'), { once: true });
+      confirmDialog.showModal();
+    });
+
+    const statusClass = (estado: string) => (estado === 'ACTIVO' ? 'status-ready' : 'status-off');
 
     function showError(text: string): void {
       if (!accessError) return;
@@ -134,6 +174,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
     function showMessage(text: string): void {
       if (!message) return;
+      accessError?.classList.add('is-hidden');
       message.textContent = text;
       message.className = 'alert alert-success';
       window.setTimeout(() => message.classList.add('is-hidden'), 4200);
@@ -162,16 +203,46 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       copy.append(name, location);
 
       const status = document.createElement('span');
-      status.className = `status-badge ${site.estado === 'ACTIVO' ? 'status-ready' : 'status-next'}`;
-      status.textContent = site.estado;
+      status.className = `status-badge ${statusClass(site.estado)}`;
+      status.textContent = site.estado.toLowerCase();
 
-      row.append(copy, status);
+      const side = document.createElement('div');
+      side.className = 'inline-actions';
+      side.append(status);
+      if (isAdmin) {
+        const edit = document.createElement('button');
+        edit.type = 'button';
+        edit.className = 'button button-ghost button-small';
+        edit.textContent = 'Editar';
+        edit.addEventListener('click', () => openSiteDialog(site));
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'button button-ghost button-small';
+        toggle.textContent = site.estado === 'ACTIVO' ? 'Deshabilitar' : 'Habilitar';
+        toggle.addEventListener('click', () => void toggleSite(site));
+        side.append(edit, toggle);
+      }
+
+      row.append(copy, side);
       return row;
+    }
+
+    function syncOrganizationActions(organization: Organization): void {
+      const active = organization.estado === 'ACTIVO';
+      if (openSiteButton) openSiteButton.disabled = !active;
+      const edit = document.querySelector<HTMLButtonElement>('#edit-organization');
+      const toggle = document.querySelector<HTMLButtonElement>('#toggle-organization');
+      if (edit) edit.disabled = false;
+      if (toggle) {
+        toggle.disabled = false;
+        toggle.textContent = active ? 'Deshabilitar' : 'Habilitar';
+      }
+      document.querySelector('#organization-disabled-note')?.classList.toggle('is-hidden', active);
     }
 
     async function loadSites(organization: Organization): Promise<void> {
       selectedOrganization = organization;
-      if (openSiteButton) openSiteButton.disabled = false;
+      syncOrganizationActions(organization);
       if (siteTitle) siteTitle.textContent = organization.razonSocial;
       if (siteList) {
         siteList.className = 'data-list';
@@ -192,6 +263,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       }
 
       const sites = await response.json() as Site[];
+      currentSites = sites;
       if (!siteList) return;
 
       siteList.replaceChildren();
@@ -222,8 +294,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       copy.append(name, identifier);
 
       const status = document.createElement('span');
-      status.className = `status-badge ${organization.estado === 'ACTIVO' ? 'status-ready' : 'status-next'}`;
-      status.textContent = organization.estado;
+      status.className = `status-badge ${statusClass(organization.estado)}`;
+      status.textContent = organization.estado.toLowerCase();
       button.append(copy, status);
 
       button.addEventListener('click', () => {
@@ -258,36 +330,110 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       button.addEventListener('click', () => button.closest('dialog')?.close());
     });
 
-    document.querySelector('#open-organization-dialog')?.addEventListener('click', () => {
+    function openOrganizationDialog(organization: Organization | null): void {
+      editingOrganization = organization;
       document.querySelector<HTMLFormElement>('#organization-form')?.reset();
       showFormError('#organization-form-error', null);
+      const text = (selector: string, value: string) => {
+        const node = document.querySelector(selector);
+        if (node) node.textContent = value;
+      };
+      text('#organization-dialog-eyebrow', organization ? 'Modificar organización' : 'Alta de organización');
+      text('#organization-dialog-title', organization ? organization.razonSocial : 'Registrar organización');
+      text('#organization-dialog-help', organization
+        ? 'El identificador y la razón social siguen siendo únicos en la plataforma.'
+        : 'Incorporá un cliente a la plataforma (RF-015).');
+      text('#organization-dialog-state', `estado = ${organization?.estado ?? 'ACTIVO'}`);
+      text('#organization-submit', organization ? 'Guardar cambios' : 'Registrar organización');
+      if (organization) {
+        document.querySelector<HTMLInputElement>('#organization-identifier')!.value = organization.identificador;
+        document.querySelector<HTMLInputElement>('#organization-name')!.value = organization.razonSocial;
+      }
       organizationDialog?.showModal();
-    });
+    }
 
-    openSiteButton?.addEventListener('click', () => {
+    function openSiteDialog(site: Site | null): void {
       if (!selectedOrganization) return;
+      editingSite = site;
       document.querySelector<HTMLFormElement>('#site-form')?.reset();
       showFormError('#site-form-error', null);
-      const context = document.querySelector('#site-dialog-context');
-      if (context) context.textContent = `Nueva sede de ${selectedOrganization.razonSocial} (RF-016).`;
+      const text = (selector: string, value: string) => {
+        const node = document.querySelector(selector);
+        if (node) node.textContent = value;
+      };
+      text('#site-dialog-eyebrow', site ? 'Modificar sede' : 'Alta de sede');
+      text('#site-dialog-title', site ? site.nombre : 'Registrar sede');
+      text('#site-dialog-context', site
+        ? `Sede de ${selectedOrganization.razonSocial}. El nombre sigue siendo único dentro de la organización.`
+        : `Nueva sede de ${selectedOrganization.razonSocial} (RF-016).`);
+      text('#site-submit', site ? 'Guardar cambios' : 'Registrar sede');
+      if (site) {
+        document.querySelector<HTMLInputElement>('#site-name')!.value = site.nombre;
+        document.querySelector<HTMLInputElement>('#site-location')!.value = site.ubicacion;
+      }
       siteDialog?.showModal();
+    }
+
+    async function toggleSite(site: Site): Promise<void> {
+      if (!selectedOrganization) return;
+      const disable = site.estado === 'ACTIVO';
+      const accepted = await confirmAction(
+        disable ? `Deshabilitar la sede ${site.nombre}` : `Habilitar la sede ${site.nombre}`,
+        disable
+          ? 'No se le podrán asignar dispositivos nuevos. Los dispositivos que ya tiene conservan su historial.'
+          : 'Vuelve a estar disponible para asignar dispositivos.',
+        disable ? 'Deshabilitar' : 'Habilitar');
+      if (!accepted) return;
+      const response = await authFetch(`/api/sites/${site.id}/status`, jsonRequest('PATCH', { estado: disable ? 'DESHABILITADO' : 'ACTIVO' }));
+      if (!response.ok) return showError(await readApiError(response));
+      showMessage(`Sede ${site.nombre} ${disable ? 'deshabilitada' : 'habilitada'}.`);
+      await loadSites(selectedOrganization);
+    }
+
+    document.querySelector('#open-organization-dialog')?.addEventListener('click', () => openOrganizationDialog(null));
+    document.querySelector('#edit-organization')?.addEventListener('click', () => {
+      if (selectedOrganization) openOrganizationDialog(selectedOrganization);
+    });
+    openSiteButton?.addEventListener('click', () => openSiteDialog(null));
+
+    document.querySelector('#toggle-organization')?.addEventListener('click', async () => {
+      const organization = selectedOrganization;
+      if (!organization) return;
+      const disable = organization.estado === 'ACTIVO';
+      const accepted = await confirmAction(
+        disable ? `Deshabilitar ${organization.razonSocial}` : `Habilitar ${organization.razonSocial}`,
+        disable
+          ? `Sus usuarios no van a poder ingresar y las sesiones abiertas se cierran en el acto. Sus ${currentSites.length} sedes, dispositivos, auditorías y reportes se conservan.`
+          : 'Sus usuarios activos vuelven a poder ingresar.',
+        disable ? 'Deshabilitar' : 'Habilitar');
+      if (!accepted) return;
+      const response = await authFetch(`/api/client-organizations/${organization.id}/status`,
+        jsonRequest('PATCH', { estado: disable ? 'DESHABILITADO' : 'ACTIVO' }));
+      if (!response.ok) return showError(await readApiError(response));
+      showMessage(`Organización ${organization.razonSocial} ${disable ? 'deshabilitada' : 'habilitada'}.`);
+      await loadOrganizations(organization.id);
     });
 
     document.querySelector<HTMLFormElement>('#organization-form')?.addEventListener('submit', async (event) => {
       event.preventDefault();
       showFormError('#organization-form-error', null);
-      const response = await authFetch('/api/client-organizations', jsonRequest('POST', {
+      const payload = {
         identificador: inputValue('#organization-identifier'),
         razonSocial: inputValue('#organization-name'),
-      }));
+      };
+      const response = editingOrganization
+        ? await authFetch(`/api/client-organizations/${editingOrganization.id}`, jsonRequest('PUT', payload))
+        : await authFetch('/api/client-organizations', jsonRequest('POST', payload));
       if (!response.ok) {
         showFormError('#organization-form-error', await readApiError(response));
         return;
       }
-      const created = await response.json() as Organization;
+      const saved = await response.json() as Organization;
       organizationDialog?.close();
-      showMessage(`Organización ${created.razonSocial} registrada correctamente.`);
-      await loadOrganizations(created.id);
+      showMessage(editingOrganization
+        ? `Organización ${saved.razonSocial} actualizada.`
+        : `Organización ${saved.razonSocial} registrada correctamente.`);
+      await loadOrganizations(saved.id);
     });
 
     document.querySelector<HTMLFormElement>('#site-form')?.addEventListener('submit', async (event) => {
@@ -295,17 +441,22 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       if (!selectedOrganization) return;
       showFormError('#site-form-error', null);
       const organization = selectedOrganization;
-      const response = await authFetch(`/api/client-organizations/${organization.id}/sites`, jsonRequest('POST', {
+      const payload = {
         nombre: inputValue('#site-name'),
         ubicacion: inputValue('#site-location'),
-      }));
+      };
+      const response = editingSite
+        ? await authFetch(`/api/sites/${editingSite.id}`, jsonRequest('PUT', payload))
+        : await authFetch(`/api/client-organizations/${organization.id}/sites`, jsonRequest('POST', payload));
       if (!response.ok) {
         showFormError('#site-form-error', await readApiError(response));
         return;
       }
-      const created = await response.json() as Site;
+      const saved = await response.json() as Site;
       siteDialog?.close();
-      showMessage(`Sede ${created.nombre} registrada en ${organization.razonSocial}.`);
+      showMessage(editingSite
+        ? `Sede ${saved.nombre} actualizada.`
+        : `Sede ${saved.nombre} registrada en ${organization.razonSocial}.`);
       await loadSites(organization);
     });
 

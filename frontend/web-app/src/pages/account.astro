@@ -1,0 +1,133 @@
+---
+import MasterLayout from '../layouts/MasterLayout.astro';
+---
+
+<MasterLayout
+  title="Mi cuenta"
+  section="Cuenta"
+  description="Tus datos de acceso y el cambio de tu contraseña."
+>
+  <div id="account-message" class="alert alert-success is-hidden" role="status"></div>
+
+  <section class="account-grid">
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Identidad</span>
+          <h2 id="account-name">—</h2>
+        </div>
+      </div>
+      <dl class="technical-definition-list">
+        <div><dt>usuario</dt><dd id="account-username">—</dd></div>
+        <div><dt>correo</dt><dd id="account-email">—</dd></div>
+        <div><dt>organización</dt><dd id="account-organization">—</dd></div>
+        <div><dt>perfil</dt><dd id="account-roles">—</dd></div>
+        <div><dt>sesión vence</dt><dd id="account-expires">—</dd></div>
+      </dl>
+      <p class="log-muted" style="margin-top: 14px;">
+        Para cambiar tu nombre, correo, organización o perfil, pedíselo al administrador del sistema.
+      </p>
+    </article>
+
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Seguridad</span>
+          <h2>Cambiar contraseña</h2>
+        </div>
+      </div>
+      <form id="account-password-form" class="account-form" novalidate>
+        <label class="field">
+          <span>contraseña actual *</span>
+          <input id="account-current" type="password" autocomplete="current-password" maxlength="72" required />
+        </label>
+        <label class="field">
+          <span>contraseña nueva *</span>
+          <input id="account-new" type="password" autocomplete="new-password" maxlength="72" required />
+        </label>
+        <ul id="account-rules" class="password-rules"></ul>
+        <label class="field">
+          <span>repetir contraseña nueva *</span>
+          <input id="account-confirm" type="password" autocomplete="new-password" maxlength="72" required />
+        </label>
+        <div id="account-error" class="alert alert-error is-hidden" role="alert" style="margin-bottom: 14px;"></div>
+        <button id="account-submit" class="button button-primary" type="submit">Cambiar contraseña</button>
+        <p class="log-muted" style="margin-top: 12px;">
+          Al cambiarla se cierran tus otras sesiones abiertas. Después de 5 intentos de ingreso fallidos la cuenta se
+          bloquea 15 minutos.
+        </p>
+      </form>
+    </article>
+  </section>
+
+  <script>
+    import { authFetch, getStoredUser, saveSession } from '../lib/auth';
+    import { jsonRequest, readApiError, ROLE_LABEL, type LoginResponse, type Organization } from '../lib/api';
+    import { formatDate } from '../lib/format';
+    import { passwordRulesHtml, updatePasswordRules } from '../lib/password';
+
+    const user = getStoredUser();
+    const set = (selector: string, text: string) => {
+      const node = document.querySelector(selector);
+      if (node) node.textContent = text;
+    };
+    const show = (selector: string, message: string | null) => {
+      const node = document.querySelector<HTMLElement>(selector);
+      if (!node) return;
+      node.textContent = message ?? '';
+      node.classList.toggle('is-hidden', !message);
+    };
+    const field = (selector: string) => document.querySelector<HTMLInputElement>(selector)!;
+
+    const renderIdentity = () => {
+      const current = getStoredUser();
+      if (!current) return;
+      set('#account-name', current.nombre);
+      set('#account-username', `@${current.username}`);
+      set('#account-email', current.email);
+      set('#account-roles', current.roles.map((role) => ROLE_LABEL[role] ?? role).join(', '));
+      const expires = Number(sessionStorage.getItem('tfi.auth.expiresAt'));
+      set('#account-expires', expires ? formatDate(new Date(expires).toISOString()) : '—');
+    };
+
+    const rules = document.querySelector<HTMLElement>('#account-rules');
+    if (rules) rules.innerHTML = passwordRulesHtml();
+    const syncRules = () => updatePasswordRules(rules, field('#account-new').value, user?.username ?? '');
+    field('#account-new').addEventListener('input', syncRules);
+
+    document.querySelector<HTMLFormElement>('#account-password-form')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      show('#account-error', null);
+      const actual = field('#account-current').value;
+      const nueva = field('#account-new').value;
+      if (!actual) return show('#account-error', 'Ingresá tu contraseña actual.');
+      if (!syncRules()) return show('#account-error', 'La contraseña nueva no cumple la política.');
+      if (nueva !== field('#account-confirm').value) return show('#account-error', 'Las contraseñas nuevas no coinciden.');
+
+      const submit = document.querySelector<HTMLButtonElement>('#account-submit');
+      if (submit) submit.disabled = true;
+      try {
+        const response = await authFetch('/api/auth/password', jsonRequest('POST', { actual, nueva }));
+        if (!response.ok) return show('#account-error', await readApiError(response));
+        // El servidor devuelve un token nuevo: el anterior (y las otras sesiones) dejan de valer.
+        saveSession(await response.json() as LoginResponse);
+        (event.target as HTMLFormElement).reset();
+        syncRules();
+        renderIdentity();
+        show('#account-message', 'Contraseña actualizada. Tus otras sesiones abiertas se cerraron.');
+      } finally {
+        if (submit) submit.disabled = false;
+      }
+    });
+
+    renderIdentity();
+    syncRules();
+    if (user?.organizationId) {
+      authFetch(`/api/client-organizations/${user.organizationId}`)
+        .then(async (response) => {
+          if (response.ok) set('#account-organization', (await response.json() as Organization).razonSocial);
+        })
+        .catch(() => {});
+    }
+  </script>
+</MasterLayout>

@@ -23,6 +23,9 @@ public class JwtTokenAdapter implements JwtPort {
                 .groups(usuario.roles())
                 .claim("organizationId", usuario.organizacionId())
                 .claim("name", usuario.nombre())
+                // Sin esto, en producción el token vencía a los 5 minutos (valor por defecto de SmallRye JWT),
+                // aunque el login informaba 60.
+                .expiresIn(DURACION_SEGUNDOS)
                 .signWithSecret(secret);
     }
 

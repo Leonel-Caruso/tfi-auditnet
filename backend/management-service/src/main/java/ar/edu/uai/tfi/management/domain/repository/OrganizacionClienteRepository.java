@@ -11,4 +11,7 @@ public interface OrganizacionClienteRepository {
     Optional<OrganizacionCliente> buscarPorId(Long id);
     Optional<OrganizacionCliente> buscarPorIdentificador(String identificador);
     Optional<OrganizacionCliente> buscarPorRazonSocial(String razonSocial);
+
+    /** Actualiza identificador, razón social y estado. */
+    OrganizacionCliente actualizar(OrganizacionCliente organizacion);
 }

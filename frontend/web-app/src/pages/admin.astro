@@ -1,0 +1,249 @@
+---
+import MasterLayout from '../layouts/MasterLayout.astro';
+---
+
+<MasterLayout
+  title="Panel de administración"
+  section="Panel de administración"
+  description="Salud de los servicios, seguridad de las cuentas y acceso a las bitácoras de la plataforma. Exclusivo del administrador del sistema."
+>
+  <div id="admin-error" class="alert alert-error is-hidden" role="alert"></div>
+
+  <section class="panel compact-panel dashboard-scope">
+    <div>
+      <span class="eyebrow">Estado de la plataforma</span>
+      <h2 id="admin-overall">Verificando servicios…</h2>
+    </div>
+    <div class="dashboard-scope-actions">
+      <span id="admin-checked" class="technical-hint"></span>
+      <button id="admin-refresh" class="button button-ghost button-small" type="button">Actualizar</button>
+    </div>
+  </section>
+
+  <section class="health-grid" id="admin-health">
+    <article class="panel" data-service="management"><div class="skeleton-row"></div></article>
+    <article class="panel" data-service="core"><div class="skeleton-row"></div></article>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <span class="eyebrow">Infraestructura</span>
+        <h2>Gateway y mensajería</h2>
+      </div>
+    </div>
+    <div class="health-components" style="margin-top: 0;">
+      <div class="health-component">
+        <span class="health-dot"></span>
+        <div><strong>Gateway web (nginx)</strong><small>Sirve la consola y deriva /api a cada servicio</small></div>
+        <code>en línea</code>
+      </div>
+      <div class="health-component">
+        <span class="health-dot is-na"></span>
+        <div><strong>Colas de mensajería</strong><small>No aplica: los servicios se comunican por REST sincrónico y comparten la base PostgreSQL</small></div>
+        <code>no aplica</code>
+      </div>
+    </div>
+  </section>
+
+  <section class="metric-grid" id="admin-security-kpis">
+    <article class="metric-card"><span class="metric-label">cargando</span><strong>—</strong><small>GET /api/admin/security</small></article>
+  </section>
+
+  <section class="two-column dashboard-row">
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Seguridad</span>
+          <h2>Eventos de las últimas 24 horas</h2>
+        </div>
+        <a class="inline-link" href="/logs#sistema">bitácora de sistema →</a>
+      </div>
+      <div id="admin-events" class="event-counts"></div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Rechazos</span>
+          <h2>Últimos accesos y operaciones rechazadas</h2>
+        </div>
+        <a class="inline-link" href="/logs?resultado=FALLO#sistema">ver todos →</a>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table log-table">
+          <thead><tr><th>FECHA</th><th>EVENTO</th><th>ACTOR</th><th>DETALLE</th></tr></thead>
+          <tbody id="admin-rejections"></tbody>
+        </table>
+        <div id="admin-rejections-empty" class="empty-state compact-empty is-hidden">
+          <div><code>fallos.24h = 0</code><p>No hubo rechazos en las últimas 24 horas.</p></div>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <span class="eyebrow">Bitácoras</span>
+        <h2>Registros de la plataforma</h2>
+      </div>
+    </div>
+    <nav class="log-tabs" aria-label="Bitácoras" style="margin-bottom: 0;">
+      <a class="log-tab" href="/logs#sistema"><code>SYS</code><span>Sistema</span><small>accesos y seguridad · PostgreSQL</small></a>
+      <a class="log-tab" href="/logs#transacciones"><code>TRX</code><span>Transacciones</span><small>operaciones de negocio · PostgreSQL</small></a>
+      <a class="log-tab" href="/logs#excepciones"><code>EXC</code><span>Excepciones</span><small>errores inesperados · MongoDB</small></a>
+    </nav>
+  </section>
+
+  <script>
+    import { auditFetch, authFetch } from '../lib/auth';
+    import { readApiError, type SecuritySummary, type ServiceHealth } from '../lib/api';
+    import { escapeHtml, formatDate } from '../lib/format';
+
+    const LABELS: Record<string, string> = {
+      management: 'management-service',
+      core: 'audit-core-service',
+    };
+    const EVENT_ORDER = [
+      'LOGIN_EXITOSO', 'LOGIN_RECHAZADO', 'CUENTA_BLOQUEADA', 'CUENTA_DESBLOQUEADA', 'CONTRASENA_CAMBIADA',
+      'CONTRASENA_RESTABLECIDA', 'USUARIO_CREADO', 'USUARIO_MODIFICADO', 'USUARIO_DESHABILITADO', 'USUARIO_HABILITADO',
+      'ROLES_ASIGNADOS', 'ROL_MODIFICADO',
+    ];
+    const ALERT_EVENTS = new Set(['LOGIN_RECHAZADO', 'CUENTA_BLOQUEADA']);
+
+    const showError = (message: string | null) => {
+      const node = document.querySelector<HTMLElement>('#admin-error');
+      if (!node) return;
+      node.textContent = message ?? '';
+      node.classList.toggle('is-hidden', !message);
+    };
+
+    const uptime = (seconds: number) => {
+      const days = Math.floor(seconds / 86400);
+      const hours = Math.floor((seconds % 86400) / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      if (days > 0) return `${days} d ${hours} h`;
+      if (hours > 0) return `${hours} h ${minutes} min`;
+      return `${minutes} min`;
+    };
+
+    const healthHtml = (key: string, health: ServiceHealth | null, error: string | null) => {
+      const name = LABELS[key];
+      if (!health) {
+        return `
+          <div class="panel-heading">
+            <div><span class="eyebrow">Servicio</span><h2>${name}</h2></div>
+            <span class="status-badge status-locked">no responde</span>
+          </div>
+          <p class="log-muted">${escapeHtml(error ?? 'No se obtuvo respuesta del servicio.')}</p>`;
+      }
+      const ok = health.estado === 'UP';
+      return `
+        <div class="panel-heading">
+          <div><span class="eyebrow">Servicio</span><h2>${escapeHtml(health.servicio)}</h2></div>
+          <span class="status-badge ${ok ? 'status-ready' : 'status-next'}">${ok ? 'operativo' : 'degradado'}</span>
+        </div>
+        <dl class="health-meta">
+          <div><dt>versión</dt><dd>${escapeHtml(health.version)}</dd></div>
+          <div><dt>en línea</dt><dd title="desde ${escapeHtml(formatDate(health.inicio))}">${uptime(health.segundosEnLinea)}</dd></div>
+          <div><dt>memoria</dt><dd>${health.memoriaUsadaMb} / ${health.memoriaMaximaMb} MB</dd></div>
+        </dl>
+        <div class="health-components">
+          ${health.componentes.map((component) => `
+            <div class="health-component">
+              <span class="health-dot ${component.estado === 'UP' ? '' : 'is-down'}"></span>
+              <div><strong>${escapeHtml(component.nombre)}</strong><small>${escapeHtml(component.detalle)}</small></div>
+              <code>${component.estado === 'UP' ? `${component.latenciaMs} ms` : 'caído'}</code>
+            </div>`).join('')}
+        </div>`;
+    };
+
+    const fetchHealth = async (key: 'management' | 'core') => {
+      try {
+        const response = key === 'management' ? await authFetch('/api/admin/health') : await auditFetch('/api/system/health');
+        if (!response.ok) return { key, health: null, error: await readApiError(response) };
+        return { key, health: await response.json() as ServiceHealth, error: null };
+      } catch (error) {
+        return { key, health: null, error: error instanceof Error ? error.message : 'Sin respuesta.' };
+      }
+    };
+
+    const loadHealth = async () => {
+      const results = await Promise.all([fetchHealth('management'), fetchHealth('core')]);
+      results.forEach(({ key, health, error }) => {
+        const node = document.querySelector<HTMLElement>(`[data-service="${key}"]`);
+        if (node) node.innerHTML = healthHtml(key, health, error);
+      });
+      const down = results.filter((result) => !result.health).length;
+      const degraded = results.filter((result) => result.health && result.health.estado !== 'UP').length;
+      const overall = document.querySelector('#admin-overall');
+      if (overall) {
+        overall.textContent = down > 0
+          ? `${down} servicio${down > 1 ? 's' : ''} sin respuesta`
+          : degraded > 0 ? 'Servicios en línea con componentes degradados' : 'Todos los servicios operativos';
+      }
+      const checked = document.querySelector('#admin-checked');
+      if (checked) checked.textContent = `verificado ${new Intl.DateTimeFormat('es-AR', { timeStyle: 'medium' }).format(new Date())}`;
+    };
+
+    const loadSecurity = async () => {
+      const response = await authFetch('/api/admin/security');
+      if (!response.ok) throw new Error(await readApiError(response));
+      const summary = await response.json() as SecuritySummary;
+      const events = summary.eventosUltimas24h;
+      const kpis = document.querySelector('#admin-security-kpis');
+      if (kpis) {
+        kpis.innerHTML = `
+          <a class="metric-card metric-link" href="/users"><span class="metric-label">usuarios activos</span><strong>${summary.usuariosActivos}</strong><small>${summary.usuariosDeshabilitados} deshabilitados</small></a>
+          <a class="metric-card metric-link ${summary.cuentasBloqueadas > 0 ? 'is-alert' : ''}" href="/users"><span class="metric-label">cuentas bloqueadas</span><strong>${summary.cuentasBloqueadas}</strong><small>por intentos fallidos</small></a>
+          <a class="metric-card metric-link" href="${logLink('evento=LOGIN_EXITOSO')}"><span class="metric-label">ingresos 24 h</span><strong>${events.LOGIN_EXITOSO ?? 0}</strong><small>inicios de sesión exitosos</small></a>
+          <a class="metric-card metric-link ${(events.LOGIN_RECHAZADO ?? 0) > 0 ? 'is-alert' : ''}" href="${logLink('evento=LOGIN_RECHAZADO')}"><span class="metric-label">rechazos 24 h</span><strong>${events.LOGIN_RECHAZADO ?? 0}</strong><small>${events.CUENTA_BLOQUEADA ?? 0} bloqueos de cuenta</small></a>`;
+      }
+      const eventsNode = document.querySelector('#admin-events');
+      if (eventsNode) {
+        eventsNode.innerHTML = EVENT_ORDER.map((event) => {
+          const total = events[event] ?? 0;
+          return `<a class="event-count ${ALERT_EVENTS.has(event) && total > 0 ? 'is-alert' : ''}" href="${logLink(`evento=${event}`)}"><span>${event}</span><strong>${total}</strong></a>`;
+        }).join('');
+      }
+      const body = document.querySelector('#admin-rejections');
+      if (body) {
+        body.innerHTML = summary.ultimosRechazos.map((record) => `
+          <tr>
+            <td><span class="log-nowrap">${escapeHtml(formatDate(record.fecha))}</span></td>
+            <td><strong>${escapeHtml(record.evento)}</strong></td>
+            <td>${escapeHtml(record.actor ?? '—')}<small>${escapeHtml(record.origenIp ?? '')}</small></td>
+            <td><small title="${escapeHtml(record.detalle ?? '')}">${escapeHtml(record.detalle ?? '')}</small></td>
+          </tr>`).join('');
+      }
+      document.querySelector('#admin-rejections-empty')?.classList.toggle('is-hidden', summary.ultimosRechazos.length > 0);
+    };
+
+    /** Hace 24 h en el formato del filtro de Bitácoras (fecha y hora local), para que el listado coincida con el número. */
+    const last24h = () => {
+      const date = new Date(Date.now() - 24 * 3600 * 1000);
+      const pad = (value: number) => String(value).padStart(2, '0');
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    };
+    const logLink = (params: string) => `/logs?${params}&desde=${encodeURIComponent(last24h())}#sistema`;
+
+    const refresh = async () => {
+      showError(null);
+      const button = document.querySelector<HTMLButtonElement>('#admin-refresh');
+      if (button) button.disabled = true;
+      try {
+        await Promise.all([loadHealth(), loadSecurity()]);
+      } catch (error) {
+        showError(error instanceof Error ? error.message : 'No se pudo obtener el estado de la plataforma.');
+      } finally {
+        if (button) button.disabled = false;
+      }
+    };
+
+    document.querySelector('#admin-refresh')?.addEventListener('click', () => void refresh());
+    // Se actualiza solo cada minuto mientras la pestaña está visible.
+    window.setInterval(() => { if (document.visibilityState === 'visible') void loadHealth(); }, 60_000);
+    void refresh();
+  </script>
+</MasterLayout>

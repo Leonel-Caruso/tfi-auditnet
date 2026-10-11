@@ -65,10 +65,10 @@ public class DevDataInitializer {
 
     private void crearRolesBase() {
         List<RolBase> roles = List.of(
-                new RolBase("ADMINISTRADOR_SISTEMA", "Gestiona usuarios, roles, clientes y configuración general."),
-                new RolBase("ANALISTA_RED", "Carga configuraciones, ejecuta auditorías y analiza hallazgos."),
-                new RolBase("AUDITOR_TECNICO", "Consulta evidencia, reportes e historial de auditoría."),
-                new RolBase("RESPONSABLE_GESTION_IT", "Consulta indicadores, reportes y alertas relevantes.")
+                new RolBase("ADMINISTRADOR_SISTEMA", "Administra usuarios, organizaciones, sedes, bitácoras y la salud de la plataforma."),
+                new RolBase("ANALISTA_RED", "Importa configuraciones, ejecuta auditorías, atiende hallazgos y deriva alertas."),
+                new RolBase("AUDITOR_TECNICO", "Define baselines y reglas, revisa hallazgos y genera reportes de auditoría."),
+                new RolBase("RESPONSABLE_GESTION_IT", "Consulta el tablero, las alertas y los reportes de su organización y deriva alertas.")
         );
 
         for (RolBase rolBase : roles) {

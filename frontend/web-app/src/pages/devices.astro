@@ -473,7 +473,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       if (organizationSelect) {
         organizationSelect.replaceChildren(new Option('Seleccionar organización...', ''));
         state.organizations.forEach((organization) => {
-          organizationSelect.add(new Option(organization.razonSocial, String(organization.id)));
+          organizationSelect.add(new Option(`${organization.razonSocial}${organization.estado !== 'ACTIVO' ? ' (deshabilitada)' : ''}`, String(organization.id)));
         });
       }
     }
@@ -497,7 +497,12 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
       // Se vuelve a consultar por si se registraron sedes nuevas en otra pantalla.
       const sites = await loadSites(organizationId, true);
-      sites.forEach((site) => siteSelect.add(new Option(`${site.nombre} · ${site.ubicacion}`, String(site.id))));
+      sites.forEach((site) => {
+        // Una sede deshabilitada no admite dispositivos nuevos (D-33); se muestra solo si el equipo ya estaba ahí.
+        if (site.estado !== 'ACTIVO' && site.id !== selected) return;
+        const label = `${site.nombre} · ${site.ubicacion}${site.estado !== 'ACTIVO' ? ' (deshabilitada)' : ''}`;
+        siteSelect.add(new Option(label, String(site.id)));
+      });
       siteSelect.disabled = false;
       if (selected) siteSelect.value = String(selected);
     }

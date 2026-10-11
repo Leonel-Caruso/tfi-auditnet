@@ -42,6 +42,17 @@ public class PanacheSedeRepository implements PanacheRepository<SedeEntity>, Sed
                 .firstResultOptional().map(this::aDominio);
     }
 
+    @Override
+    public Sede actualizar(Sede sede) {
+        SedeEntity entity = findByIdOptional(sede.id())
+                .orElseThrow(() -> new java.util.NoSuchElementException("No existe la sede."));
+        entity.nombre = sede.nombre();
+        entity.ubicacion = sede.ubicacion();
+        entity.estado = sede.estado();
+        flush();
+        return aDominio(entity);
+    }
+
     private Sede aDominio(SedeEntity entity) {
         return new Sede(entity.id, entity.organizacion.id, entity.nombre, entity.ubicacion, entity.estado);
     }
