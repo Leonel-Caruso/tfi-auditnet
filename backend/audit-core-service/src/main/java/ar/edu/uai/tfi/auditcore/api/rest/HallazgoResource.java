@@ -48,7 +48,10 @@ public class HallazgoResource {
         this.jwt = jwt;
     }
 
-    /** Lista priorizada; los filtros se aplican en el servidor y no modifican la información guardada. */
+    /**
+     * Lista priorizada; los filtros se aplican en el servidor y no modifican la información guardada.
+     * {@code estado=PENDIENTES} devuelve ABIERTO y EN_REVISION (lo usan los enlaces del tablero).
+     */
     @GET
     public List<HallazgoResponse> listar(@QueryParam("estado") String estado,
                                          @QueryParam("severidad") String severidad,
@@ -58,9 +61,10 @@ public class HallazgoResource {
                                          @QueryParam("desde") String desde,
                                          @QueryParam("hasta") String hasta) {
         try {
+            boolean soloPendientes = estado != null && estado.trim().equalsIgnoreCase("PENDIENTES");
             FiltroHallazgos filtro = new FiltroHallazgos(
                     organizacionDelUsuario(),
-                    FiltrosConsulta.enumerado(EstadoHallazgo.class, estado, "estado"),
+                    soloPendientes ? null : FiltrosConsulta.enumerado(EstadoHallazgo.class, estado, "estado"),
                     FiltrosConsulta.enumerado(SeveridadRegla.class, severidad, "severidad"),
                     FiltrosConsulta.id(dispositivoId, "dispositivoId"),
                     FiltrosConsulta.id(baselineId, "baselineId"),
@@ -68,7 +72,10 @@ public class HallazgoResource {
                     FiltrosConsulta.fecha(desde, "desde"),
                     FiltrosConsulta.fecha(hasta, "hasta")
             );
-            return service.buscarPriorizados(filtro).stream().map(HallazgoResource::aResponse).toList();
+            return service.buscarPriorizados(filtro).stream()
+                    .filter(priorizado -> !soloPendientes || priorizado.hallazgo().estado().pendiente())
+                    .map(HallazgoResource::aResponse)
+                    .toList();
         } catch (IllegalArgumentException exception) {
             throw error(Response.Status.BAD_REQUEST, exception.getMessage());
         }

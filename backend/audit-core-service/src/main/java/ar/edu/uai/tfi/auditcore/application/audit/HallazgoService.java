@@ -1,6 +1,8 @@
 package ar.edu.uai.tfi.auditcore.application.audit;
 
+import ar.edu.uai.tfi.auditcore.application.alert.AlertaService;
 import ar.edu.uai.tfi.auditcore.application.port.TrazabilidadPort;
+import ar.edu.uai.tfi.auditcore.domain.model.AuditoriaConfiguracion;
 import ar.edu.uai.tfi.auditcore.domain.model.CriticidadDispositivo;
 import ar.edu.uai.tfi.auditcore.domain.model.DispositivoRed;
 import ar.edu.uai.tfi.auditcore.domain.model.EstadoHallazgo;
@@ -33,20 +35,25 @@ import java.util.stream.Collectors;
 public class HallazgoService {
 
     static final String ENTIDAD = "HALLAZGO";
+    /** Usuario con que se registran los cambios automáticos (re-auditoría que cumple la regla, D-26). */
+    public static final String USUARIO_SISTEMA = "SISTEMA";
 
     private final HallazgoRepository repository;
     private final SeguimientoHallazgoRepository seguimientoRepository;
     private final DispositivoRepository dispositivoRepository;
     private final TrazabilidadPort trazabilidad;
+    private final AlertaService alertaService;
 
     public HallazgoService(HallazgoRepository repository,
                            SeguimientoHallazgoRepository seguimientoRepository,
                            DispositivoRepository dispositivoRepository,
-                           TrazabilidadPort trazabilidad) {
+                           TrazabilidadPort trazabilidad,
+                           AlertaService alertaService) {
         this.repository = repository;
         this.seguimientoRepository = seguimientoRepository;
         this.dispositivoRepository = dispositivoRepository;
         this.trazabilidad = trazabilidad;
+        this.alertaService = alertaService;
     }
 
     /** Hallazgo con la criticidad actual de su dispositivo, usada para priorizar. */
@@ -110,8 +117,44 @@ public class HallazgoService {
                 actualizado.organizacionId(), anterior, actualizado, usuario,
                 recortar(anterior.estado() + " -> " + nuevoEstado
                         + (comentarioLimpio == null ? "" : ": " + comentarioLimpio), 1000)));
+        // Si el hallazgo tiene alerta crítica, se cierra o se reactiva con él (CU-006-002).
+        alertaService.sincronizarConHallazgo(actualizado, usuario, comentarioLimpio);
 
         return new HallazgoPriorizado(actualizado, criticidadDe(actualizado.dispositivoId()));
+    }
+
+    /**
+     * Resuelve automáticamente un hallazgo pendiente porque una auditoría posterior del mismo dispositivo cumple
+     * la regla (CU-005-001: "RESUELTO se confirma con una nueva auditoría"; decisión D-26). Queda en el historial
+     * de seguimiento y en la bitácora con el usuario SISTEMA, y su alerta se cierra.
+     *
+     * No es @Transactional a propósito: corre dentro de la transacción de la auditoría y, si otro usuario cambió
+     * el hallazgo en ese momento, simplemente no lo toca (devuelve false) sin anular la auditoría.
+     *
+     * @return true si lo resolvió
+     */
+    public boolean resolverPorReauditoria(HallazgoAuditoria pendiente, AuditoriaConfiguracion auditoria) {
+        if (pendiente == null || !pendiente.estado().pendiente()) {
+            return false;
+        }
+        String comentario = recortar("Resuelto automáticamente: la regla " + pendiente.codigoRegla()
+                + " se cumple en la auditoría " + String.format("AUD-%03d", auditoria.id())
+                + " ejecutada por " + auditoria.ejecutadoPor() + ".", 1000);
+        Instant ahora = Instant.now();
+        HallazgoAuditoria actualizado;
+        try {
+            actualizado = repository.actualizarEstado(pendiente.id(), pendiente.estado(), EstadoHallazgo.RESUELTO,
+                    USUARIO_SISTEMA, ahora);
+        } catch (IllegalStateException cambiadoMientrasTanto) {
+            return false;
+        }
+        seguimientoRepository.guardar(new SeguimientoHallazgo(null, pendiente.id(), pendiente.estado(),
+                EstadoHallazgo.RESUELTO, comentario, USUARIO_SISTEMA, ahora));
+        trazabilidad.registrar(new Transaccion(ENTIDAD, actualizado.id(), OperacionTransaccion.CAMBIO_ESTADO,
+                actualizado.organizacionId(), pendiente, actualizado, USUARIO_SISTEMA,
+                recortar(pendiente.estado() + " -> RESUELTO: " + comentario, 1000)));
+        alertaService.sincronizarConHallazgo(actualizado, USUARIO_SISTEMA, comentario, false);
+        return true;
     }
 
     /** Historial de cambios de estado del hallazgo, del más viejo al más nuevo. */

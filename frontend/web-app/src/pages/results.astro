@@ -16,6 +16,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         <span>estado</span>
         <select name="estado" class="technical-select">
           <option value="">todos</option>
+          <option value="PENDIENTES">pendientes (abierto / en revisión)</option>
           <option value="ABIERTO">ABIERTO</option>
           <option value="EN_REVISION">EN_REVISION</option>
           <option value="RESUELTO">RESUELTO</option>
@@ -164,7 +165,11 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     let baselines: ConfigurationBaseline[] = [];
     let selectedId: number | null = null;
     // Filtro por auditoría cuando se llega desde el historial (/results?auditoria=ID).
-    let auditFilter = Number(new URLSearchParams(window.location.search).get('auditoria')) || null;
+    const urlParams = new URLSearchParams(window.location.search);
+    let auditFilter = Number(urlParams.get('auditoria')) || null;
+    // Desde alertas, el tablero o la vista del cliente: ?hallazgo=ID abre ese hallazgo; ?estado=, ?severidad= y
+    // ?dispositivo= precargan los filtros.
+    const initialFinding = Number(urlParams.get('hallazgo')) || null;
     // Evita que una respuesta lenta pise a una más nueva (filtros o selección cambiados rápido).
     let loadSeq = 0;
 
@@ -462,6 +467,16 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       devices.forEach((device) => deviceSelect?.add(new Option(`${device.identificador} · ${device.nombre}`, String(device.id))));
       const baselineSelect = form?.querySelector<HTMLSelectElement>('[name=baselineId]');
       baselines.forEach((baseline) => baselineSelect?.add(new Option(`${baseline.nombre} v${baseline.version}`, String(baseline.id))));
+
+      const preset: Record<string, string | null> = {
+        estado: urlParams.get('estado'),
+        severidad: urlParams.get('severidad'),
+        dispositivoId: urlParams.get('dispositivo'),
+      };
+      for (const [name, value] of Object.entries(preset)) {
+        const field = form?.querySelector<HTMLSelectElement>(`[name=${name}]`);
+        if (field && value && Array.from(field.options).some((option) => option.value === value)) field.value = value;
+      }
     };
 
     form?.addEventListener('submit', (event) => {
@@ -482,6 +497,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       .then(loadFindings)
       .then(() => {
         if (auditFilter) showSuccess(`Mostrando los hallazgos de ${code('AUD', auditFilter)}.`);
+        if (initialFinding) void selectFinding(initialFinding);
       })
       .catch((error) => showError(error instanceof Error ? error.message : 'No se pudieron cargar los hallazgos.'));
   </script>

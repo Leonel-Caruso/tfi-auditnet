@@ -1,0 +1,211 @@
+---
+import MasterLayout from '../layouts/MasterLayout.astro';
+---
+
+<MasterLayout
+  title="Estado del cliente"
+  section="Consola"
+  description="Vista consolidada de una organización cliente: sedes, dispositivos, hallazgos, alertas y nivel general de riesgo (CU-007-003)."
+>
+  <div id="client-error" class="alert alert-error is-hidden" role="alert"></div>
+
+  <section class="panel compact-panel dashboard-scope">
+    <div>
+      <span class="eyebrow">Organización cliente</span>
+      <h2 id="client-title">Estado general de auditoría</h2>
+      <small id="client-endpoint" class="technical-hint">{'GET /api/client-organizations/{id}/audit-status'}</small>
+    </div>
+    <div class="dashboard-scope-actions">
+      <label class="log-filter" id="client-org-filter" hidden>
+        <span>organización</span>
+        <select id="client-org" class="technical-select"></select>
+      </label>
+    </div>
+  </section>
+
+  <div id="client-risk"></div>
+
+  <section id="client-kpis" class="metric-grid dashboard-kpis" aria-live="polite"></section>
+
+  <section class="panel dashboard-row">
+    <div class="panel-heading">
+      <div>
+        <span class="eyebrow">Sedes</span>
+        <h2>Riesgo por sede</h2>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table log-table">
+        <thead>
+          <tr><th>SEDE</th><th>RIESGO</th><th>DISPOSITIVOS</th><th>AUDITADOS</th><th>PENDIENTES</th><th>CRÍTICOS</th><th>ALERTAS</th></tr>
+        </thead>
+        <tbody id="client-sites"></tbody>
+      </table>
+      <div id="client-sites-empty" class="empty-state compact-empty is-hidden">
+        <div><code>devices.count = 0</code><p>La organización todavía no tiene dispositivos registrados.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="two-column dashboard-row">
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Findings</span>
+          <h2>Hallazgos pendientes por severidad</h2>
+        </div>
+      </div>
+      <div id="client-severity"></div>
+    </article>
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Histórico</span>
+          <h2>Auditorías recientes</h2>
+        </div>
+      </div>
+      <div id="client-recent"></div>
+      <div class="panel-heading client-reports-heading">
+        <div>
+          <span class="eyebrow">Evidencia</span>
+          <h2>Reportes disponibles</h2>
+        </div>
+        <a class="inline-link" href="/reports">reportes →</a>
+      </div>
+      <div id="client-reports"></div>
+    </article>
+  </section>
+
+  <section class="panel dashboard-row">
+    <div class="panel-heading">
+      <div>
+        <span class="eyebrow">Dispositivos</span>
+        <h2>Dispositivos por nivel de riesgo</h2>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table log-table">
+        <thead>
+          <tr><th>DISPOSITIVO</th><th>SEDE</th><th>CRITICIDAD</th><th>RIESGO</th><th>PENDIENTES</th><th>ALERTAS</th><th>ÚLTIMA AUDITORÍA</th></tr>
+        </thead>
+        <tbody id="client-devices"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <script>
+    import { auditFetch, authFetch, getStoredUser, hasRole } from '../lib/auth';
+    import { readApiError, type ClientAuditStatus, type NetworkDevice, type Organization, type Site, type SiteRisk } from '../lib/api';
+    import { code, escapeHtml, formatDate, riskBadge } from '../lib/format';
+    import { deviceRiskRowsHtml, kpiHtml, recentAuditsHtml, riskBannerHtml, severityChartHtml, wireTooltips } from '../lib/dashboard-view';
+
+    const isAdmin = hasRole('ADMINISTRADOR_SISTEMA');
+    const params = new URLSearchParams(window.location.search);
+    let organizations: Organization[] = [];
+    let devices: NetworkDevice[] = [];
+    let sites: Site[] = [];
+    let loadSeq = 0;
+
+    const set = (selector: string, html: string) => {
+      const node = document.querySelector<HTMLElement>(selector);
+      if (node) node.innerHTML = html;
+    };
+    const showError = (message: string | null) => {
+      const node = document.querySelector<HTMLElement>('#client-error');
+      if (!node) return;
+      node.textContent = message ?? '';
+      node.classList.toggle('is-hidden', !message);
+    };
+
+    const siteRowsHtml = (rows: SiteRisk[]) => rows.map((row) => {
+      const name = row.sedeId == null ? 'sin sede asignada' : sites.find((site) => site.id === row.sedeId)?.nombre ?? `sede #${row.sedeId}`;
+      return `
+        <tr class="${row.nivel === 'ALTO' ? 'is-critical' : ''}">
+          <td><strong>${escapeHtml(name)}</strong></td>
+          <td>${riskBadge(row.nivel)}</td>
+          <td>${row.dispositivos}</td>
+          <td>${row.auditados}/${row.dispositivos}</td>
+          <td>${row.pendientes}</td>
+          <td>${row.criticosPendientes}</td>
+          <td>${row.alertasVigentes > 0 && row.sedeId != null
+            ? `<a class="inline-link" href="/alerts?sede=${row.sedeId}">${row.alertasVigentes} →</a>`
+            : row.alertasVigentes}</td>
+        </tr>`;
+    }).join('');
+
+    const load = async (organizationId: number) => {
+      showError(null);
+      const seq = ++loadSeq;
+      const [statusResponse, siteResponse, deviceResponse] = await Promise.all([
+        auditFetch(`/api/client-organizations/${organizationId}/audit-status`),
+        authFetch(`/api/client-organizations/${organizationId}/sites`),
+        auditFetch('/api/devices'),
+      ]);
+      if (seq !== loadSeq) return;
+      if (!statusResponse.ok) {
+        showError(await readApiError(statusResponse));
+        return;
+      }
+      const status = await statusResponse.json() as ClientAuditStatus;
+      sites = siteResponse.ok ? await siteResponse.json() as Site[] : [];
+      devices = deviceResponse.ok ? await deviceResponse.json() as NetworkDevice[] : [];
+      if (seq !== loadSeq) return;
+
+      const organization = organizations.find((item) => item.id === organizationId);
+      const title = document.querySelector('#client-title');
+      if (title) title.textContent = organization ? organization.razonSocial : `Organización #${organizationId}`;
+      const endpoint = document.querySelector('#client-endpoint');
+      if (endpoint) endpoint.textContent = `GET /api/client-organizations/${organizationId}/audit-status`;
+
+      const summary = status.resumen;
+      set('#client-risk', riskBannerHtml(summary, organization?.razonSocial ?? 'organización'));
+      set('#client-kpis', kpiHtml(summary));
+      set('#client-sites', siteRowsHtml(status.sedes));
+      document.querySelector('#client-sites-empty')?.classList.toggle('is-hidden', status.sedes.length > 0);
+      set('#client-severity', severityChartHtml(summary));
+      set('#client-recent', recentAuditsHtml(summary.auditoriasRecientes,
+        (id) => devices.find((device) => device.id === id)?.identificador ?? `#${id}`));
+      set('#client-devices', deviceRiskRowsHtml(status.dispositivos, sites));
+      set('#client-reports', status.reportes.length === 0
+        ? '<p class="log-muted">Todavía no se generaron reportes de esta organización.</p>'
+        : `<ul class="compare-list">${status.reportes.map((report) => `
+            <li class="compare-item">
+              <a class="inline-link" href="/reports?reporte=${report.id}"><code>${code('REP', report.id)}</code></a>
+              <span>${escapeHtml(report.titulo)}</span>
+              <small>${escapeHtml(formatDate(report.fechaGeneracion))}</small>
+            </li>`).join('')}</ul>`);
+      if (!siteResponse.ok) showError('No se pudieron obtener los nombres de las sedes; se muestran sus identificadores.');
+      wireTooltips(document);
+    };
+
+    const start = async () => {
+      if (isAdmin) {
+        const response = await authFetch('/api/client-organizations');
+        if (!response.ok) throw new Error(await readApiError(response));
+        organizations = await response.json() as Organization[];
+        if (organizations.length === 0) throw new Error('No hay organizaciones cliente registradas.');
+        const select = document.querySelector<HTMLSelectElement>('#client-org');
+        organizations.forEach((organization) => select?.add(new Option(organization.razonSocial, String(organization.id))));
+        const requested = Number(params.get('organizacion'));
+        const initial = organizations.some((item) => item.id === requested) ? requested : organizations[0].id;
+        if (select) {
+          select.value = String(initial);
+          select.addEventListener('change', () => {
+            window.history.replaceState(null, '', `?organizacion=${select.value}`);
+            void load(Number(select.value));
+          });
+        }
+        document.querySelector('#client-org-filter')?.removeAttribute('hidden');
+        await load(initial);
+        return;
+      }
+      const own = getStoredUser()?.organizationId;
+      if (!own) throw new Error('Tu usuario no tiene una organización asociada.');
+      const response = await authFetch(`/api/client-organizations/${own}`);
+      if (response.ok) organizations = [await response.json() as Organization];
+      await load(own);
+    };
+
+    start().catch((error) => showError(error instanceof Error ? error.message : 'No fue posible obtener el estado general.'));
+  </script>
+</MasterLayout>

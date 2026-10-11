@@ -286,3 +286,183 @@ export type ExceptionLogRecord = {
   usuario: string | null;
   correlacion: string | null;
 };
+
+// Bloque 5.1: alertas críticas, tablero de control y estado general del cliente.
+export type Severity = AuditFinding['severidad'];
+export type DeviceCriticality = NetworkDevice['criticidad'];
+export type AlertStatus = 'ACTIVA' | 'EN_ATENCION' | 'CERRADA';
+export type TechnicalProfile = 'ANALISTA_RED' | 'AUDITOR_TECNICO';
+export type RiskLevel = 'SIN_DATOS' | 'BAJO' | 'MEDIO' | 'ALTO';
+
+export type CriticalAlert = {
+  id: number;
+  hallazgoId: number;
+  auditoriaId: number;
+  dispositivoId: number;
+  organizacionId: number;
+  severidad: 'ALTA' | 'CRITICA';
+  estado: AlertStatus;
+  fechaGeneracion: string;
+  /** Perfil técnico al que se derivó (null si no se derivó). */
+  perfilAsignado: TechnicalProfile | null;
+  comentario: string | null;
+  fechaEstado: string | null;
+  usuarioEstado: string | null;
+  dispositivoIdentificador: string | null;
+  dispositivoNombre: string | null;
+  sedeId: number | null;
+  criticidadDispositivo: DeviceCriticality | null;
+  codigoRegla: string | null;
+  nombreRegla: string | null;
+  estadoHallazgo: FindingStatus | null;
+};
+
+export type CriticalAlertDetail = {
+  alerta: CriticalAlert;
+  /** null si el hallazgo de origen no pudo obtenerse. */
+  hallazgo: AuditFinding | null;
+};
+
+export type DeviceRisk = {
+  dispositivoId: number;
+  identificador: string;
+  nombre: string;
+  sedeId: number | null;
+  criticidad: DeviceCriticality;
+  nivel: RiskLevel;
+  pendientes: number;
+  criticosPendientes: number;
+  altosPendientes: number;
+  alertasVigentes: number;
+  ultimaAuditoria: string | null;
+};
+
+export type WeeklyEvolution = {
+  /** Lunes de la semana (yyyy-mm-dd). */
+  semana: string;
+  auditorias: number;
+  hallazgosDetectados: number;
+  hallazgosCerrados: number;
+};
+
+export type DashboardSummary = {
+  generado: string;
+  nivelRiesgo: RiskLevel;
+  dispositivos: {
+    registrados: number;
+    activos: number;
+    auditados: number;
+    activosSinAuditar: number;
+    porCriticidad: Record<DeviceCriticality, number>;
+  };
+  hallazgos: {
+    pendientes: number;
+    enRevision: number;
+    cerrados: number;
+    pendientesPorSeveridad: Record<Severity, number>;
+    cerradosPorSeveridad: Record<Severity, number>;
+  };
+  alertas: { vigentes: number; activas: number; enAtencion: number; criticasVigentes: number };
+  auditorias: { total: number; ultimos30Dias: number; cumplimientoActual: number | null };
+  auditoriasRecientes: AuditSummary[];
+  dispositivosEnRiesgo: DeviceRisk[];
+  evolucion: WeeklyEvolution[];
+};
+
+export type SiteRisk = {
+  /** null agrupa los dispositivos sin sede. */
+  sedeId: number | null;
+  nivel: RiskLevel;
+  dispositivos: number;
+  auditados: number;
+  pendientes: number;
+  criticosPendientes: number;
+  alertasVigentes: number;
+};
+
+export type ClientAuditStatus = {
+  organizacionId: number;
+  resumen: DashboardSummary;
+  sedes: SiteRisk[];
+  dispositivos: DeviceRisk[];
+  /** Últimos reportes de la organización (sin contenido). */
+  reportes: ReportSummary[];
+};
+
+// Bloque 5.2: reportes de auditoría (foto fija guardada al generarlos).
+export type ReportCriteria = {
+  organizacionId: number | null;
+  desde: string | null;
+  hasta: string | null;
+  dispositivoIds: number[];
+  severidades: Severity[];
+  estados: FindingStatus[];
+  auditoriaIds: number[];
+};
+
+export type ReportSummary = {
+  id: number;
+  organizacionId: number | null;
+  titulo: string;
+  totalAuditorias: number;
+  totalHallazgos: number;
+  generadoPor: string;
+  fechaGeneracion: string;
+};
+
+export type ReportContent = {
+  resumen: {
+    auditorias: number;
+    dispositivos: number;
+    reglasEvaluadas: number;
+    reglasCumplidas: number;
+    cumplimiento: number | null;
+    hallazgos: number;
+    hallazgosPendientes: number;
+    hallazgosPorSeveridad: Record<string, number>;
+    hallazgosPorEstado: Record<string, number>;
+    severidadMaxima: string;
+    resultadoGeneral: 'SIN_DESVIOS' | 'CON_DESVIOS';
+  };
+  auditorias: {
+    id: number;
+    fechaEjecucion: string;
+    ejecutadoPor: string;
+    dispositivoId: number;
+    dispositivoIdentificador: string | null;
+    dispositivoNombre: string | null;
+    criticidadDispositivo: string | null;
+    sedeId: number | null;
+    configuracionId: number;
+    configuracionVersion: number | null;
+    baselineId: number;
+    baselineNombre: string | null;
+    baselineVersion: number | null;
+    totalReglas: number;
+    reglasCumplidas: number;
+    totalHallazgos: number;
+    severidadMaxima: string;
+    resultado: string;
+  }[];
+  hallazgos: {
+    id: number;
+    auditoriaId: number;
+    dispositivoId: number;
+    dispositivoIdentificador: string | null;
+    reglaId: number;
+    codigoRegla: string;
+    nombreRegla: string;
+    severidad: Severity;
+    impacto: string | null;
+    evidencia: string;
+    recomendacion: string;
+    estado: FindingStatus;
+    fechaDeteccion: string;
+  }[];
+  inconsistencias: string[];
+};
+
+export type AuditReport = ReportSummary & {
+  criterios: ReportCriteria;
+  contenido: ReportContent;
+};

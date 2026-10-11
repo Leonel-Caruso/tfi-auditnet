@@ -1,10 +1,12 @@
 package ar.edu.uai.tfi.auditcore.application.audit;
 
+import ar.edu.uai.tfi.auditcore.application.alert.AlertaService;
 import ar.edu.uai.tfi.auditcore.application.audit.HallazgoService.HallazgoPriorizado;
 import ar.edu.uai.tfi.auditcore.domain.model.*;
 import ar.edu.uai.tfi.auditcore.domain.repository.DispositivoRepository;
 import ar.edu.uai.tfi.auditcore.domain.repository.HallazgoRepository;
 import ar.edu.uai.tfi.auditcore.domain.repository.SeguimientoHallazgoRepository;
+import ar.edu.uai.tfi.auditcore.support.EnMemoria;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -20,8 +22,10 @@ class HallazgoServiceTest {
     private final FakeSeguimientos seguimientos = new FakeSeguimientos();
     private final FakeDispositivos dispositivos = new FakeDispositivos();
     private final List<Transaccion> transacciones = new ArrayList<>();
-    private final HallazgoService service =
-            new HallazgoService(hallazgos, seguimientos, dispositivos, transacciones::add);
+    private final EnMemoria.Alertas alertas = new EnMemoria.Alertas();
+    private final List<Transaccion> transaccionesAlertas = new ArrayList<>();
+    private final HallazgoService service = new HallazgoService(hallazgos, seguimientos, dispositivos,
+            transacciones::add, new AlertaService(alertas, hallazgos, dispositivos, transaccionesAlertas::add));
 
     @Test
     void pasarARevisionRegistraUsuarioFechaHistorialYBitacora() {
@@ -116,6 +120,30 @@ class HallazgoServiceTest {
                 () -> service.cambiarEstado(1L, null, "ACEPTADO", "Falso positivo", "auditor"));
         assertTrue(seguimientos.items.isEmpty());
         assertTrue(transacciones.isEmpty());
+    }
+
+    @Test
+    void cerrarElHallazgoCierraSuAlertaYReabrirloLaReactiva() {
+        HallazgoAuditoria critico = hallazgo(1L, 2L, 10L, SeveridadRegla.CRITICA, EstadoHallazgo.ABIERTO, "2026-10-01T10:00:00Z");
+        hallazgos.items.add(critico);
+        AlertaService alertaService = new AlertaService(alertas, hallazgos, dispositivos, transaccionesAlertas::add);
+        AlertaCritica alerta = alertaService.generar(critico, "motor").orElseThrow();
+
+        service.cambiarEstado(1L, null, "EN_REVISION", null, "analista");
+        assertEquals(EstadoAlerta.ACTIVA, alertas.buscarPorId(alerta.id()).orElseThrow().estado(),
+                "pasar a revisión no cierra la alerta");
+
+        service.cambiarEstado(1L, null, "RESUELTO", "Se aplicó el cambio", "analista");
+        AlertaCritica cerrada = alertas.buscarPorId(alerta.id()).orElseThrow();
+        assertEquals(EstadoAlerta.CERRADA, cerrada.estado());
+        assertEquals("analista", cerrada.usuarioEstado());
+        assertTrue(cerrada.comentario().contains("RESUELTO"));
+
+        service.cambiarEstado(1L, null, "ABIERTO", "Reapareció", "auditor");
+        assertEquals(EstadoAlerta.ACTIVA, alertas.buscarPorId(alerta.id()).orElseThrow().estado());
+        // generación + cierre + reactivación quedan en la bitácora como entidad ALERTA
+        assertEquals(3, transaccionesAlertas.size());
+        assertTrue(transaccionesAlertas.stream().allMatch(t -> t.entidad().equals("ALERTA")));
     }
 
     @Test

@@ -46,6 +46,18 @@ server {
     # Identificador de correlación: nginx genera uno por solicitud ($request_id) y lo envía a los
     # servicios en X-Request-ID; las bitácoras lo guardan para seguir una operación de punta a punta.
 
+    # ---- audit-core-service: estado general de auditoría de una organización (CU-007-003).
+    #      La ruta cuelga de /api/client-organizations, pero los datos son de audit-core; nginx usa la
+    #      primera location regex que coincide, por eso esta va antes que la de management-service.
+    location ~ ^/api/client-organizations/[0-9]+/audit-status/?$ {
+        proxy_pass ${CORE_UPSTREAM};
+        proxy_ssl_server_name on;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Request-ID $request_id;
+        proxy_read_timeout 90s;
+    }
+
     # ---- management-service: acceso, usuarios, roles, organizaciones, sedes y bitácoras (admin)
     location ~ ^/api/(auth|users|roles|client-organizations|sites|management|admin)(/|$) {
         proxy_pass ${MANAGEMENT_UPSTREAM};
@@ -56,8 +68,8 @@ server {
         proxy_read_timeout 90s;
     }
 
-    # ---- audit-core-service: el resto de la API (dispositivos, baselines,
-    #      reglas, configuraciones, auditorías y hallazgos)
+    # ---- audit-core-service: el resto de la API (dispositivos, baselines, reglas, configuraciones,
+    #      auditorías, hallazgos, alertas y tablero)
     location /api/ {
         proxy_pass ${CORE_UPSTREAM};
         proxy_ssl_server_name on;

@@ -1,5 +1,7 @@
 package ar.edu.uai.tfi.auditcore.api.rest.dto.audit;
 
+import ar.edu.uai.tfi.auditcore.domain.model.AuditoriaConfiguracion;
+
 import java.time.Instant;
 
 public record AuditoriaResumenResponse(
@@ -17,4 +19,22 @@ public record AuditoriaResumenResponse(
         String resultado,
         String estado
 ) {
+
+    public static AuditoriaResumenResponse de(AuditoriaConfiguracion auditoria) {
+        return new AuditoriaResumenResponse(
+                auditoria.id(),
+                auditoria.configuracionId(),
+                auditoria.dispositivoId(),
+                auditoria.baselineId(),
+                auditoria.organizacionId(),
+                auditoria.fechaEjecucion(),
+                auditoria.ejecutadoPor(),
+                auditoria.totalReglas(),
+                auditoria.reglasCumplidas(),
+                auditoria.totalHallazgos(),
+                auditoria.severidadMaxima(),
+                auditoria.resultado(),
+                auditoria.estado().name()
+        );
+    }
 }

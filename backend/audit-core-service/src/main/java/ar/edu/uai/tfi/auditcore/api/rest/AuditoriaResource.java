@@ -164,21 +164,7 @@ public class AuditoriaResource {
     }
 
     private AuditoriaResumenResponse aResumen(AuditoriaConfiguracion auditoria) {
-        return new AuditoriaResumenResponse(
-                auditoria.id(),
-                auditoria.configuracionId(),
-                auditoria.dispositivoId(),
-                auditoria.baselineId(),
-                auditoria.organizacionId(),
-                auditoria.fechaEjecucion(),
-                auditoria.ejecutadoPor(),
-                auditoria.totalReglas(),
-                auditoria.reglasCumplidas(),
-                auditoria.totalHallazgos(),
-                auditoria.severidadMaxima(),
-                auditoria.resultado(),
-                auditoria.estado().name()
-        );
+        return AuditoriaResumenResponse.de(auditoria);
     }
 
     private EvaluacionReglaResponse aEvaluacion(ResultadoReglaAuditoria evaluacion) {

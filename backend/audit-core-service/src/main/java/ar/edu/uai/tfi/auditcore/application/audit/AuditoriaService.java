@@ -1,5 +1,6 @@
 package ar.edu.uai.tfi.auditcore.application.audit;
 
+import ar.edu.uai.tfi.auditcore.application.alert.AlertaService;
 import ar.edu.uai.tfi.auditcore.domain.model.OperacionTransaccion;
 import ar.edu.uai.tfi.auditcore.domain.model.Transaccion;
 import ar.edu.uai.tfi.auditcore.application.port.TrazabilidadPort;
@@ -26,6 +27,8 @@ public class AuditoriaService {
     private final HallazgoRepository hallazgoRepository;
     private final MotorAuditoriaService motor;
     private final TrazabilidadPort trazabilidad;
+    private final AlertaService alertaService;
+    private final HallazgoService hallazgoService;
 
     public AuditoriaService(
             ConfiguracionRepository configuracionRepository,
@@ -36,7 +39,9 @@ public class AuditoriaService {
             EvaluacionReglaRepository evaluacionRepository,
             HallazgoRepository hallazgoRepository,
             MotorAuditoriaService motor,
-            TrazabilidadPort trazabilidad
+            TrazabilidadPort trazabilidad,
+            AlertaService alertaService,
+            HallazgoService hallazgoService
     ) {
         this.configuracionRepository = configuracionRepository;
         this.dispositivoRepository = dispositivoRepository;
@@ -47,6 +52,8 @@ public class AuditoriaService {
         this.hallazgoRepository = hallazgoRepository;
         this.motor = motor;
         this.trazabilidad = trazabilidad;
+        this.alertaService = alertaService;
+        this.hallazgoService = hallazgoService;
     }
 
     @Transactional
@@ -92,7 +99,9 @@ public class AuditoriaService {
     }
 
     private AuditoriaDetalle ejecutarConfiguracion(ConfiguracionDispositivo configuracion, String actor) {
-        DispositivoRed dispositivo = dispositivoRepository.buscarPorId(configuracion.dispositivoId())
+        // Bloquea el dispositivo: dos auditorías simultáneas del mismo equipo se ejecutan en orden y no generan dos
+        // alertas para la misma regla (D-26).
+        DispositivoRed dispositivo = dispositivoRepository.buscarParaActualizar(configuracion.dispositivoId())
                 .orElseThrow(() -> new NoSuchElementException("No existe el dispositivo asociado a la configuración."));
         if (dispositivo.estado() != EstadoDispositivo.ACTIVO) {
             throw new IllegalStateException("El dispositivo " + dispositivo.identificador()
@@ -157,7 +166,7 @@ public class AuditoriaService {
             ));
 
             if (!calculada.cumple()) {
-                hallazgoRepository.guardar(new HallazgoAuditoria(
+                HallazgoAuditoria hallazgo = hallazgoRepository.guardar(new HallazgoAuditoria(
                         null,
                         auditoria.id(),
                         calculada.reglaId(),
@@ -177,8 +186,12 @@ public class AuditoriaService {
                         null,
                         null
                 ));
+                // CRITICA o ALTA: alerta interna (RF-012, CU-006-002).
+                alertaService.generar(hallazgo, actorSeguro(actor));
             }
         }
+
+        int resueltos = resolverHallazgosAnteriores(auditoria, configuracion, calculadas);
 
         trazabilidad.registrar(new Transaccion(
                 "AUDITORIA",
@@ -193,9 +206,45 @@ public class AuditoriaService {
                         + ", baselineId=" + baseline.id()
                         + ", reglas=" + calculadas.size()
                         + ", hallazgos=" + hallazgos
+                        + ", resueltosAutomaticamente=" + resueltos
         ));
 
         return armarDetalle(auditoria);
+    }
+
+    /**
+     * Re-auditoría (D-26): los hallazgos pendientes del mismo dispositivo cuya regla (mismo código) ahora se cumple
+     * pasan a RESUELTO automáticamente. Solo los detectados sobre una versión de configuración igual o anterior a
+     * la auditada: re-auditar una versión vieja no "resuelve" lo que falla en una más nueva.
+     */
+    private int resolverHallazgosAnteriores(AuditoriaConfiguracion auditoria, ConfiguracionDispositivo configuracion,
+                                            List<MotorAuditoriaService.EvaluacionCalculada> calculadas) {
+        java.util.Set<String> cumplen = calculadas.stream()
+                .filter(MotorAuditoriaService.EvaluacionCalculada::cumple)
+                .map(MotorAuditoriaService.EvaluacionCalculada::codigoRegla)
+                .collect(java.util.stream.Collectors.toSet());
+        if (cumplen.isEmpty()) {
+            return 0;
+        }
+        int resueltos = 0;
+        java.util.Map<Long, Integer> versionPorAuditoria = new java.util.HashMap<>();
+        for (HallazgoAuditoria previo : hallazgoRepository.buscar(new FiltroHallazgos(auditoria.organizacionId(),
+                null, null, auditoria.dispositivoId(), null, null, null, null))) {
+            if (previo.auditoriaId().equals(auditoria.id()) || !previo.estado().pendiente()
+                    || !cumplen.contains(previo.codigoRegla())) {
+                continue;
+            }
+            Integer versionPrevia = versionPorAuditoria.computeIfAbsent(previo.auditoriaId(), id ->
+                    auditoriaRepository.buscarPorId(id)
+                            .flatMap(previa -> configuracionRepository.buscarPorId(previa.configuracionId()))
+                            .map(ConfiguracionDispositivo::version)
+                            .orElse(null));
+            if (versionPrevia != null && configuracion.version() != null && versionPrevia <= configuracion.version()
+                    && hallazgoService.resolverPorReauditoria(previo, auditoria)) {
+                resueltos++;
+            }
+        }
+        return resueltos;
     }
 
     private AuditoriaDetalle armarDetalle(AuditoriaConfiguracion auditoria) {

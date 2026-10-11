@@ -3,185 +3,232 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 ---
 
 <MasterLayout
-  title="Inicio"
+  title="Tablero de control"
   section="Consola"
-  description="Resumen operativo de la plataforma de auditoría y control de configuraciones de red."
+  description="Estado general de auditorías, dispositivos, hallazgos y alertas críticas (CU-006-003). Cada indicador lleva al detalle."
 >
-  <section class="hero-card">
+  <div id="dash-error" class="alert alert-error is-hidden" role="alert"></div>
+
+  <section class="panel compact-panel dashboard-scope">
     <div>
-      <span class="status-badge status-ready">system.status = READY</span>
-      <h2>Consola central de auditoría y configuración</h2>
-      <p>
-        Gestión de acceso, organizaciones y sedes sobre una base preparada para inventario técnico,
-        baselines, reglas, ejecución de auditorías y generación de hallazgos.
-      </p>
+      <span class="eyebrow">Tablero de control</span>
+      <h2 id="dash-scope-title">Estado general</h2>
     </div>
-    <div class="hero-terminal" aria-label="Estado del flujo técnico">
-      <span>frontend: <strong>astro</strong></span>
-      <span>api.management: <strong>8081</strong></span>
-      <span>api.audit-core: <strong>8082</strong></span>
-      <span>database: <strong>postgresql</strong></span>
-      <span>security: <strong>jwt + bcrypt</strong></span>
+    <div class="dashboard-scope-actions">
+      <label class="log-filter" id="dash-org-filter" hidden>
+        <span>organización</span>
+        <select id="dash-org" class="technical-select"><option value="">todas las organizaciones</option></select>
+      </label>
+      <a id="dash-client-link" class="button button-ghost button-small" href="/client-status">Estado por sede →</a>
     </div>
   </section>
 
-  <section class="metric-grid">
-    <article class="metric-card">
-      <span class="metric-label">session.user</span>
-      <strong id="metric-user">Validando...</strong>
-      <small id="metric-role">—</small>
+  <div id="dash-risk"></div>
+
+  <section id="dash-kpis" class="metric-grid dashboard-kpis" aria-live="polite">
+    <article class="metric-card"><span class="metric-label">cargando</span><strong>—</strong><small>GET /api/dashboard/summary</small></article>
+  </section>
+
+  <section class="two-column dashboard-row">
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Findings</span>
+          <h2>Hallazgos pendientes por severidad</h2>
+        </div>
+      </div>
+      <div id="dash-severity"></div>
     </article>
-    <article class="metric-card" data-admin-section>
+
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Evolución</span>
+          <h2>Desvíos por semana</h2>
+        </div>
+        <span class="technical-hint">últimas 8 semanas</span>
+      </div>
+      <div id="dash-evolution"></div>
+    </article>
+  </section>
+
+  <section class="two-column dashboard-row">
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Operación</span>
+          <h2>Alertas vigentes</h2>
+        </div>
+        <a class="inline-link" href="/alerts">ver todas →</a>
+      </div>
+      <div id="dash-alerts"></div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Histórico</span>
+          <h2>Auditorías recientes</h2>
+        </div>
+        <a class="inline-link" href="/history">historial →</a>
+      </div>
+      <div id="dash-recent"></div>
+    </article>
+  </section>
+
+  <section class="panel dashboard-row">
+    <div class="panel-heading">
+      <div>
+        <span class="eyebrow">Riesgo</span>
+        <h2>Dispositivos con mayor riesgo</h2>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="data-table log-table">
+        <thead>
+          <tr><th>DISPOSITIVO</th><th>SEDE</th><th>CRITICIDAD</th><th>RIESGO</th><th>PENDIENTES</th><th>ALERTAS</th><th>ÚLTIMA AUDITORÍA</th></tr>
+        </thead>
+        <tbody id="dash-risk-devices"></tbody>
+      </table>
+      <div id="dash-risk-empty" class="empty-state compact-empty is-hidden">
+        <div><code>risk.devices = 0</code><p>No hay dispositivos con riesgo alto o medio.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="metric-grid" data-admin-section hidden>
+    <article class="metric-card">
       <span class="metric-label">organizations.count</span>
       <strong id="metric-organizations">—</strong>
       <small>Clientes registrados</small>
     </article>
-    <article class="metric-card" data-admin-section>
+    <article class="metric-card">
       <span class="metric-label">sites.count</span>
       <strong id="metric-sites">—</strong>
       <small>Sedes operativas registradas</small>
     </article>
-    <article class="metric-card" data-admin-section>
+    <article class="metric-card">
       <span class="metric-label">users.count</span>
       <strong id="metric-users">—</strong>
       <small>Accesos administrados por rol</small>
     </article>
   </section>
 
-  <section class="panel">
-    <div class="panel-heading">
-      <div>
-        <span class="eyebrow">Operación técnica</span>
-        <h2>Módulos principales</h2>
-      </div>
-    </div>
-    <div class="use-case-grid">
-      <article class="use-case-card">
-        <span class="step-number">01</span>
-        <div>
-          <h3>Dispositivos</h3>
-          <p>Inventario técnico de routers y switches asociados a cada organización y sede.</p>
-          <span id="module-device-count" class="status-badge status-ready">inventario operativo</span>
-        </div>
-      </article>
-      <article class="use-case-card featured">
-        <span class="step-number">02</span>
-        <div>
-          <h3>Baselines y reglas</h3>
-          <p>Definición del estado esperado y de las condiciones que determinan cumplimiento o desvío.</p>
-          <span id="module-policy-count" class="status-badge status-ready">policy engine operativo</span>
-        </div>
-      </article>
-      <article class="use-case-card featured">
-        <span class="step-number">03</span>
-        <div>
-          <h3>Auditorías y hallazgos</h3>
-          <p>Comparación de configuraciones contra una baseline para producir evidencia técnica trazable.</p>
-          <span id="module-audit-count" class="status-badge status-ready">audit engine operativo</span>
-        </div>
-      </article>
-    </div>
-  </section>
-
-  <section class="two-column">
-    <article class="panel">
-      <div class="panel-heading">
-        <div>
-          <span class="eyebrow">Pipeline</span>
-          <h2>Flujo funcional principal</h2>
-        </div>
-      </div>
-      <div class="flow-line">
-        <span>device</span><b>→</b><span>baseline</span><b>→</b><span>rules</span><b>→</b><span>audit</span><b>→</b><span>findings</span>
-      </div>
-    </article>
-
-    <article class="panel">
-      <div class="panel-heading">
-        <div>
-          <span class="eyebrow">Stack activo</span>
-          <h2>Arquitectura operativa</h2>
-        </div>
-      </div>
-      <div class="architecture-stack">
-        <span>frontend / Astro</span>
-        <i>REST + Authorization: Bearer JWT</i>
-        <span>backend / Quarkus · management-service</span>
-        <i>acceso, organizaciones, sedes y usuarios</i>
-        <span>backend / Quarkus · audit-core-service</span>
-        <i>inventario técnico y núcleo de auditoría</i>
-        <span>storage / PostgreSQL</span>
-      </div>
-    </article>
-  </section>
-
   <script>
     import { auditFetch, authFetch, getStoredUser, hasRole } from '../lib/auth';
-    import type { AuditFinding, AuditSummary, BaselineRule, ConfigurationBaseline, NetworkDevice, Organization, Site, User } from '../lib/api';
-
-    const stored = getStoredUser();
-    const userNode = document.querySelector('#metric-user');
-    const roleNode = document.querySelector('#metric-role');
-    if (userNode) userNode.textContent = stored?.nombre ?? stored?.username ?? 'Usuario';
-    if (roleNode) roleNode.textContent = stored?.roles?.join(', ').toLowerCase() ?? 'sin_rol';
-
-
-    auditFetch('/api/devices').then(async (response) => {
-      if (!response.ok) return;
-      const devices = await response.json() as NetworkDevice[];
-      const node = document.querySelector('#module-device-count');
-      if (node) node.textContent = `inventory.count = ${devices.length}`;
-    }).catch(() => {});
-
-    Promise.all([auditFetch('/api/baselines'), auditFetch('/api/rules')]).then(async ([baselineResponse, rulesResponse]) => {
-      if (!baselineResponse.ok || !rulesResponse.ok) return;
-      const baselines = await baselineResponse.json() as ConfigurationBaseline[];
-      const rules = await rulesResponse.json() as BaselineRule[];
-      const node = document.querySelector('#module-policy-count');
-      if (node) node.textContent = `baseline.count = ${baselines.length} · rules.count = ${rules.length}`;
-    }).catch(() => {});
-
-
-    Promise.all([auditFetch('/api/audits/history'), auditFetch('/api/findings')]).then(async ([auditResponse, findingResponse]) => {
-      if (!auditResponse.ok || !findingResponse.ok) return;
-      const audits = await auditResponse.json() as AuditSummary[];
-      const findings = await findingResponse.json() as AuditFinding[];
-      const node = document.querySelector('#module-audit-count');
-      if (node) node.textContent = `audit.count = ${audits.length} · findings.count = ${findings.length}`;
-    }).catch(() => {});
+    import { readApiError, type CriticalAlert, type DashboardSummary, type NetworkDevice, type Organization, type Site, type User } from '../lib/api';
+    import { alertStatusBadge, code, escapeHtml, severityClass } from '../lib/format';
+    import {
+      deviceRiskRowsHtml,
+      evolutionChartHtml,
+      kpiHtml,
+      recentAuditsHtml,
+      riskBannerHtml,
+      severityChartHtml,
+      wireTooltips,
+    } from '../lib/dashboard-view';
+    import { loadVisibleSites } from '../lib/sites';
 
     const isAdmin = hasRole('ADMINISTRADOR_SISTEMA');
-    if (!isAdmin) {
-      document.querySelectorAll('[data-admin-section]').forEach((node) => node.setAttribute('hidden', ''));
-    } else {
-      Promise.all([
-        authFetch('/api/client-organizations'),
-        authFetch('/api/users'),
-      ]).then(async ([orgResponse, userResponse]) => {
-        if (orgResponse.ok) {
-          const organizations = await orgResponse.json() as Organization[];
-          const orgNode = document.querySelector('#metric-organizations');
-          if (orgNode) orgNode.textContent = String(organizations.length);
+    let devices: NetworkDevice[] = [];
+    let sites: Site[] = [];
+    let organizations: Organization[] = [];
+    let loadSeq = 0;
 
-          const siteResponses = await Promise.all(
-            organizations.map((organization) => authFetch(`/api/client-organizations/${organization.id}/sites`))
-          );
-          let siteCount = 0;
-          for (const response of siteResponses) {
-            if (!response.ok) continue;
-            const sites = await response.json() as Site[];
-            siteCount += sites.length;
-          }
-          const siteNode = document.querySelector('#metric-sites');
-          if (siteNode) siteNode.textContent = String(siteCount);
-        }
+    const set = (selector: string, html: string) => {
+      const node = document.querySelector<HTMLElement>(selector);
+      if (node) node.innerHTML = html;
+    };
+    const showError = (message: string | null) => {
+      const node = document.querySelector<HTMLElement>('#dash-error');
+      if (!node) return;
+      node.textContent = message ?? '';
+      node.classList.toggle('is-hidden', !message);
+    };
+    const deviceName = (id: number) => devices.find((device) => device.id === id)?.identificador ?? `#${id}`;
+    const selectedOrg = () => Number(document.querySelector<HTMLSelectElement>('#dash-org')?.value) || null;
 
-        if (userResponse.ok) {
-          const users = await userResponse.json() as User[];
-          const node = document.querySelector('#metric-users');
-          if (node) node.textContent = String(users.length);
-        }
-      }).catch(() => {});
+    const alertsHtml = (alerts: CriticalAlert[]) => alerts.length === 0
+      ? '<p class="log-muted">No hay eventos críticos pendientes.</p>'
+      : `<ul class="compare-list">${alerts.slice(0, 5).map((alert) => `
+          <li class="compare-item ${alert.severidad === 'CRITICA' ? 'compare-nuevo_hallazgo' : ''}">
+            <a class="inline-link" href="/alerts?alerta=${alert.id}"><code>${code('ALR', alert.id)}</code></a>
+            <span>${escapeHtml(alert.codigoRegla ?? '')} · ${escapeHtml(alert.dispositivoIdentificador ?? `#${alert.dispositivoId}`)}</span>
+            <span class="badge-row"><span class="severity-badge ${severityClass(alert.severidad)}">${alert.severidad}</span>${alertStatusBadge(alert.estado)}</span>
+          </li>`).join('')}</ul>${alerts.length > 5 ? `<p class="log-muted">y ${alerts.length - 5} más.</p>` : ''}`;
+
+    const load = async () => {
+      showError(null);
+      const org = selectedOrg();
+      const seq = ++loadSeq;
+      const [summaryResponse, alertResponse] = await Promise.all([
+        auditFetch(`/api/dashboard/summary${org ? `?organizacionId=${org}` : ''}`),
+        auditFetch('/api/alerts/critical'),
+      ]);
+      if (seq !== loadSeq) return;
+      if (!summaryResponse.ok) {
+        showError(await readApiError(summaryResponse));
+        set('#dash-kpis', '<article class="metric-card"><span class="metric-label">sin datos</span><strong>—</strong><small>No fue posible obtener el resumen.</small></article>');
+        return;
+      }
+      const summary = await summaryResponse.json() as DashboardSummary;
+      if (seq !== loadSeq) return;
+
+      const orgName = org ? organizations.find((item) => item.id === org)?.razonSocial ?? `organización #${org}` : null;
+      const scope = isAdmin ? orgName ?? 'todas las organizaciones' : 'tu organización';
+      const title = document.querySelector('#dash-scope-title');
+      if (title) title.textContent = isAdmin && !org ? 'Estado general de la plataforma' : `Estado general · ${scope}`;
+      const clientLink = document.querySelector<HTMLAnchorElement>('#dash-client-link');
+      if (clientLink) {
+        clientLink.href = org ? `/client-status?organizacion=${org}` : '/client-status';
+      }
+
+      set('#dash-risk', riskBannerHtml(summary, scope));
+      set('#dash-kpis', kpiHtml(summary));
+      set('#dash-severity', severityChartHtml(summary));
+      set('#dash-evolution', evolutionChartHtml(summary.evolucion));
+      set('#dash-recent', recentAuditsHtml(summary.auditoriasRecientes, deviceName));
+      set('#dash-risk-devices', deviceRiskRowsHtml(summary.dispositivosEnRiesgo, sites));
+      document.querySelector('#dash-risk-empty')?.classList.toggle('is-hidden', summary.dispositivosEnRiesgo.length > 0);
+
+      // Si una sección falla, el resto del tablero se muestra igual (CU-006-003, flujo alternativo 4).
+      if (alertResponse.ok) {
+        const alerts = (await alertResponse.json() as CriticalAlert[])
+          .filter((alert) => !org || alert.organizacionId === org);
+        set('#dash-alerts', alertsHtml(alerts));
+      } else {
+        set('#dash-alerts', `<p class="log-muted">No se pudieron obtener las alertas: ${escapeHtml(await readApiError(alertResponse))}</p>`);
+      }
+      wireTooltips(document);
+    };
+
+    const loadReferences = async () => {
+      const [deviceResponse, visibleSites] = await Promise.all([auditFetch('/api/devices'), loadVisibleSites()]);
+      if (deviceResponse.ok) devices = await deviceResponse.json() as NetworkDevice[];
+      sites = visibleSites;
+      if (!isAdmin) return;
+
+      document.querySelector('#dash-org-filter')?.removeAttribute('hidden');
+      document.querySelectorAll('[data-admin-section]').forEach((node) => node.removeAttribute('hidden'));
+      const [orgResponse, userResponse] = await Promise.all([authFetch('/api/client-organizations'), authFetch('/api/users')]);
+      if (orgResponse.ok) {
+        organizations = await orgResponse.json() as Organization[];
+        const select = document.querySelector<HTMLSelectElement>('#dash-org');
+        organizations.forEach((organization) => select?.add(new Option(organization.razonSocial, String(organization.id))));
+        set('#metric-organizations', String(organizations.length));
+        set('#metric-sites', String(sites.length));
+      }
+      if (userResponse.ok) set('#metric-users', String((await userResponse.json() as User[]).length));
+    };
+
+    document.querySelector('#dash-org')?.addEventListener('change', () => void load());
+
+    if (!isAdmin && !getStoredUser()?.organizationId) {
+      showError('Tu usuario no tiene una organización asociada.');
     }
+    loadReferences()
+      .catch(() => {})
+      .then(load)
+      .catch((error) => showError(error instanceof Error ? error.message : 'No fue posible obtener el resumen.'));
   </script>
 </MasterLayout>

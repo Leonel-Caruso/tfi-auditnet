@@ -3,7 +3,8 @@
 const currentPath = Astro.url.pathname.replace(/\/+$/, '') || '/';
 
 const railItems = [
-  { href: '/dashboard', label: 'Inicio', code: '~/' },
+  { href: '/dashboard', label: 'Tablero de control', code: '~/' },
+  { href: '/client-status', label: 'Estado del cliente', code: 'CLI' },
   { separator: true },
   { href: '/organizations', label: 'Organizaciones y sedes', code: 'ORG', adminOnly: true },
   { href: '/users', label: 'Usuarios', code: 'USR', adminOnly: true },
@@ -15,6 +16,8 @@ const railItems = [
   { href: '/audits', label: 'Auditorías', code: 'RUN' },
   { href: '/history', label: 'Historial de auditorías', code: 'HIS' },
   { href: '/results', label: 'Hallazgos', code: 'LOG' },
+  { href: '/alerts', label: 'Alertas críticas', code: 'ALR' },
+  { href: '/reports', label: 'Reportes', code: 'REP' },
 ];
 ---
 

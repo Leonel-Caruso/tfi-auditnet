@@ -8,6 +8,7 @@ import ar.edu.uai.tfi.auditcore.infrastructure.persistence.entity.SedeReferencia
 import ar.edu.uai.tfi.auditcore.infrastructure.persistence.entity.TipoDispositivoEntity;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.persistence.LockModeType;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -97,6 +98,11 @@ public class PanacheDispositivoRepository
     @Override
     public Optional<DispositivoRed> buscarPorId(Long id) {
         return findByIdOptional(id).map(this::convertirADominio);
+    }
+
+    @Override
+    public Optional<DispositivoRed> buscarParaActualizar(Long id) {
+        return findByIdOptional(id, LockModeType.PESSIMISTIC_WRITE).map(this::convertirADominio);
     }
 
     @Override

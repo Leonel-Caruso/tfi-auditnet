@@ -314,6 +314,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <pre id="config-content">cargando...</pre>
         </div>` : ''}
         <button id="filter-device" class="button button-ghost button-small button-full" type="button">Ver solo el historial de este dispositivo</button>
+        <a class="button button-ghost button-small button-full" href="/reports?auditoria=${audit.id}">Generar reporte de esta auditoría →</a>
       `;
       content.classList.remove('is-hidden');
 

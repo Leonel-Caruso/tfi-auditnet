@@ -1,5 +1,5 @@
 // Utilidades de presentación compartidas por las pantallas de hallazgos e historial (Bloque 4).
-import type { FindingStatus } from './api';
+import type { AlertStatus, FindingStatus, RiskLevel } from './api';
 
 /** Escapa texto antes de insertarlo como HTML (los datos vienen de usuarios y de configuraciones). */
 export const escapeHtml = (value: unknown) =>
@@ -52,5 +52,41 @@ export const findingStatusBadge = (status: FindingStatus) => {
   const kind = status === 'ABIERTO' ? 'status-strong'
     : status === 'EN_REVISION' ? 'status-next'
       : 'status-ready';
+  return `<span class="status-badge ${kind}">${escapeHtml(status)}</span>`;
+};
+
+// Bloque 5.1 ---------------------------------------------------------------
+
+export const RISK_LABEL: Record<RiskLevel, string> = {
+  ALTO: 'riesgo alto',
+  MEDIO: 'riesgo medio',
+  BAJO: 'riesgo bajo',
+  SIN_DATOS: 'sin auditorías',
+};
+
+/** Qué significa cada nivel (D-23), para mostrarlo junto al indicador. */
+export const RISK_HELP: Record<RiskLevel, string> = {
+  ALTO: 'Hay hallazgos CRITICA pendientes o alertas vigentes en equipos de criticidad ALTA o CRITICA.',
+  MEDIO: 'Hay hallazgos ALTA pendientes en equipos de criticidad media o baja.',
+  BAJO: 'Solo quedan hallazgos MEDIA o BAJA pendientes, o ninguno.',
+  SIN_DATOS: 'Todavía no se ejecutaron auditorías.',
+};
+
+export const riskBadge = (level: RiskLevel) => {
+  const kind = level === 'ALTO' ? 'severity-critical'
+    : level === 'MEDIO' ? 'severity-high'
+      : level === 'BAJO' ? 'severity-low'
+        : 'status-next';
+  return `<span class="severity-badge risk-badge ${kind}">${escapeHtml(RISK_LABEL[level] ?? level)}</span>`;
+};
+
+export const ALERT_STATUS_LABEL: Record<AlertStatus, string> = {
+  ACTIVA: 'activa',
+  EN_ATENCION: 'en atención',
+  CERRADA: 'cerrada',
+};
+
+export const alertStatusBadge = (status: AlertStatus) => {
+  const kind = status === 'ACTIVA' ? 'status-strong' : status === 'EN_ATENCION' ? 'status-next' : 'status-ready';
   return `<span class="status-badge ${kind}">${escapeHtml(status)}</span>`;
 };

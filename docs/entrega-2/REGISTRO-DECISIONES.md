@@ -249,6 +249,100 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
   afectan los cambios posteriores de reglas o baselines.
 - **Prueba:** 2 tests del comparador (todas las categorías y su orden; primera auditoría sin anterior).
 
+## D-23 · Alertas críticas como entidad propia (Bloque 5)
+
+- **Decisión:** tabla `alertas_criticas` (migración audit-core V4), una alerta por hallazgo CRITICA o ALTA, generada
+  por el motor al auditar (CU-006-002, regla 1). Conserva el hallazgo y la auditoría de origen (regla 2) y no se borra
+  nunca: un trigger rechaza DELETE y TRUNCATE (regla 5). Al migrar se crearon las alertas de los hallazgos CRITICA/ALTA
+  existentes (cerradas si el hallazgo ya estaba resuelto o aceptado).
+- **Estados:** ACTIVA → EN_ATENCION (derivada a ANALISTA_RED o AUDITOR_TECNICO) → CERRADA. Desde la pantalla de
+  alertas solo se deriva o se devuelve (con motivo). El cierre sigue al hallazgo: RESUELTO o ACEPTADO cierran la
+  alerta; reabrir el hallazgo la reactiva (flujo alternativo 4). Así la alerta y el hallazgo nunca se contradicen.
+- **Permisos:** consultan los cuatro perfiles; derivan o devuelven el administrador, el responsable de gestión IT y
+  el analista de redes. El auditor técnico solo consulta (403, flujo alternativo 6). Cada cambio va a la bitácora de
+  transacciones como entidad ALERTA (regla 3). Mismo bloqueo de fila que en hallazgos para no pisar cambios; la
+  sincronización con el hallazgo no exige el estado esperado (si la derivaron mientras tanto, igual se cierra).
+- **Priorización:** vigentes primero, severidad, criticidad del dispositivo y fecha (regla 4). El impacto es texto
+  libre y se muestra en el detalle, pero no ordena.
+- **Sin notificaciones externas** (regla 6): no hay servicio de correo configurado.
+- **Alternativa descartada:** alertas como vista de los hallazgos (sin tabla). Más simple, pero sin la entidad
+  AlertaCritica ni EstadoAlerta que define la tesis.
+- **Prueba:** 5 tests de `AlertaServiceTest` y 1 en `HallazgoServiceTest` (cierre y reactivación con el hallazgo).
+
+## D-24 · Tablero de control y estado del cliente (Bloque 5)
+
+- **Decisión:** `GET /api/dashboard/summary` devuelve en una sola respuesta los indicadores, las auditorías recientes,
+  los equipos con mayor riesgo y la evolución de las últimas 8 semanas. Reemplaza a `/indicators`, `/recent-audits`
+  y `/critical-alerts` de CU-006-003 (una sola consulta, sin estados intermedios en la pantalla); las alertas
+  vigentes se leen de `/api/alerts/critical`. Del mismo modo, `GET /api/client-organizations/{id}/audit-status`
+  incluye el resumen, el riesgo y los últimos reportes (reemplaza a `/summary` y `/risk` de CU-007-003).
+- **Gateway:** `/api/client-organizations/*` es de management-service, pero `/audit-status` se calcula en audit-core.
+  nginx deriva esa ruta puntual a audit-core (location regex anterior a la de management).
+- **Cálculo:** en memoria sobre los datos del alcance (una organización, o todas para el administrador). Solo
+  lectura: nada se guarda. Alcanza para el volumen del prototipo; con mucho volumen convendría agregar en SQL.
+- **Indicadores:** dispositivos registrados, auditados y activos sin auditar; cumplimiento actual (reglas cumplidas en
+  la última auditoría de cada equipo); hallazgos pendientes, en revisión y cerrados por severidad; alertas vigentes;
+  auditorías de los últimos 30 días. Cada indicador lleva al módulo de detalle con el filtro aplicado (regla 5).
+- **Evolución:** por semana de lunes a domingo (hora de Argentina): auditorías, hallazgos detectados y cerrados (por
+  la fecha de cierre del hallazgo).
+- **Permisos:** los no administradores ven solo su organización; pedir otra responde 403. El administrador puede
+  elegir una organización o ver todas.
+- **Prueba:** 5 tests de `TableroServiceTest`.
+
+## D-25 · Nivel general de riesgo (Bloque 5)
+
+- **Decisión:** reglas simples y explicables, iguales para organización, sede y dispositivo (`EvaluadorRiesgo`):
+  1. SIN_DATOS: nunca se auditó.
+  2. ALTO: hay un hallazgo CRITICA pendiente, o una alerta vigente en un equipo de criticidad ALTA o CRITICA.
+  3. MEDIO: hay un hallazgo ALTA pendiente.
+  4. BAJO: solo quedan hallazgos MEDIA o BAJA pendientes, o ninguno.
+- **Alternativa descartada:** puntaje ponderado (severidad × criticidad con umbrales). Más fino, pero obliga a
+  justificar pesos y umbrales arbitrarios.
+- **Prueba:** `TableroServiceTest.reglasDelNivelDeRiesgo`.
+
+## D-26 · Re-auditoría: una alerta por regla y resolución automática (Bloque 5)
+
+- **Decisión:** al auditar un equipo, los hallazgos pendientes de auditorías anteriores del mismo equipo cuya regla
+  (mismo código) ahora se cumple pasan solos a RESUELTO, con usuario SISTEMA, comentario ("se cumple en la auditoría
+  AUD-n ejecutada por ...") en el seguimiento y en la bitácora, y su alerta se cierra. Es lo que define CU-005-001:
+  "RESUELTO se confirma con una nueva auditoría".
+- **Sin duplicar alertas:** si la regla sigue fallando, la auditoría nueva genera su hallazgo (cada auditoría
+  conserva su evidencia), pero no una segunda alerta: hay como máximo una alerta vigente por equipo y regla. Si
+  alguien cierra a mano el hallazgo que tenía la alerta y queda otro pendiente de la misma regla, la alerta pasa a
+  ese (se genera una nueva). Reabrir un hallazgo no crea otra alerta si la regla ya tiene una vigente.
+- **Solo hacia adelante:** se resuelven los hallazgos detectados sobre una versión de configuración igual o anterior
+  a la auditada; re-auditar una versión vieja no resuelve lo que falla en una más nueva.
+- **Severidad mayor:** si la regla subió de severidad (por ejemplo de ALTA a CRITICA), la alerta anterior se cierra
+  ("reemplazada") y la vigente pasa a ser la del hallazgo nuevo, para que se priorice como corresponde.
+- **Concurrencia:** la auditoría bloquea la fila del dispositivo, así dos auditorías simultáneas del mismo equipo se
+  ejecutan en orden. Si otro usuario cambió un hallazgo en ese momento, la resolución automática no lo toca.
+- **Alternativa descartada:** un estado REEMPLAZADO para los hallazgos repetidos (más prolijo, pero suma un estado,
+  una migración y cambios en todas las pantallas).
+- **Prueba:** `ReauditoriaTest` (5 tests: auditar fallando y luego corregido; traslado y reactivación de la alerta;
+  versión vieja; aumento de severidad).
+
+## D-27 · Reportes de auditoría como foto fija (Bloque 5)
+
+- **Decisión:** `POST /api/reports/audits` arma el reporte con las auditorías que cumplen los criterios (rango de
+  fechas o auditorías específicas, dispositivo, severidades y estados de los hallazgos) y lo guarda en
+  `reportes_auditoria` (migración audit-core V5): título, criterios y contenido en JSON, totales, usuario y fecha
+  (regla 1). El contenido incluye, por auditoría, el dispositivo, la configuración y la baseline usadas, y por
+  hallazgo la regla, severidad, impacto, evidencia, recomendación y estado en ese momento (reglas 2 a 4).
+  `reportes_auditoria_auditorias` guarda la referencia a cada auditoría de origen.
+- **Foto fija:** el reporte no se modifica ni se borra (triggers de solo inserción) y no cambia aunque cambien los
+  hallazgos después; generarlo no altera los datos de origen (regla 5). Se registra en la bitácora como REPORTE.
+- **JSON en `text`** (no `jsonb`): el contenido solo se lee completo, no se consulta por dentro, y así se evita
+  depender de un mapeo específico del dialecto. Máximo 500 auditorías por reporte.
+- **Descargas:** PDF con la impresión del navegador sobre la vista del reporte (estilos de impresión que dejan solo
+  el documento; sin librerías nuevas en el servidor). `GET /api/reports/{id}/download` devuelve CSV para Excel
+  (separador ";", UTF-8 con BOM, celdas que empiezan con = + - @ neutralizadas).
+- **Sin resultados:** si los criterios no devuelven auditorías responde 200 con un mensaje y no guarda nada (flujo
+  alternativo 3). Datos incompletos (configuración o baseline faltante) se informan en el reporte (flujo 4).
+- **Permisos:** generan el administrador, el analista de redes y el auditor técnico (la tesis menciona que el
+  analista "genera reportes"); el responsable de gestión IT los consulta y descarga. Los no administradores solo
+  ven los de su organización. El administrador puede generar uno de todas las organizaciones.
+- **Prueba:** `ReporteServiceTest` (5 tests, incluye el CSV).
+
 ## Pendientes detectados (para migraciones futuras)
 
 - `auditorias_configuracion.estado` solo admite `FINALIZADA` (CHECK de Hibernate). Alcanza mientras la auditoría sea
@@ -263,3 +357,5 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
   del prototipo. Las violaciones de unicidad por concurrencia (identificador, nombre y versión) responden 409.
 - Las consultas de hallazgos y del historial de auditorías no están paginadas (devuelven todo lo que cumple los
   filtros). Alcanza para el volumen del prototipo; si crece, agregar `page`/`size` en Bloque 8.
+- Si se audita varias veces un equipo sin corregir, cada auditoría conserva su hallazgo (evidencia) y todos cuentan
+  como pendientes hasta que la regla vuelve a cumplirse (D-26). Las alertas no se duplican.

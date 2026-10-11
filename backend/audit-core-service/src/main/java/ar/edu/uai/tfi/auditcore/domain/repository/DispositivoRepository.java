@@ -18,6 +18,14 @@ public interface DispositivoRepository {
 
     Optional<DispositivoRed> buscarPorId(Long id);
 
+    /**
+     * Igual que {@link #buscarPorId} pero bloquea la fila hasta el fin de la transacción (SELECT ... FOR UPDATE).
+     * Se usa al auditar para que dos auditorías simultáneas del mismo equipo se ejecuten una después de la otra.
+     */
+    default Optional<DispositivoRed> buscarParaActualizar(Long id) {
+        return buscarPorId(id);
+    }
+
     Optional<DispositivoRed> buscarPorIdYOrganizacion(Long id, Long organizacionId);
 
     /**
