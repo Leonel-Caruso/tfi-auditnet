@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
- * Repositorio de archivos y respaldos para el panel de administración (Bloque 7). Las rutas usan /api/system porque
+ * Repositorio de archivos y respaldos para el panel de administración. Las rutas usan /api/system porque
  * el gateway deriva /api/admin a management-service.
  */
 @Path("/api/system")

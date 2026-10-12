@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
-# =====================================================================
-# AuditNet · Despliega una nueva versión de las imágenes
-# Uso: bash 03-actualizar-imagenes.sh [etiqueta]
-#   etiqueta: entrega-2 (última) o sha-<commit> (versión exacta, recomendada)
-# Las migraciones Flyway nuevas se aplican solas al arrancar cada servicio.
-# APP_VERSION informa la etiqueta desplegada en el panel de administración.
-# =====================================================================
+# Despliega otra versión de las imágenes; Flyway migra al arrancar cada servicio.
+# Uso: bash 03-actualizar-imagenes.sh [etiqueta]   (entrega-2 o sha-<commit>, preferible)
+# APP_VERSION muestra la etiqueta desplegada en el panel de administración.
 set -euo pipefail
 cd "$(dirname "$0")"
 source ./variables.sh

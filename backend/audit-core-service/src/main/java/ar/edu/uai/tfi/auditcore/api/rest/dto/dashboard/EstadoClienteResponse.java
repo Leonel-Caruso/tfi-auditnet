@@ -8,8 +8,8 @@ import ar.edu.uai.tfi.auditcore.application.dashboard.TableroService.RiesgoSede;
 import java.util.List;
 
 /**
- * GET /api/client-organizations/{organizationId}/audit-status (CU-007-003). Los nombres de la organización y
- * de las sedes los da management-service; acá van sus ids.
+ * GET /api/client-organizations/{organizationId}/audit-status. Los nombres de la organización y de las sedes
+ * los da management-service; acá van sus ids.
  */
 public record EstadoClienteResponse(
         Long organizacionId,

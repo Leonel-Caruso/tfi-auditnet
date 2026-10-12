@@ -29,15 +29,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * Alertas críticas internas (RF-012, CU-006-002).
- *
- * <ul>
- *   <li>Se generan al auditar, una por cada hallazgo CRITICA o ALTA.</li>
- *   <li>Siguen al hallazgo: cuando se resuelve o se acepta el riesgo, la alerta se cierra; si se reabre, se
- *       reactiva.</li>
- *   <li>Desde la pantalla de alertas se derivan a un perfil técnico (EN_ATENCION) o se devuelven (ACTIVA).</li>
- *   <li>Priorización: vigentes primero, después severidad, criticidad del dispositivo y fecha.</li>
- * </ul>
+ * Alertas internas para hallazgos CRITICA o ALTA. Siguen el estado del hallazgo: se cierran cuando se resuelve o
+ * se acepta el riesgo y se reactivan si se reabre. Desde la pantalla solo se derivan o se devuelven.
  */
 @ApplicationScoped
 public class AlertaService {
@@ -67,17 +60,13 @@ public class AlertaService {
     public record AlertaDetalle(AlertaCritica alerta, DispositivoRed dispositivo, HallazgoAuditoria hallazgo) {
     }
 
-    /**
-     * Genera la alerta de un hallazgo recién detectado si es CRITICA o ALTA y no hay otra alerta vigente del mismo
-     * dispositivo y regla. La llama el motor de auditoría dentro de la misma transacción.
-     */
+    /** Se llama dentro de la transacción de la auditoría. */
     public Optional<AlertaCritica> generar(HallazgoAuditoria hallazgo, String actor) {
         if (hallazgo == null || !AlertaCritica.corresponde(hallazgo.severidad())) {
             return Optional.empty();
         }
-        // Una sola alerta vigente por dispositivo y regla: si una re-auditoría vuelve a fallar, el problema ya
-        // tiene su alerta (D-26). Si ahora la severidad es mayor (la regla pasó de ALTA a CRITICA), la alerta
-        // anterior se cierra y la nueva toma su lugar, para que se priorice como corresponde.
+        // Una sola alerta vigente por dispositivo y regla. Si la severidad subió (de ALTA a CRITICA), la nueva
+        // reemplaza a la anterior para que se priorice bien.
         Optional<AlertaCritica> vigente = alertaVigenteDeLaRegla(hallazgo);
         if (vigente.isPresent()) {
             if (hallazgo.severidad().ordinal() <= vigente.get().severidad().ordinal()) {
@@ -108,26 +97,16 @@ public class AlertaService {
         return Optional.of(alerta);
     }
 
-    /**
-     * Mantiene la alerta alineada con su hallazgo después de un cambio de estado (CU-006-002, flujo
-     * alternativo 4): hallazgo cerrado → alerta CERRADA; hallazgo reabierto → alerta ACTIVA. Equivale a
-     * {@code sincronizarConHallazgo(hallazgo, usuario, comentario, true)}.
-     */
     public void sincronizarConHallazgo(HallazgoAuditoria hallazgo, String usuario, String comentario) {
         sincronizarConHallazgo(hallazgo, usuario, comentario, true);
     }
 
     /**
-     * Sincroniza la alerta con el hallazgo y mantiene una sola alerta vigente por dispositivo y regla (D-26):
-     * <ul>
-     *   <li>Hallazgo cerrado: su alerta se cierra. Si {@code trasladar} y queda otro hallazgo pendiente del mismo
-     *       dispositivo y regla sin alerta (una re-auditoría que siguió fallando), se genera la alerta para ese.</li>
-     *   <li>Hallazgo pendiente (reabierto): si no hay otra alerta vigente del mismo dispositivo y regla, su
-     *       alerta se reactiva (o se genera, si no tenía).</li>
-     * </ul>
+     * Cierra o reactiva la alerta según el hallazgo. Al cerrar, si queda otro hallazgo pendiente del mismo
+     * dispositivo y regla, la alerta pasa a ese.
      *
-     * @param trasladar false cuando el cierre es automático por una re-auditoría que cumple la regla: en ese caso
-     *                  se cierran todos los pendientes de la regla y no hay a quién trasladarla
+     * @param trasladar false en el cierre automático por re-auditoría: ahí se cierran todos los pendientes de la
+     *                  regla y no hay a quién trasladarla
      */
     public void sincronizarConHallazgo(HallazgoAuditoria hallazgo, String usuario, String comentario,
                                        boolean trasladar) {
@@ -170,8 +149,8 @@ public class AlertaService {
 
     private void cambiar(AlertaCritica alerta, EstadoAlerta nuevo, PerfilTecnico perfil, String detalle,
                          String usuario) {
-        // Sin verificar el estado esperado: si otro usuario la derivó mientras tanto, igual sigue vigente y el
-        // cierre del hallazgo debe cerrarla (no tiene sentido rechazar el cambio del hallazgo por eso).
+        // Sin verificar el estado esperado: si otro usuario la derivó mientras tanto, el cierre del hallazgo igual
+        // debe cerrarla.
         AlertaCritica actualizada = repository.actualizarEstado(alerta.id(), null, nuevo, perfil,
                 recortar(detalle, 1000), usuario, Instant.now());
         registrarCambio(alerta, actualizada, usuario, detalle);
@@ -203,8 +182,8 @@ public class AlertaService {
     }
 
     /**
-     * Alertas priorizadas (GET /api/alerts/critical). La sede y la criticidad se filtran con los datos del
-     * dispositivo afectado.
+     * Orden: vigentes primero, después severidad, criticidad del dispositivo y fecha. La sede y la criticidad se
+     * filtran con los datos del dispositivo afectado.
      */
     public List<AlertaPriorizada> buscarPriorizadas(FiltroAlertas filtro, Long sedeId,
                                                    CriticidadDispositivo criticidad) {
@@ -224,7 +203,6 @@ public class AlertaService {
                 .toList();
     }
 
-    /** Detalle de la alerta (GET /api/alerts/{id}). */
     public AlertaDetalle detalle(Long id, Long organizacionId) {
         AlertaCritica alerta = obtener(id, organizacionId);
         return new AlertaDetalle(
@@ -235,8 +213,8 @@ public class AlertaService {
     }
 
     /**
-     * Deriva la alerta a un perfil técnico (EN_ATENCION) o la devuelve (ACTIVA). PATCH /api/alerts/{id}/status.
-     * El cierre no se hace acá: la alerta se cierra cuando el hallazgo se resuelve o se acepta el riesgo.
+     * Deriva la alerta a un perfil técnico (EN_ATENCION) o la devuelve (ACTIVA). El cierre no se hace acá: depende
+     * del hallazgo.
      *
      * @param organizacionId null para el administrador
      */

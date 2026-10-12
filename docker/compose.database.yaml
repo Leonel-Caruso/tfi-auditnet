@@ -16,7 +16,7 @@ services:
       timeout: 5s
       retries: 10
 
-  # Bloque 2.3c: MongoDB local para la bitácora de excepciones (en Azure: Cosmos DB para MongoDB)
+  # Bitácora de excepciones (en Azure: Cosmos DB para MongoDB)
   mongo:
     image: mongo:7
     container_name: tfi-mongo
@@ -30,8 +30,7 @@ services:
       timeout: 5s
       retries: 10
 
-  # Bloque 7: emulador oficial de Azure Blob Storage para el repositorio de archivos (en Azure: Blob Storage).
-  # Usa la cuenta pública de desarrollo devstoreaccount1; audit-core se conecta solo en el perfil dev.
+  # Emulador de Blob Storage con la cuenta pública devstoreaccount1; audit-core lo usa solo en el perfil dev.
   azurite:
     image: mcr.microsoft.com/azure-storage/azurite:3.33.0
     container_name: tfi-azurite

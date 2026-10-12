@@ -3,9 +3,8 @@ package ar.edu.uai.tfi.auditcore.infrastructure.web;
 import jakarta.enterprise.context.RequestScoped;
 
 /**
- * Datos de la solicitud HTTP en curso que interesan a las bitácoras:
- * origen, navegador, método, ruta e identificador de correlación.
- * Lo completa {@link ContextoSolicitudFilter} al comienzo de cada solicitud.
+ * Datos de la solicitud HTTP en curso que usan las bitácoras (origen, navegador, método, ruta y correlación).
+ * Lo completa {@link ContextoSolicitudFilter}.
  */
 @RequestScoped
 public class ContextoSolicitud {

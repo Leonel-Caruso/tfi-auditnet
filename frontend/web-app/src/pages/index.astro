@@ -1,20 +1,16 @@
 ---
+import HeadMeta from '../components/HeadMeta.astro';
 import '../styles/global.css';
 ---
 <!doctype html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
-    <title>AuditNet</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <meta name="theme-color" content="#171a1f" />
+    <HeadMeta title="AuditNet" description="Plataforma de auditoría y control de configuraciones de red." />
   </head>
   <body class="redirect-page">
     <div class="spinner"></div>
-    <p>booting_console...</p>
+    <p>Abriendo la consola…</p>
     <script>
       const hasToken = Boolean(sessionStorage.getItem('tfi.auth.token'));
       window.location.replace(hasToken ? '/dashboard' : '/login');

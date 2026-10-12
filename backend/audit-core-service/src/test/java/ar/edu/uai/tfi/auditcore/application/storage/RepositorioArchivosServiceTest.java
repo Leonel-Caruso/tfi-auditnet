@@ -14,7 +14,7 @@ import java.util.NoSuchElementException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Bloque 7 · Repositorio de archivos: rutas, hash SHA-256, verificación al descargar y archivos pendientes. */
+/** Repositorio de archivos: rutas, hash SHA-256, verificación al descargar y archivos pendientes. */
 class RepositorioArchivosServiceTest {
 
     private static final Instant AHORA = Instant.parse("2026-10-11T22:00:00Z");

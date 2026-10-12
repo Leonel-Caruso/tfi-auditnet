@@ -23,10 +23,8 @@ public interface AlertaRepository {
     List<AlertaCritica> buscar(FiltroAlertas filtro);
 
     /**
-     * Cambia el estado (y la derivación) de la alerta. Bloquea la fila y verifica que el estado siga siendo
-     * {@code estadoEsperado}; si otro usuario lo cambió mientras tanto, lanza IllegalStateException (409).
-     * Con {@code estadoEsperado} null no verifica (lo usa la sincronización con el hallazgo, que no depende de
-     * una derivación hecha mientras tanto).
+     * Bloquea la fila y verifica que el estado siga siendo {@code estadoEsperado}; si otro usuario lo cambió, lanza
+     * IllegalStateException (409). Con null no verifica: lo usa la sincronización con el hallazgo.
      */
     AlertaCritica actualizarEstado(Long id, EstadoAlerta estadoEsperado, EstadoAlerta estado,
                                    PerfilTecnico perfilAsignado, String comentario, String usuario, Instant fecha);

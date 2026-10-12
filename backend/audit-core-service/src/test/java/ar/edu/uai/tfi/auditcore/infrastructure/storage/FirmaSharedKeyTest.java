@@ -8,7 +8,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Bloque 7 · Firma Shared Key de Blob Storage y lectura de la cadena de conexión. */
+/** Firma Shared Key de Blob Storage y lectura de la cadena de conexión. */
 class FirmaSharedKeyTest {
 
     @Test

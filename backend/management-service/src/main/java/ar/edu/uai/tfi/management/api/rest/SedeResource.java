@@ -9,7 +9,7 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 
-/** Sedes por id (CU-007-002): consultar, modificar y habilitar/deshabilitar. Solo el administrador. */
+/** Sedes por id: consultar, modificar y habilitar/deshabilitar. Solo el administrador. */
 @Path("/api/sites")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

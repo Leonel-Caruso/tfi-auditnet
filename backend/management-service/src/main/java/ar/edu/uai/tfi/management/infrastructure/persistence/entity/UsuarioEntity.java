@@ -39,7 +39,7 @@ public class UsuarioEntity {
     @Column(name = "estado", nullable = false, length = 30)
     public EstadoRegistro estado;
 
-    /** V4: contraseñas incorrectas seguidas desde el último acceso o bloqueo. */
+    /** Contraseñas incorrectas seguidas desde el último acceso o bloqueo. */
     @Column(name = "intentos_fallidos", nullable = false)
     public int intentosFallidos;
 

@@ -100,7 +100,7 @@ public class AuditoriaService {
 
     private AuditoriaDetalle ejecutarConfiguracion(ConfiguracionDispositivo configuracion, String actor) {
         // Bloquea el dispositivo: dos auditorías simultáneas del mismo equipo se ejecutan en orden y no generan dos
-        // alertas para la misma regla (D-26).
+        // alertas para la misma regla.
         DispositivoRed dispositivo = dispositivoRepository.buscarParaActualizar(configuracion.dispositivoId())
                 .orElseThrow(() -> new NoSuchElementException("No existe el dispositivo asociado a la configuración."));
         if (dispositivo.estado() != EstadoDispositivo.ACTIVO) {
@@ -186,7 +186,6 @@ public class AuditoriaService {
                         null,
                         null
                 ));
-                // CRITICA o ALTA: alerta interna (RF-012, CU-006-002).
                 alertaService.generar(hallazgo, actorSeguro(actor));
             }
         }
@@ -213,9 +212,9 @@ public class AuditoriaService {
     }
 
     /**
-     * Re-auditoría (D-26): los hallazgos pendientes del mismo dispositivo cuya regla (mismo código) ahora se cumple
-     * pasan a RESUELTO automáticamente. Solo los detectados sobre una versión de configuración igual o anterior a
-     * la auditada: re-auditar una versión vieja no "resuelve" lo que falla en una más nueva.
+     * Pasa a RESUELTO los hallazgos pendientes del dispositivo cuya regla (por código) ahora se cumple. Solo los de
+     * una versión de configuración igual o anterior: re-auditar una versión vieja no resuelve lo que falla en una
+     * más nueva.
      */
     private int resolverHallazgosAnteriores(AuditoriaConfiguracion auditoria, ConfiguracionDispositivo configuracion,
                                             List<MotorAuditoriaService.EvaluacionCalculada> calculadas) {
@@ -248,7 +247,6 @@ public class AuditoriaService {
     }
 
     private AuditoriaDetalle armarDetalle(AuditoriaConfiguracion auditoria) {
-        // La configuración evaluada y la baseline usada se conservan siempre (CU-005-002, reglas 2 y 3).
         return new AuditoriaDetalle(
                 auditoria,
                 evaluacionRepository.listarPorAuditoria(auditoria.id()),
@@ -258,9 +256,6 @@ public class AuditoriaService {
         );
     }
 
-    /**
-     * Historial filtrado (GET /api/audits/history con filtros). Solo lectura: no modifica la evidencia.
-     */
     public List<AuditoriaConfiguracion> buscarHistorial(FiltroAuditorias filtro) {
         FiltroAuditorias criterios = filtro == null
                 ? new FiltroAuditorias(null, null, null, null, null, null, null, null)
@@ -281,9 +276,8 @@ public class AuditoriaService {
     }
 
     /**
-     * Compara la auditoría con la inmediatamente anterior del mismo dispositivo (evolución en el tiempo,
-     * CU-005-002). Si es la primera del dispositivo, {@code anterior} es null y todas las reglas figuran
-     * como nuevas.
+     * Compara la auditoría con la inmediatamente anterior del mismo dispositivo. Si es la primera,
+     * {@code anterior} es null y todas las reglas figuran como nuevas.
      *
      * @param organizacionId null para el administrador
      */

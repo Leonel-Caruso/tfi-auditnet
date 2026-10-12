@@ -48,12 +48,12 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-jdbc-postgresql</artifactId>
         </dependency>
-        <!-- Bloque 2.3c: bitácora de excepciones en MongoDB (entidad NoSQL) -->
+        <!-- Bitácora de excepciones en MongoDB -->
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-mongodb-client</artifactId>
         </dependency>
-        <!-- Bloque 2.1: migraciones versionadas del esquema con Flyway -->
+        <!-- Migraciones versionadas del esquema -->
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-flyway</artifactId>

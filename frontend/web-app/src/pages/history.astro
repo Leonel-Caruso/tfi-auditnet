@@ -5,7 +5,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 <MasterLayout
   title="Historial de auditorías"
   section="Resultados y trazabilidad"
-  description="Auditorías anteriores con la configuración evaluada, la baseline usada, las reglas aplicadas y la evolución respecto de la auditoría previa del mismo dispositivo. Solo lectura."
+  description="Auditorías anteriores con la configuración evaluada, la baseline y las reglas usadas, y la comparación con la auditoría previa. Solo lectura."
 >
   <div id="history-error" class="alert alert-error is-hidden" role="alert"></div>
 
@@ -23,19 +23,19 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         <span>severidad máxima</span>
         <select name="severidad" class="technical-select">
           <option value="">todas</option>
-          <option value="CRITICA">CRITICA</option>
-          <option value="ALTA">ALTA</option>
-          <option value="MEDIA">MEDIA</option>
-          <option value="BAJA">BAJA</option>
-          <option value="NINGUNA">NINGUNA</option>
+          <option value="CRITICA">crítica</option>
+          <option value="ALTA">alta</option>
+          <option value="MEDIA">media</option>
+          <option value="BAJA">baja</option>
+          <option value="NINGUNA">sin hallazgos</option>
         </select>
       </label>
       <label class="log-filter">
         <span>resultado</span>
         <select name="resultado" class="technical-select">
           <option value="">todos</option>
-          <option value="CON_HALLAZGOS">CON_HALLAZGOS</option>
-          <option value="CUMPLE">CUMPLE</option>
+          <option value="CON_HALLAZGOS">con hallazgos</option>
+          <option value="CUMPLE">cumple</option>
         </select>
       </label>
       <label class="log-filter">
@@ -61,11 +61,10 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <article class="panel finding-list-panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Audit trail</span>
+          <span class="eyebrow">Registro de auditorías</span>
           <h2>Auditorías registradas</h2>
         </div>
         <div class="log-heading-meta">
-          <span id="history-endpoint" class="technical-hint">GET /api/audits/history</span>
           <span id="history-count" class="counter-chip">—</span>
         </div>
       </div>
@@ -74,7 +73,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         <table class="data-table finding-table log-table">
           <thead>
             <tr>
-              <th>AUDIT</th>
+              <th>AUDITORÍA</th>
               <th>FECHA</th>
               <th>DISPOSITIVO</th>
               <th>BASELINE</th>
@@ -88,24 +87,25 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         </table>
         <div id="history-empty" class="empty-state compact-empty is-hidden">
           <div>
-            <code>audits.count = 0</code>
+            <code>0 auditorías</code>
             <p>No se encontraron auditorías para los filtros actuales.</p>
           </div>
         </div>
       </div>
+      <nav id="history-pager" class="pager is-hidden" aria-label="Páginas del historial"></nav>
     </article>
 
     <aside class="panel finding-inspector" aria-live="polite">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Historical evidence</span>
+          <span class="eyebrow">Evidencia histórica</span>
           <h2>Detalle de la auditoría</h2>
         </div>
         <span class="inspector-led"></span>
       </div>
 
       <div id="history-inspector-empty" class="inspector-empty">
-        <code>select audit;</code>
+        <code>sin selección</code>
         <p>Seleccioná una auditoría para ver la evidencia histórica y su evolución.</p>
       </div>
 
@@ -126,6 +126,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       type RuleChangeCategory,
     } from '../lib/api';
     import { code, escapeHtml, findingStatusBadge, formatDate, localToIso, severityClass } from '../lib/format';
+    import { crearPaginador, totalDeRespuesta } from '../lib/paginador';
 
     let audits: AuditSummary[] = [];
     let devices: NetworkDevice[] = [];
@@ -139,6 +140,9 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     const initialDevice = Number(params.get('dispositivo')) || null;
 
     const form = document.querySelector<HTMLFormElement>('#history-filters');
+    // El historial crece con cada auditoría: se pide al servidor de a una página.
+    const paginador = crearPaginador(document.querySelector<HTMLElement>('#history-pager'), { alCambiar: () => void load() });
+    let total = 0;
     const deviceById = (id: number) => devices.find((item) => item.id === id);
     const baselineById = (id: number) => baselines.find((item) => item.id === id);
 
@@ -197,7 +201,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       }).join('');
 
       const count = document.querySelector('#history-count');
-      if (count) count.textContent = String(audits.length);
+      if (count) count.textContent = String(total);
       document.querySelector('#history-empty')?.classList.toggle('is-hidden', audits.length > 0);
 
       body.querySelectorAll<HTMLElement>('[data-audit-id]').forEach((row) => {
@@ -280,14 +284,14 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         ${incomplete ? '<div class="alert alert-error">La auditoría tiene datos incompletos por un error previo; se muestra la evidencia disponible.</div>' : ''}
         <dl class="technical-definition-list">
           <div><dt>baseline</dt><dd>${detail.baseline ? `${escapeHtml(detail.baseline.nombre)} v${detail.baseline.version}` : `#${audit.baselineId}`}</dd></div>
-          <div><dt>config</dt><dd>${detail.configuracion
+          <div><dt>configuración</dt><dd>${detail.configuracion
             ? `${code('CFG', detail.configuracion.id)} · v${detail.configuracion.version} · ${escapeHtml(detail.configuracion.nombreFuente)}`
             : code('CFG', audit.configuracionId)}</dd></div>
-          <div><dt>config.imported</dt><dd>${detail.configuracion
+          <div><dt>importada</dt><dd>${detail.configuracion
             ? `${escapeHtml(formatDate(detail.configuracion.fechaImportacion))} · ${escapeHtml(detail.configuracion.usuarioResponsable)}`
             : '—'}</dd></div>
-          <div><dt>rules.pass</dt><dd>${audit.reglasCumplidas}/${audit.totalReglas}</dd></div>
-          <div><dt>executed.by</dt><dd>${escapeHtml(audit.ejecutadoPor)}</dd></div>
+          <div><dt>reglas cumplidas</dt><dd>${audit.reglasCumplidas}/${audit.totalReglas}</dd></div>
+          <div><dt>ejecutó</dt><dd>${escapeHtml(audit.ejecutadoPor)}</dd></div>
         </dl>
 
         <div class="baseline-versions">
@@ -310,7 +314,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         ${detail.configuracion ? `
         <button id="show-config" class="button button-ghost button-small button-full" type="button">Ver configuración evaluada</button>
         <div id="config-block" class="config-preview is-hidden">
-          <span>normalized (${code('CFG', detail.configuracion.id)})</span>
+          <span>configuración normalizada (${code('CFG', detail.configuracion.id)})</span>
           <pre id="config-content">cargando...</pre>
         </div>` : ''}
         <button id="filter-device" class="button button-ghost button-small button-full" type="button">Ver solo el historial de este dispositivo</button>
@@ -331,6 +335,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       document.querySelector('#filter-device')?.addEventListener('click', () => {
         const select = form?.querySelector<HTMLSelectElement>('[name=dispositivoId]');
         if (select) select.value = String(audit.dispositivoId);
+        paginador.reiniciar();
         void load();
       });
     };
@@ -344,8 +349,9 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         showError(error instanceof Error ? error.message : 'Filtros inválidos.');
         return;
       }
+      const pagina = `pagina=${paginador.pagina}&porPagina=${paginador.porPagina}`;
       const seq = ++loadSeq;
-      const response = await auditFetch(`/api/audits/history${query}`);
+      const response = await auditFetch(`/api/audits/history${query ? `${query}&` : '?'}${pagina}`);
       if (seq !== loadSeq) return;
       if (!response.ok) {
         showError(await readApiError(response));
@@ -353,9 +359,12 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       }
       const data = await response.json() as AuditSummary[];
       if (seq !== loadSeq) return;
+      total = totalDeRespuesta(response, data.length);
+      const paginaPedida = paginador.pagina;
+      paginador.actualizar(total);
+      // La página pedida quedó después del final (por ejemplo, cambió el total): se pide la última.
+      if (data.length === 0 && total > 0 && paginador.pagina !== paginaPedida) return load();
       audits = data;
-      const endpoint = document.querySelector('#history-endpoint');
-      if (endpoint) endpoint.textContent = `GET /api/audits/history${query}`;
       render();
     };
 
@@ -378,10 +387,12 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
     form?.addEventListener('submit', (event) => {
       event.preventDefault();
+      paginador.reiniciar();
       void load();
     });
     document.querySelector('#history-clear')?.addEventListener('click', () => {
       form?.reset();
+      paginador.reiniciar();
       window.history.replaceState(null, '', window.location.pathname);
       void load();
     });

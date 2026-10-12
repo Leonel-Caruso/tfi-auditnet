@@ -22,7 +22,7 @@ export const riskBannerHtml = (summary: DashboardSummary, scope: string) => `
     <small>calculado ${escapeHtml(formatDate(summary.generado))}</small>
   </div>`;
 
-/** Indicadores principales; cada uno lleva al módulo de detalle (CU-006-003, regla 5). */
+/** Indicadores principales; cada uno lleva al módulo de detalle. */
 export const kpiHtml = (summary: DashboardSummary) => {
   const { dispositivos, hallazgos, alertas, auditorias } = summary;
   const criticalHigh = (hallazgos.pendientesPorSeveridad.CRITICA ?? 0) + (hallazgos.pendientesPorSeveridad.ALTA ?? 0);

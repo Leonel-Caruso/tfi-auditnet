@@ -11,14 +11,9 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
- * Completa {@link ContextoSolicitud} y devuelve el identificador de correlación en la respuesta.
- *
- * <ul>
- *   <li>Correlación: el encabezado {@code X-Request-ID} que agrega nginx (API Gateway). Si no llega
- *       (por ejemplo, en desarrollo local) se genera uno nuevo.</li>
- *   <li>Origen: la cadena {@code X-Forwarded-For} completa, porque detrás del gateway la IP directa
- *       es la del proxy. Se guarda tal cual llega, sin interpretarla.</li>
- * </ul>
+ * Completa {@link ContextoSolicitud} y devuelve la correlación en la respuesta. La correlación es el
+ * {@code X-Request-ID} que agrega nginx, o una nueva si no llega. El origen se guarda como la cadena
+ * {@code X-Forwarded-For} completa, porque detrás del gateway la IP directa es la del proxy.
  */
 public class ContextoSolicitudFilter {
 

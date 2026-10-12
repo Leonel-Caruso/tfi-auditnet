@@ -1,0 +1,66 @@
+---
+// Encabezado común: íconos, PWA y metadatos para buscadores. Solo /login es indexable.
+// nginx reemplaza __ORIGEN_PUBLICO__ por el dominio real (sub_filter), así las URL absolutas no dependen del build.
+interface Props {
+  title: string;
+  description: string;
+  indexable?: boolean;
+  path?: string;
+}
+
+const { title, description, indexable = false, path } = Astro.props;
+const origen = '__ORIGEN_PUBLICO__';
+---
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content={description} />
+<meta name="robots" content={indexable ? 'index, follow' : 'noindex, nofollow'} />
+<title>{title}</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=2" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2" />
+<link rel="manifest" href="/manifest.webmanifest" />
+<link rel="preload" href="/fonts/jetbrains-mono-800.woff2" as="font" type="font/woff2" crossorigin />
+<meta name="theme-color" content="#171a1f" />
+<meta name="application-name" content="AuditNet" />
+<meta name="apple-mobile-web-app-title" content="AuditNet" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+{indexable && path && (
+  <Fragment>
+    <link rel="canonical" href={`${origen}${path}`} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_AR" />
+    <meta property="og:site_name" content="AuditNet" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={`${origen}${path}`} />
+    <meta property="og:image" content={`${origen}/icons/icon-512.png`} />
+    <meta property="og:image:alt" content="Logo de AuditNet: A_ blanca sobre fondo naranja" />
+    <meta name="twitter:card" content="summary" />
+    <script
+      is:inline
+      type="application/ld+json"
+      set:html={JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'WebApplication',
+        name: 'AuditNet',
+        description,
+        applicationCategory: 'BusinessApplication',
+        operatingSystem: 'Web',
+        inLanguage: 'es',
+        url: `${origen}/`,
+      })}
+    />
+  </Fragment>
+)}
+{import.meta.env.PROD && (
+  <script is:inline>
+    // El service worker solo sirve la página "sin conexión"; no cachea datos ni llamadas a /api.
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js').catch(function () {});
+      });
+    }
+  </script>
+)}

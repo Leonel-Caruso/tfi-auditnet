@@ -22,15 +22,9 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
 /**
- * Escribe en la bitácora de transacciones (tabla bitacora_transacciones), en la MISMA transacción
- * que la operación de negocio: el registro existe solo si la operación se confirmó.
- *
- * La tabla pertenece a management-service (migración V3). Por eso este servicio no la mapea como
- * entidad: solo inserta con SQL explícito. Así su arranque no depende de que esa migración ya se
- * haya aplicado; la tabla se necesita recién cuando se registra la primera operación.
- *
- * El EntityManager se inyecta como {@code Instance} y se obtiene recién al registrar: así el bean
- * no exige una persistencia activa al iniciar (por ejemplo, en los tests sin base de datos).
+ * Escribe en bitacora_transacciones dentro de la misma transacción que la operación de negocio. La tabla es de
+ * management-service, por eso no se mapea como entidad y se inserta con SQL explícito. El EntityManager se
+ * obtiene recién al registrar para que el bean no exija persistencia al iniciar (tests sin base).
  */
 @ApplicationScoped
 public class PersistenciaTrazabilidadAdapter implements TrazabilidadPort {

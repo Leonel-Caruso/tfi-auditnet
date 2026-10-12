@@ -3,22 +3,22 @@
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
 const labels: Record<string, string> = {
   '/dashboard': 'inicio',
-  '/organizations': 'organizations',
-  '/users': 'users',
-  '/logs': 'logs',
-  '/devices': 'devices',
+  '/organizations': 'organizaciones',
+  '/users': 'usuarios',
+  '/logs': 'bitácoras',
+  '/devices': 'dispositivos',
   '/baselines': 'baselines',
-  '/rules': 'rules',
-  '/audits': 'audits',
-  '/history': 'history',
-  '/results': 'findings',
-  '/alerts': 'alerts',
-  '/client-status': 'client-status',
-  '/reports': 'reports',
-  '/admin': 'admin',
-  '/account': 'account',
+  '/rules': 'reglas',
+  '/audits': 'auditorías',
+  '/history': 'historial',
+  '/results': 'hallazgos',
+  '/alerts': 'alertas',
+  '/client-status': 'estado del cliente',
+  '/reports': 'reportes',
+  '/admin': 'administración',
+  '/account': 'mi cuenta',
 };
-const currentLabel = labels[path] ?? 'console';
+const currentLabel = labels[path] ?? 'consola';
 ---
 
 <header class="console-header">
@@ -43,26 +43,26 @@ const currentLabel = labels[path] ?? 'console';
   </div>
 
   <div class="header-actions">
-    <div class="service-state" title="Management API disponible">
+    <div class="service-state" title="Conexión con los servicios">
       <span class="service-dot"></span>
-      <code id="topbar-connection">api</code>
+      <code id="topbar-connection">conectando</code>
     </div>
 
     <div class="compact-user">
       <button id="user-menu-button" class="compact-user-button" type="button" aria-expanded="false" aria-controls="user-popover">
         <span class="compact-user-avatar" id="user-avatar">U_</span>
-        <span class="compact-user-handle" id="user-handle">user</span>
+        <span class="compact-user-handle" id="user-handle">usuario</span>
         <span class="compact-user-caret">⌄</span>
       </button>
 
       <div id="user-popover" class="user-popover is-hidden">
         <div class="user-popover-copy">
           <strong id="user-name">Usuario</strong>
-          <code id="user-role">sin_rol</code>
+          <code id="user-role">sin perfil</code>
         </div>
         <div class="user-popover-divider"></div>
-        <a class="user-popover-action" href="/account">mi_cuenta</a>
-        <button id="logout-button" class="user-popover-action" type="button">cerrar_sesion</button>
+        <a class="user-popover-action" href="/account">Mi cuenta</a>
+        <button id="logout-button" class="user-popover-action" type="button">Cerrar sesión</button>
       </div>
     </div>
   </div>

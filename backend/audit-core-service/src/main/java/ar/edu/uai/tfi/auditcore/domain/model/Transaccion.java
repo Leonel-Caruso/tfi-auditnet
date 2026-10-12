@@ -3,14 +3,10 @@ package ar.edu.uai.tfi.auditcore.domain.model;
 /**
  * Operación de negocio que los servicios informan a la bitácora de transacciones.
  *
- * @param entidad        entidad afectada, por ejemplo DISPOSITIVO o AUDITORIA
- * @param entidadId      id de la entidad afectada
- * @param operacion      qué se hizo
- * @param organizacionId organización cliente a la que pertenece el dato
- * @param valorAnterior  estado antes de la operación (null en un alta); se guarda como JSON
- * @param valorNuevo     estado después de la operación; se guarda como JSON
- * @param actor          quién la realizó; si es null se toma el usuario autenticado
- * @param detalle        texto breve adicional
+ * @param entidad       entidad afectada, por ejemplo DISPOSITIVO o AUDITORIA
+ * @param valorAnterior estado antes de la operación (null en un alta); se guarda como JSON
+ * @param valorNuevo    estado después de la operación; se guarda como JSON
+ * @param actor         quién la realizó; si es null se toma el usuario autenticado
  */
 public record Transaccion(
         String entidad,

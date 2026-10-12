@@ -6,9 +6,8 @@ import ar.edu.uai.tfi.management.application.ExcepcionAplicacion;
 import java.util.Locale;
 
 /**
- * Política de contraseñas (Bloque 6, D-30): al menos 10 caracteres, con letras y números, y que no contenga el
- * nombre de usuario. Se aplica al crear un usuario, al restablecer y al cambiar la contraseña. Las contraseñas se
- * guardan con hash BCrypt (RNF-002).
+ * Al menos 10 caracteres, con letras y números, y sin el nombre de usuario. Se aplica al crear un usuario, al
+ * restablecer y al cambiar la contraseña.
  */
 public final class PoliticaContrasena {
 

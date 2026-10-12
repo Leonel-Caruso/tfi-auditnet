@@ -8,6 +8,6 @@ public enum OperacionTransaccion {
     BAJA_LOGICA,
     IMPORTACION,
     EJECUCION,
-    /** Respaldo de la base de datos (Bloque 7). */
+    /** Respaldo de la base de datos. */
     EXPORTACION
 }

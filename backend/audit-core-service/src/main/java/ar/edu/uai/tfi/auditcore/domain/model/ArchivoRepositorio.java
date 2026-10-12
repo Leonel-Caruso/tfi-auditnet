@@ -4,7 +4,7 @@ import java.time.Instant;
 
 /**
  * Entrada del catálogo del repositorio de archivos (tabla {@code archivos_repositorio}): dónde está el archivo en el
- * almacenamiento, su tamaño y su hash SHA-256, que permite comprobar que no fue alterado (RNF-012).
+ * almacenamiento, su tamaño y su hash SHA-256, que permite comprobar que no fue alterado.
  *
  * @param entidadId      configuración o reporte de origen (null para un respaldo)
  * @param organizacionId organización dueña del archivo (null para respaldos y reportes de todas las organizaciones)

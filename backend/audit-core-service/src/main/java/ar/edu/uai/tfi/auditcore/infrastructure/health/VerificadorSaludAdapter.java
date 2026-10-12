@@ -83,7 +83,7 @@ public class VerificadorSaludAdapter implements SaludPort {
         }
     }
 
-    /** Bloque 7: repositorio de archivos (Blob Storage en Azure, Azurite en local). */
+    /** Blob Storage en Azure, Azurite en local. */
     private ComponenteSalud repositorioArchivos() {
         String nombre = "Repositorio de archivos";
         if (!almacen.configurado()) {

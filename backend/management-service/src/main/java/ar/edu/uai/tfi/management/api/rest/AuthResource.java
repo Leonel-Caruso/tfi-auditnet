@@ -51,10 +51,7 @@ public class AuthResource {
                 usuario.roles());
     }
 
-    /**
-     * El usuario autenticado cambia su contraseña. Responde un token nuevo: las demás sesiones abiertas quedan sin
-     * efecto (D-31).
-     */
+    /** El usuario cambia su contraseña. Responde un token nuevo: las demás sesiones abiertas quedan sin efecto. */
     @POST
     @Path("/password")
     @Authenticated

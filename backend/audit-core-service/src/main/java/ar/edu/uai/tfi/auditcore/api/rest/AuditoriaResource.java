@@ -43,19 +43,23 @@ public class AuditoriaResource {
     }
 
     /**
-     * Historial de auditorías (CU-005-002), de la más reciente a la más vieja. Filtros opcionales:
-     * dispositivoId, baselineId, severidad (máxima), resultado, ejecutadoPor, desde y hasta (ISO-8601).
+     * Historial de auditorías, de la más reciente a la más vieja. Filtros opcionales: dispositivoId, baselineId,
+     * severidad (máxima), resultado, ejecutadoPor, desde y hasta (ISO-8601). Paginado opcional con pagina y
+     * porPagina; el total viaja en X-Total-Count.
      */
     @GET
     @Path("/history")
-    public List<AuditoriaResumenResponse> historial(@QueryParam("dispositivoId") String dispositivoId,
+    public Response historial(@QueryParam("dispositivoId") String dispositivoId,
                                                     @QueryParam("baselineId") String baselineId,
                                                     @QueryParam("severidad") String severidad,
                                                     @QueryParam("resultado") String resultado,
                                                     @QueryParam("ejecutadoPor") String ejecutadoPor,
                                                     @QueryParam("desde") String desde,
-                                                    @QueryParam("hasta") String hasta) {
+                                                    @QueryParam("hasta") String hasta,
+                                                    @QueryParam("pagina") String pagina,
+                                                    @QueryParam("porPagina") String porPagina) {
         try {
+            Paginacion paginacion = Paginacion.de(pagina, porPagina);
             FiltroAuditorias filtro = new FiltroAuditorias(
                     esAdministrador() ? null : organizationIdActual(),
                     FiltrosConsulta.id(dispositivoId, "dispositivoId"),
@@ -66,7 +70,7 @@ public class AuditoriaResource {
                     FiltrosConsulta.fecha(desde, "desde"),
                     FiltrosConsulta.fecha(hasta, "hasta")
             );
-            return service.buscarHistorial(filtro).stream().map(this::aResumen).toList();
+            return Paginacion.responder(service.buscarHistorial(filtro).stream().map(this::aResumen).toList(), paginacion);
         } catch (IllegalArgumentException exception) {
             throw error(Response.Status.BAD_REQUEST, exception.getMessage());
         }

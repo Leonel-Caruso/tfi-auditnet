@@ -6,11 +6,7 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
-/**
- * Herramienta de diagnóstico del panel de administración: genera un error controlado para
- * verificar, de punta a punta, que la bitácora de excepciones registra correctamente.
- * Solo administradores.
- */
+/** Genera un error controlado para comprobar de punta a punta que la bitácora de excepciones registra. */
 @Path("/api/admin/diagnostico")
 @Produces(MediaType.APPLICATION_JSON)
 @RolesAllowed("ADMINISTRADOR_SISTEMA")

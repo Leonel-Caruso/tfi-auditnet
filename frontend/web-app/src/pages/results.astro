@@ -5,7 +5,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 <MasterLayout
   title="Hallazgos"
   section="Resultados y trazabilidad"
-  description="Desvíos detectados por el motor de auditoría, priorizados por estado, severidad y criticidad del dispositivo, con su seguimiento."
+  description="Desvíos detectados en las auditorías, ordenados por prioridad. Revisá la evidencia y actualizá su seguimiento."
 >
   <div id="finding-error" class="alert alert-error is-hidden" role="alert"></div>
   <div id="finding-success" class="alert alert-success is-hidden" role="status"></div>
@@ -17,20 +17,20 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         <select name="estado" class="technical-select">
           <option value="">todos</option>
           <option value="PENDIENTES">pendientes (abierto / en revisión)</option>
-          <option value="ABIERTO">ABIERTO</option>
-          <option value="EN_REVISION">EN_REVISION</option>
-          <option value="RESUELTO">RESUELTO</option>
-          <option value="ACEPTADO">ACEPTADO</option>
+          <option value="ABIERTO">abierto</option>
+          <option value="EN_REVISION">en revisión</option>
+          <option value="RESUELTO">resuelto</option>
+          <option value="ACEPTADO">riesgo aceptado</option>
         </select>
       </label>
       <label class="log-filter">
         <span>severidad</span>
         <select name="severidad" class="technical-select">
           <option value="">todas</option>
-          <option value="CRITICA">CRITICA</option>
-          <option value="ALTA">ALTA</option>
-          <option value="MEDIA">MEDIA</option>
-          <option value="BAJA">BAJA</option>
+          <option value="CRITICA">crítica</option>
+          <option value="ALTA">alta</option>
+          <option value="MEDIA">media</option>
+          <option value="BAJA">baja</option>
         </select>
       </label>
       <label class="log-filter">
@@ -53,7 +53,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <div class="log-filter-actions">
       <div class="terminal-search">
         <span>&gt;</span>
-        <input id="finding-search" type="search" autocomplete="off" placeholder="buscar regla, dispositivo o evidencia en lo cargado..." />
+        <input id="finding-search" type="search" autocomplete="off" placeholder="buscar regla, dispositivo o evidencia en los resultados..." />
       </div>
       <button type="button" id="finding-clear" class="button button-ghost button-small">Limpiar</button>
       <button type="submit" class="button button-primary button-small">Consultar</button>
@@ -87,11 +87,10 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <article class="panel finding-list-panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Audit evidence</span>
+          <span class="eyebrow">Evidencia de auditoría</span>
           <h2>Hallazgos priorizados</h2>
         </div>
         <div class="log-heading-meta">
-          <span id="finding-endpoint" class="technical-hint">GET /api/findings</span>
           <span id="finding-count" class="counter-chip">—</span>
         </div>
       </div>
@@ -100,7 +99,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         <table class="data-table finding-table log-table">
           <thead>
             <tr>
-              <th>FINDING</th>
+              <th>HALLAZGO</th>
               <th>REGLA</th>
               <th>DISPOSITIVO</th>
               <th>SEVERIDAD</th>
@@ -112,24 +111,25 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         </table>
         <div id="finding-empty" class="empty-state compact-empty is-hidden">
           <div>
-            <code>findings.count = 0</code>
+            <code>0 hallazgos</code>
             <p id="finding-empty-text">No hay hallazgos para los filtros actuales.</p>
           </div>
         </div>
       </div>
+      <nav id="finding-pager" class="pager is-hidden" aria-label="Páginas de hallazgos"></nav>
     </article>
 
     <aside class="panel finding-inspector" aria-live="polite">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Finding inspector</span>
+          <span class="eyebrow">Hallazgo seleccionado</span>
           <h2>Detalle y seguimiento</h2>
         </div>
         <span class="inspector-led"></span>
       </div>
 
       <div id="finding-inspector-empty" class="inspector-empty">
-        <code>select finding;</code>
+        <code>sin selección</code>
         <p>Seleccioná un hallazgo para revisar la evidencia y actualizar su seguimiento.</p>
       </div>
 
@@ -159,6 +159,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       localToIso,
       severityClass,
     } from '../lib/format';
+    import { crearPaginador } from '../lib/paginador';
 
     let findings: AuditFinding[] = [];
     let devices: NetworkDevice[] = [];
@@ -176,6 +177,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     const canTrack = hasRole('ADMINISTRADOR_SISTEMA') || hasRole('ANALISTA_RED') || hasRole('AUDITOR_TECNICO');
 
     const form = document.querySelector<HTMLFormElement>('#finding-filters');
+    // Se pagina en el navegador porque las métricas y la búsqueda rápida usan todos los hallazgos filtrados.
+    const paginador = crearPaginador(document.querySelector<HTMLElement>('#finding-pager'), { alCambiar: () => render() });
     const search = document.querySelector<HTMLInputElement>('#finding-search');
 
     const deviceById = (id: number) => devices.find((item) => item.id === id);
@@ -224,20 +227,25 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       set('#metric-closed', findings.filter((f) => f.estado === 'RESUELTO' || f.estado === 'ACEPTADO').length);
     };
 
-    const render = () => {
-      const body = document.querySelector<HTMLTableSectionElement>('#finding-table-body');
-      if (!body) return;
-      const term = search?.value.trim().toLowerCase() ?? '';
-
-      const visible = findings.filter((finding) => {
+    const searchTerm = () => search?.value.trim().toLowerCase() ?? '';
+    const visibleFindings = () => {
+      const term = searchTerm();
+      return findings.filter((finding) => {
         if (!term) return true;
         const device = deviceById(finding.dispositivoId);
         const baseline = baselineById(finding.baselineId);
         return [finding.codigoRegla, finding.nombreRegla, finding.evidencia, device?.identificador, device?.nombre, baseline?.nombre]
           .join(' ').toLowerCase().includes(term);
       });
+    };
 
-      body.innerHTML = visible.map((finding) => {
+    const render = () => {
+      const body = document.querySelector<HTMLTableSectionElement>('#finding-table-body');
+      if (!body) return;
+      const term = searchTerm();
+      const visible = visibleFindings();
+
+      body.innerHTML = paginador.recortar(visible).map((finding) => {
         const device = deviceById(finding.dispositivoId);
         const classes = ['finding-row'];
         if (finding.id === selectedId) classes.push('is-selected');
@@ -345,24 +353,24 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         </div>
 
         <dl class="technical-definition-list">
-          <div><dt>rule.code</dt><dd>${escapeHtml(finding.codigoRegla)}</dd></div>
-          <div><dt>condition</dt><dd>${escapeHtml(finding.tipoRegla)}</dd></div>
-          <div><dt>device</dt><dd>${escapeHtml(device?.identificador ?? `#${finding.dispositivoId}`)} · criticidad ${escapeHtml(finding.criticidadDispositivo ?? '—')}</dd></div>
+          <div><dt>regla</dt><dd>${escapeHtml(finding.codigoRegla)}</dd></div>
+          <div><dt>condición</dt><dd>${escapeHtml(finding.tipoRegla)}</dd></div>
+          <div><dt>dispositivo</dt><dd>${escapeHtml(device?.identificador ?? `#${finding.dispositivoId}`)} · criticidad ${escapeHtml(finding.criticidadDispositivo ?? '—')}</dd></div>
           <div><dt>baseline</dt><dd>${escapeHtml(baseline ? `${baseline.nombre} v${baseline.version}` : `#${finding.baselineId}`)}</dd></div>
-          <div><dt>audit.id</dt><dd><a class="inline-link" href="/history?auditoria=${finding.auditoriaId}">${code('AUD', finding.auditoriaId)} →</a></dd></div>
-          <div><dt>detected.at</dt><dd>${escapeHtml(formatDate(finding.fechaDeteccion))}</dd></div>
-          <div><dt>status.changed</dt><dd>${finding.fechaEstado
+          <div><dt>auditoría</dt><dd><a class="inline-link" href="/history?auditoria=${finding.auditoriaId}">${code('AUD', finding.auditoriaId)} →</a></dd></div>
+          <div><dt>detectado</dt><dd>${escapeHtml(formatDate(finding.fechaDeteccion))}</dd></div>
+          <div><dt>último cambio</dt><dd>${finding.fechaEstado
             ? `${escapeHtml(formatDate(finding.fechaEstado))} · ${escapeHtml(finding.usuarioEstado)}`
             : 'sin cambios'}</dd></div>
         </dl>
 
         <div class="rule-expression-block">
-          <span>pattern</span>
+          <span>patrón buscado</span>
           <code>${escapeHtml(finding.patron)}</code>
         </div>
 
         <div class="finding-evidence-block">
-          <span>evidence</span>
+          <span>evidencia</span>
           <p>${escapeHtml(finding.evidencia)}</p>
         </div>
 
@@ -446,8 +454,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const data = await response.json() as AuditFinding[];
       if (seq !== loadSeq) return;
       findings = data;
-      const endpoint = document.querySelector('#finding-endpoint');
-      if (endpoint) endpoint.textContent = `GET /api/findings${query}`;
+      paginador.reiniciar();
       renderMetrics();
       render();
     };
@@ -491,13 +498,20 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       window.history.replaceState(null, '', window.location.pathname);
       void loadFindings();
     });
-    search?.addEventListener('input', render);
+    search?.addEventListener('input', () => {
+      paginador.reiniciar();
+      render();
+    });
 
     loadReferences()
       .then(loadFindings)
       .then(() => {
         if (auditFilter) showSuccess(`Mostrando los hallazgos de ${code('AUD', auditFilter)}.`);
-        if (initialFinding) void selectFinding(initialFinding);
+        if (initialFinding) {
+          // Si el hallazgo pedido está en otra página, se muestra esa página.
+          paginador.irAPosicion(visibleFindings().findIndex((finding) => finding.id === initialFinding));
+          void selectFinding(initialFinding);
+        }
       })
       .catch((error) => showError(error instanceof Error ? error.message : 'No se pudieron cargar los hallazgos.'));
   </script>

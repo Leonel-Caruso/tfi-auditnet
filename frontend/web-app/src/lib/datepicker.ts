@@ -1,9 +1,6 @@
-// Calendario propio para los campos de fecha (Bloque 6). Reemplaza al selector nativo del navegador, que no
-// respeta el estilo de la consola, sin cambiar lo que leen las pantallas: el <input> original sigue en el
-// formulario (oculto) con el mismo nombre y el mismo formato de valor:
-//   type="date"            → AAAA-MM-DD
-//   type="datetime-local"  → AAAA-MM-DDTHH:mm
-// Atributo opcional data-time="end" en un campo "hasta": al elegir un día sin hora se usa 23:59 (si no, 00:00).
+// Calendario propio para los campos de fecha. El <input> original queda oculto en el formulario con el mismo
+// nombre y formato (date: AAAA-MM-DD, datetime-local: AAAA-MM-DDTHH:mm).
+// Con data-time="end" (campo "hasta"), un día sin hora toma 23:59 en lugar de 00:00.
 
 const MONTHS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 const WEEKDAYS = ['lu', 'ma', 'mi', 'ju', 'vi', 'sá', 'do'];

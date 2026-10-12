@@ -23,10 +23,8 @@ import java.util.NoSuchElementException;
 import java.util.function.Supplier;
 
 /**
- * Alertas críticas internas (RF-012, CU-006-002). Todos los perfiles las consultan; las derivan o devuelven el
- * administrador, el responsable de gestión IT y el analista de redes. Los usuarios que no son administradores
- * solo ven su organización.
- *
+ * Alertas críticas internas. Todos los perfiles las consultan; las derivan o devuelven el administrador, el
+ * responsable de gestión IT y el analista de redes. Quien no es administrador solo ve su organización.
  * Ejemplo: GET /api/alerts/critical?estado=VIGENTES&severidad=CRITICA&sedeId=3
  */
 @Path("/api/alerts")

@@ -5,7 +5,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 <MasterLayout
   title="Tablero de control"
   section="Consola"
-  description="Estado general de auditorías, dispositivos, hallazgos y alertas críticas (CU-006-003). Cada indicador lleva al detalle."
+  description="Resumen de auditorías, dispositivos, hallazgos y alertas. Cada indicador abre el detalle."
 >
   <div id="dash-error" class="alert alert-error is-hidden" role="alert"></div>
 
@@ -26,14 +26,14 @@ import MasterLayout from '../layouts/MasterLayout.astro';
   <div id="dash-risk"></div>
 
   <section id="dash-kpis" class="metric-grid dashboard-kpis" aria-live="polite">
-    <article class="metric-card"><span class="metric-label">cargando</span><strong>—</strong><small>GET /api/dashboard/summary</small></article>
+    <article class="metric-card"><span class="metric-label">cargando</span><strong>—</strong><small>consultando…</small></article>
   </section>
 
   <section class="two-column dashboard-row">
     <article class="panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Findings</span>
+          <span class="eyebrow">Hallazgos</span>
           <h2>Hallazgos pendientes por severidad</h2>
         </div>
       </div>
@@ -91,24 +91,24 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         <tbody id="dash-risk-devices"></tbody>
       </table>
       <div id="dash-risk-empty" class="empty-state compact-empty is-hidden">
-        <div><code>risk.devices = 0</code><p>No hay dispositivos con riesgo alto o medio.</p></div>
+        <div><code>sin riesgo</code><p>No hay dispositivos con riesgo alto o medio.</p></div>
       </div>
     </div>
   </section>
 
   <section class="metric-grid" data-admin-section hidden>
     <article class="metric-card">
-      <span class="metric-label">organizations.count</span>
+      <span class="metric-label">organizaciones</span>
       <strong id="metric-organizations">—</strong>
       <small>Clientes registrados</small>
     </article>
     <article class="metric-card">
-      <span class="metric-label">sites.count</span>
+      <span class="metric-label">sedes</span>
       <strong id="metric-sites">—</strong>
       <small>Sedes operativas registradas</small>
     </article>
     <article class="metric-card">
-      <span class="metric-label">users.count</span>
+      <span class="metric-label">usuarios</span>
       <strong id="metric-users">—</strong>
       <small>Accesos administrados por rol</small>
     </article>
@@ -191,7 +191,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       set('#dash-risk-devices', deviceRiskRowsHtml(summary.dispositivosEnRiesgo, sites));
       document.querySelector('#dash-risk-empty')?.classList.toggle('is-hidden', summary.dispositivosEnRiesgo.length > 0);
 
-      // Si una sección falla, el resto del tablero se muestra igual (CU-006-003, flujo alternativo 4).
+      // Si una sección falla, el resto del tablero se muestra igual.
       if (alertResponse.ok) {
         const alerts = (await alertResponse.json() as CriticalAlert[])
           .filter((alert) => !org || alert.organizacionId === org);

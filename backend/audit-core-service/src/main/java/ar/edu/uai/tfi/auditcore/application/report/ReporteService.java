@@ -43,11 +43,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Reportes de auditoría (RF-011, CU-006-001).
- *
- * El reporte se arma con las auditorías que cumplen los criterios y sus hallazgos (filtrados por severidad y
- * estado), y se guarda como una foto fija: contenido, criterios, fecha y usuario. Generarlo no modifica ningún
- * dato de origen (regla 5) y queda registrado en la bitácora (regla 7).
+ * Reportes de auditoría. Se guardan como foto fija (contenido, criterios, fecha y usuario) y generarlos no
+ * modifica ningún dato de origen.
  */
 @ApplicationScoped
 public class ReporteService {
@@ -90,10 +87,8 @@ public class ReporteService {
     }
 
     /**
-     * Genera y guarda el reporte (POST /api/reports/audits).
-     *
      * @param criterios la organización ya viene resuelta según el usuario (null = todas, solo administrador)
-     * @return vacío si los criterios no devuelven auditorías (flujo alternativo 3: no se guarda nada)
+     * @return vacío si los criterios no devuelven auditorías; en ese caso no se guarda nada
      */
     @Transactional
     public Optional<ReporteAuditoria> generar(CriteriosReporte criterios, String actor, Instant ahora) {
@@ -128,7 +123,6 @@ public class ReporteService {
                 usuario,
                 recortar(reporte.titulo() + ": " + reporte.totalAuditorias() + " auditorías, "
                         + reporte.totalHallazgos() + " hallazgos", 1000)));
-        // Bloque 7: el CSV del reporte se guarda en el repositorio de archivos tal como se generó.
         repositorioArchivos.guardarReporte(reporte, usuario);
         return Optional.of(reporte);
     }
@@ -212,7 +206,7 @@ public class ReporteService {
             ConfiguracionDispositivo configuracion = configuracionRepository
                     .buscarPorId(auditoria.configuracionId()).orElse(null);
             String codigo = String.format("AUD-%03d", auditoria.id());
-            // Flujo alternativo 4: se informa la inconsistencia y se muestra la evidencia disponible.
+            // Si falta algún dato de origen se informa la inconsistencia y se incluye lo disponible.
             if (dispositivo == null) {
                 inconsistencias.add(codigo + ": no se encontró el dispositivo " + auditoria.dispositivoId() + ".");
             }

@@ -4,9 +4,8 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Matriz de permisos por perfil (D-29), tal como están aplicados con {@code @RolesAllowed} en los dos servicios.
- * Se muestra en el panel de usuarios para que el administrador sepa qué habilita cada perfil. Si cambia un
- * permiso en el código, hay que actualizar esta tabla (y revisar la prueba {@code RolServiceTest}).
+ * Permisos por perfil tal como están aplicados con {@code @RolesAllowed} en los dos servicios; se muestra en el
+ * panel de usuarios. Si cambia un permiso en el código, hay que actualizar esta tabla y {@code RolServiceTest}.
  */
 public final class MatrizPermisos {
 

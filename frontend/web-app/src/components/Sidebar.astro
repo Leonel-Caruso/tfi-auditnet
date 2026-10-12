@@ -51,9 +51,8 @@ const railItems = [
 </aside>
 
 <script>
-  // En pantallas bajas el menú se desplaza sin barra: se marca si quedan ítems ocultos arriba o abajo (degradado)
-  // y el ítem de la pantalla actual queda a la vista. La consola se muestra recién al validar la sesión, por eso se
-  // calcula cuando el menú toma tamaño (ResizeObserver) y no al cargar.
+  // Marca si quedan ítems ocultos arriba o abajo y centra el ítem actual. Se calcula con ResizeObserver porque
+  // la consola recién se muestra al validar la sesión.
   const nav = document.querySelector<HTMLElement>('.rail-nav');
   if (nav) {
     let centered = false;
@@ -72,7 +71,7 @@ const railItems = [
     };
     nav.addEventListener('scroll', sync, { passive: true });
     new ResizeObserver(sync).observe(nav);
-    // Los ítems solo de administrador se ocultan al validar la sesión: cambia el alto del contenido.
+    // Al validar la sesión se ocultan los ítems de administrador y cambia el alto.
     new MutationObserver(sync).observe(nav, { attributes: true, subtree: true, attributeFilter: ['hidden'] });
   }
 </script>

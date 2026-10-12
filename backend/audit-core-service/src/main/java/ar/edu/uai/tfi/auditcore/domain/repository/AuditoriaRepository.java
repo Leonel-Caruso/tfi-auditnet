@@ -19,7 +19,7 @@ public interface AuditoriaRepository {
 
     Optional<AuditoriaConfiguracion> buscarPorIdYOrganizacion(Long id, Long organizacionId);
 
-    /** Historial filtrado, de la más reciente a la más vieja (CU-005-002). */
+    /** Historial filtrado, de la más reciente a la más vieja. */
     List<AuditoriaConfiguracion> buscarHistorial(FiltroAuditorias filtro);
 
     /** Cantidad de auditorías que usaron la baseline como referencia. */

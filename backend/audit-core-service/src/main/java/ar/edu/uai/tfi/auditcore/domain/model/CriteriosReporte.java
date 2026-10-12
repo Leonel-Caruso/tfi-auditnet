@@ -4,7 +4,7 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Criterios con los que se generó un reporte (CU-006-001, paso 3). Se guardan junto al reporte.
+ * Criterios con los que se generó un reporte. Se guardan junto al reporte.
  *
  * @param organizacionId null solo si el administrador lo generó para todas las organizaciones
  * @param dispositivoIds vacío = todos los dispositivos

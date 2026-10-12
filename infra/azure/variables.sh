@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 # shellcheck disable=SC2034  # variables usadas por los scripts que hacen source de este archivo
-# =====================================================================
-# AuditNet · Variables comunes de la infraestructura en Azure
-# No contiene secretos: las contraseñas se piden al ejecutar los scripts.
-# =====================================================================
+# Variables comunes de los scripts de Azure. Sin secretos: las contraseñas se
+# piden al ejecutar.
 
 # Grupo de recursos y región (Azure for Students solo permite algunas regiones;
 # brazilsouth es la permitida más cercana a Argentina).
@@ -19,12 +17,11 @@ PG_VERSION="17"
 # Cosmos DB para MongoDB (bitácora de excepciones). Nombre único en todo Azure.
 COSMOS_CUENTA="cosmos-auditnet-lcaruso"
 MONGO_BASE="auditnet"
-# Versión de la API de MongoDB. El driver de Quarkus (MongoDB Java 5.x) exige 4.2 o superior.
-# Azure creó la cuenta en 3.6 aunque se pidió 6.0, y desde 3.6 solo se puede subir a 4.0 o 4.2:
-# por eso se fija 4.2 y 04-crear-cosmos.sh verifica la versión real al terminar.
+# El driver MongoDB Java 5.x exige API 4.2 o superior. Azure puede crear la cuenta en 3.6,
+# que solo sube hasta 4.2: por eso 04-crear-cosmos.sh verifica la versión real.
 MONGO_VERSION="4.2"
 
-# Bloque 7: repositorio de archivos (Blob Storage). Nombre único en todo Azure: 3 a 24 minúsculas y números.
+# Blob Storage. Nombre único en todo Azure: 3 a 24 minúsculas y números.
 ST_CUENTA="stauditnetlcaruso"
 ST_CONTENEDOR="auditnet-archivos"
 
@@ -37,18 +34,19 @@ APP_WEB="ca-auditnet-web"
 # Imágenes publicadas por GitHub Actions (.github/workflows/imagenes.yml)
 REGISTRO="ghcr.io/leonel-caruso"
 
+# Despliegue desde GitHub Actions con OIDC (ver 06-configurar-github-oidc.sh).
+IDENTIDAD_GITHUB="id-auditnet-github"
+REPO_GITHUB="Leonel-Caruso/tfi-auditnet"
+ENTORNO_GITHUB="azure"
+
 # Datos del administrador inicial (la contraseña se pide al ejecutar)
 BOOTSTRAP_ADMIN_EMAIL="admin@auditnet.local"
 BOOTSTRAP_ADMIN_USERNAME="admin"
 BOOTSTRAP_ORG_IDENTIFIER="TFI-DEMO"
 BOOTSTRAP_ORG_NAME="Organizacion Demo TFI"
 
-# ---------------------------------------------------------------------
-# Pide una contraseña dos veces y valida que no tenga símbolos, para
-# evitar problemas al pasarla a Azure CLI: 16 a 64 caracteres, con
-# mayúsculas, minúsculas y números.
+# Pide la contraseña dos veces. Sin símbolos para no tener problemas de escape en Azure CLI.
 # Uso: pedir_clave "Mensaje" NOMBRE_VARIABLE
-# ---------------------------------------------------------------------
 pedir_clave() {
   local mensaje="$1" destino="$2" clave repetida
   while true; do
@@ -62,5 +60,19 @@ pedir_clave() {
     fi
     printf -v "$destino" '%s' "$clave"
     return 0
+  done
+}
+
+# Una suscripción nueva trae pocos proveedores registrados y Azure falla con
+# "MissingSubscriptionRegistration" al crear el primer recurso de cada tipo.
+# Uso: registrar_proveedores Microsoft.Storage Microsoft.App ...
+registrar_proveedores() {
+  local proveedor estado
+  for proveedor in "$@"; do
+    estado=$(az provider show -n "$proveedor" --query registrationState -o tsv 2>/dev/null || echo "NotRegistered")
+    if [[ "$estado" != "Registered" ]]; then
+      echo "      Registrando el proveedor $proveedor (puede tardar unos minutos)..."
+      az provider register --namespace "$proveedor" --wait -o none
+    fi
   done
 }

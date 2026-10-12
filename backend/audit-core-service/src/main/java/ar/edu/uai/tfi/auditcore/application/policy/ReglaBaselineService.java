@@ -21,14 +21,8 @@ import java.util.NoSuchElementException;
 import java.util.regex.Pattern;
 
 /**
- * Gestión de reglas de auditoría (RF-006, CU-003-002).
- *
- * Reglas de negocio:
- * - La condición debe poder interpretarla el motor: texto de una sola línea y, para VALOR_ESPERADO,
- *   parámetro y valor esperado.
- * - No puede haber dos reglas activas con la misma condición en una baseline.
- * - Las reglas de una baseline ya usada en auditorías no se crean ni se modifican (se conserva la
- *   evidencia): el cambio se hace en una versión nueva de la baseline. La baja lógica sí se permite.
+ * Gestión de reglas de auditoría. Las reglas de una baseline ya auditada no se crean ni se modifican, para
+ * conservar la evidencia: el cambio va en una versión nueva de la baseline. La baja lógica sí se permite.
  */
 @ApplicationScoped
 public class ReglaBaselineService {
@@ -112,9 +106,8 @@ public class ReglaBaselineService {
     }
 
     /**
-     * Baja lógica (INACTIVA) o reactivación (ACTIVA). La baja lógica se permite aunque la baseline tenga
-     * auditorías (CU-003-002, flujo alternativo 6): la regla no se sobrescribe y las auditorías anteriores
-     * conservan su copia. La reactivación agrega un criterio, por eso exige una baseline editable.
+     * La baja lógica se permite aunque la baseline tenga auditorías, porque cada auditoría conserva su copia de
+     * la regla. La reactivación agrega un criterio, por eso exige una baseline editable.
      */
     @Transactional
     public ReglaBaseline cambiarEstado(Long id, String estado, String actor) {
@@ -128,7 +121,6 @@ public class ReglaBaselineService {
             throw new IllegalStateException("La regla " + anterior.codigo() + " ya está " + nuevoEstado + ".");
         }
         if (nuevoEstado == EstadoRegla.ACTIVA) {
-            // Reactivar agrega un criterio: solo en baselines activas y todavía no auditadas.
             baselineEditable(anterior.baselineId());
         }
 

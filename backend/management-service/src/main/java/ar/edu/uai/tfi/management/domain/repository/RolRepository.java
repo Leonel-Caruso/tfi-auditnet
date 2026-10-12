@@ -12,6 +12,6 @@ public interface RolRepository {
 
     Optional<Rol> buscarPorId(Long id);
 
-    /** Actualiza la descripción (los nombres y permisos de los perfiles son fijos, D-29). */
+    /** Actualiza la descripción (los nombres y permisos de los perfiles son fijos). */
     Rol actualizar(Rol rol);
 }

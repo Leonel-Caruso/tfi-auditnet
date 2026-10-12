@@ -16,9 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-/**
- * Bloque 2.3a · Consulta de la bitácora de sistema: validación de filtros y límite.
- */
+/** Consulta de la bitácora de sistema: validación de filtros y límite. */
 class BitacoraSistemaServiceTest {
 
     private FiltroBitacoraSistema filtroRecibido;

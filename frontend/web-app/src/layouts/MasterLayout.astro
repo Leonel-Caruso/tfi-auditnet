@@ -1,6 +1,7 @@
 ---
 import Sidebar from '../components/Sidebar.astro';
 import Topbar from '../components/Topbar.astro';
+import HeadMeta from '../components/HeadMeta.astro';
 import '../styles/global.css';
 
 interface Props {
@@ -20,18 +21,12 @@ const {
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
-    <meta name="description" content={description} />
-    <title>{title} · AuditNet</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <meta name="theme-color" content="#171a1f" />
+    <HeadMeta title={`${title} · AuditNet`} description={description} />
   </head>
   <body class="app-body">
     <div id="session-loading" class="session-loading">
       <div class="spinner"></div>
-      <span>validando_sesion...</span>
+      <span>Validando sesión…</span>
     </div>
 
     <div id="protected-shell" class="app-shell is-hidden">
@@ -53,9 +48,10 @@ const {
 
     <script>
       import { getStoredUser, logout, verifySession } from '../lib/auth';
+      import { ROLE_LABEL } from '../lib/api';
       import { enhanceDateInputs } from '../lib/datepicker';
 
-      // Calendario con el estilo de la consola en todos los campos de fecha (reportes, bitácoras, historial, hallazgos).
+      // Calendario propio en todos los campos de fecha.
       enhanceDateInputs(document);
 
       async function initializeShell() {
@@ -87,11 +83,11 @@ const {
           const connectionNode = document.querySelector('#topbar-connection');
 
           if (nameNode) nameNode.textContent = displayName;
-          if (roleNode) roleNode.textContent = roles[0]?.toLowerCase() ?? 'sin_rol';
+          if (roleNode) roleNode.textContent = roles[0] ? ROLE_LABEL[roles[0]] ?? roles[0] : 'sin perfil';
           if (avatarNode) avatarNode.textContent = `${displayName.slice(0, 1).toUpperCase()}_`;
           if (handleNode) handleNode.textContent = stored?.username ?? current.username;
           if (connectionNode) {
-            connectionNode.textContent = 'api';
+            connectionNode.textContent = 'en línea';
             connectionNode.classList.add('is-online');
           }
 

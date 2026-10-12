@@ -26,16 +26,14 @@ import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 /**
- * Consulta, priorización y seguimiento de hallazgos (RF-009, CU-005-001).
- *
- * Priorización: primero los pendientes (ABIERTO, EN_REVISION), después por severidad, por criticidad del
- * dispositivo (CU-002-001, regla 3) y por fecha de detección, de la más reciente a la más vieja.
+ * Consulta, priorización y seguimiento de hallazgos. Orden: primero los pendientes, después por severidad,
+ * criticidad del dispositivo y fecha de detección (más reciente primero).
  */
 @ApplicationScoped
 public class HallazgoService {
 
     static final String ENTIDAD = "HALLAZGO";
-    /** Usuario con que se registran los cambios automáticos (re-auditoría que cumple la regla, D-26). */
+    /** Usuario con que se registran los cambios automáticos (re-auditoría que cumple la regla). */
     public static final String USUARIO_SISTEMA = "SISTEMA";
 
     private final HallazgoRepository repository;
@@ -78,9 +76,8 @@ public class HallazgoService {
     }
 
     /**
-     * Cambia el estado de seguimiento (PATCH /api/findings/{id}/status). Registra quién y cuándo en el
-     * hallazgo, el cambio con su comentario en el historial y la transacción en la bitácora. La evidencia,
-     * la severidad y la regla del hallazgo no se modifican.
+     * Cambia el estado de seguimiento y lo deja en el historial y la bitácora. La evidencia, la severidad y la
+     * regla del hallazgo no se modifican.
      *
      * @param organizacionId null para el administrador; si no, el hallazgo debe ser de esa organización
      */
@@ -117,19 +114,18 @@ public class HallazgoService {
                 actualizado.organizacionId(), anterior, actualizado, usuario,
                 recortar(anterior.estado() + " -> " + nuevoEstado
                         + (comentarioLimpio == null ? "" : ": " + comentarioLimpio), 1000)));
-        // Si el hallazgo tiene alerta crítica, se cierra o se reactiva con él (CU-006-002).
+        // Si el hallazgo tiene alerta crítica, se cierra o se reactiva con él.
         alertaService.sincronizarConHallazgo(actualizado, usuario, comentarioLimpio);
 
         return new HallazgoPriorizado(actualizado, criticidadDe(actualizado.dispositivoId()));
     }
 
     /**
-     * Resuelve automáticamente un hallazgo pendiente porque una auditoría posterior del mismo dispositivo cumple
-     * la regla (CU-005-001: "RESUELTO se confirma con una nueva auditoría"; decisión D-26). Queda en el historial
-     * de seguimiento y en la bitácora con el usuario SISTEMA, y su alerta se cierra.
+     * Resuelve un hallazgo pendiente cuando una auditoría posterior del mismo dispositivo cumple la regla. Se
+     * registra con el usuario SISTEMA y su alerta se cierra.
      *
-     * No es @Transactional a propósito: corre dentro de la transacción de la auditoría y, si otro usuario cambió
-     * el hallazgo en ese momento, simplemente no lo toca (devuelve false) sin anular la auditoría.
+     * Sin @Transactional a propósito: corre dentro de la transacción de la auditoría y, si otro usuario cambió
+     * el hallazgo en ese momento, no lo toca (devuelve false) en lugar de anular la auditoría.
      *
      * @return true si lo resolvió
      */

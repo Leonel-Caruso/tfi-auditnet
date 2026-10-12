@@ -1,12 +1,6 @@
-# =====================================================================
-# AuditNet · Integración continua y publicación de imágenes Docker
-# ---------------------------------------------------------------------
-# En cada push a entrega-2 (o a mano desde la pestaña Actions):
-#   1. Ejecuta los tests de ambos servicios y el chequeo/build del frontend.
-#   2. Solo si todo pasa, construye las 3 imágenes Docker y las publica en
-#      GitHub Container Registry (ghcr.io).
-# Azure Container Apps despliega esas imágenes (ver infra/azure).
-# =====================================================================
+# Tests de backend y frontend; si pasan, publica las 3 imágenes en ghcr.io y las
+# despliega en Azure Container Apps tras aprobar el entorno "azure" (login por OIDC,
+# ver infra/azure/06-configurar-github-oidc.sh).
 name: CI e imagenes
 
 on:
@@ -63,7 +57,7 @@ jobs:
     needs: [tests-backend, frontend]
     runs-on: ubuntu-latest
     strategy:
-      # Si una imagen falla (por ejemplo, una descarga momentánea), las otras terminan igual.
+      # Si una imagen falla, las otras terminan igual.
       fail-fast: false
       matrix:
         include:
@@ -93,3 +87,62 @@ jobs:
           labels: |
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.sha }}
+
+  desplegar:
+    name: Desplegar en Azure (con aprobación)
+    needs: [imagenes]
+    # Sin las variables de Azure el job se omite y el CI sigue en verde.
+    if: ${{ vars.AZURE_CLIENT_ID != '' }}
+    runs-on: ubuntu-latest
+    # El entorno "azure" tiene revisores obligatorios.
+    environment:
+      name: azure
+      url: ${{ steps.humo.outputs.url }}
+    # Nunca dos despliegues a la vez; uno nuevo espera a que termine el anterior.
+    concurrency:
+      group: despliegue-azure
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Iniciar sesión en Azure (OIDC, sin contraseñas)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Actualizar las 3 Container Apps a sha-${{ github.sha }}
+        run: bash infra/azure/03-actualizar-imagenes.sh "sha-${{ github.sha }}"
+      - name: Prueba de humo
+        id: humo
+        run: |
+          source infra/azure/variables.sh
+          # Cada app tiene la imagen de este commit y su revisión nueva quedó aprovisionada.
+          for app in "$APP_MANAGEMENT" "$APP_CORE" "$APP_WEB"; do
+            imagen=$(az containerapp show -n "$app" -g "$RG" --query "properties.template.containers[0].image" -o tsv)
+            [[ "$imagen" == *":sha-$GITHUB_SHA" ]] || { echo "::error::$app quedó con $imagen"; exit 1; }
+            revision=$(az containerapp show -n "$app" -g "$RG" --query properties.latestRevisionName -o tsv)
+            for intento in $(seq 1 30); do
+              estado=$(az containerapp revision show -n "$app" -g "$RG" --revision "$revision" --query properties.provisioningState -o tsv)
+              [ "$estado" = "Provisioned" ] && break
+              sleep 10
+            done
+            echo "$app -> $revision ($estado)"
+            [ "$estado" = "Provisioned" ] || { echo "::error::$app: la revisión $revision quedó en $estado"; exit 1; }
+          done
+          URL="https://$(az containerapp show -n "$APP_WEB" -g "$RG" --query properties.configuration.ingress.fqdn -o tsv)"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          # Las apps arrancan desde cero réplicas: hasta ~10 minutos por ruta.
+          for ruta in /login /api/management/status /api/audit-core/status; do
+            for intento in $(seq 1 20); do
+              codigo=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 "$URL$ruta" || true)
+              [ "$codigo" = "200" ] && break
+              sleep 10
+            done
+            echo "$ruta -> HTTP $codigo"
+            [ "$codigo" = "200" ] || { echo "::error::$ruta no respondió 200"; exit 1; }
+          done
+          curl -sI "$URL/login" | grep -qi "^strict-transport-security" || { echo "::error::Falta el encabezado HSTS"; exit 1; }
+          echo "Despliegue verificado: $URL" >> "$GITHUB_STEP_SUMMARY"

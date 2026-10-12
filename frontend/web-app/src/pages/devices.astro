@@ -5,13 +5,13 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 <MasterLayout
   title="Dispositivos"
   section="Operación técnica"
-  description="Inventario de activos de red incorporados al universo auditable de la plataforma."
+  description="Inventario de dispositivos de red que se pueden auditar. Registrá equipos, editalos o dalos de baja."
 >
   <section id="device-message" class="alert is-hidden" role="status"></section>
 
   <section class="device-toolbar panel compact-panel">
     <div class="device-toolbar-copy">
-      <span class="eyebrow">// inventario</span>
+      <span class="eyebrow">Inventario</span>
       <div>
         <strong id="device-count">0 activos</strong>
         <span>routers y switches registrados</span>
@@ -52,10 +52,9 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <article class="panel device-inventory-panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">// activos de red</span>
+          <span class="eyebrow">Activos de red</span>
           <h2>Inventario técnico</h2>
         </div>
-        <span class="technical-hint">GET /api/devices</span>
       </div>
 
       <div class="table-wrap">
@@ -78,7 +77,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
       <div id="devices-empty" class="empty-state compact-empty is-hidden">
         <div>
-          <code>inventory.count = 0</code>
+          <code>0 dispositivos</code>
           <p>Todavía no hay dispositivos registrados con los filtros actuales.</p>
         </div>
       </div>
@@ -87,14 +86,14 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <aside class="panel device-inspector" aria-label="Detalle del dispositivo">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">// inspector</span>
+          <span class="eyebrow">Dispositivo seleccionado</span>
           <h2>Detalle del activo</h2>
         </div>
         <span class="inspector-led"></span>
       </div>
 
       <div id="device-inspector-empty" class="inspector-empty">
-        <code>select device;</code>
+        <code>sin selección</code>
         <p>Seleccioná un activo del inventario para consultar su detalle.</p>
       </div>
 
@@ -106,12 +105,12 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         </div>
 
         <dl class="technical-definition-list">
-          <div><dt>device.type</dt><dd id="inspector-type">—</dd></div>
-          <div><dt>vendor</dt><dd id="inspector-vendor">—</dd></div>
-          <div><dt>organization</dt><dd id="inspector-organization">—</dd></div>
-          <div><dt>site</dt><dd id="inspector-site">—</dd></div>
-          <div><dt>criticality</dt><dd id="inspector-criticality">—</dd></div>
-          <div><dt>resource.id</dt><dd id="inspector-id">—</dd></div>
+          <div><dt>tipo de dispositivo</dt><dd id="inspector-type">—</dd></div>
+          <div><dt>fabricante</dt><dd id="inspector-vendor">—</dd></div>
+          <div><dt>organización</dt><dd id="inspector-organization">—</dd></div>
+          <div><dt>sede</dt><dd id="inspector-site">—</dd></div>
+          <div><dt>criticidad</dt><dd id="inspector-criticality">—</dd></div>
+          <div><dt>identificador</dt><dd id="inspector-id">—</dd></div>
         </dl>
 
         <div class="inspector-footnote">
@@ -131,7 +130,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <form id="device-form" class="device-form">
       <div class="dialog-header">
         <div>
-          <span id="device-dialog-eyebrow" class="eyebrow">// POST /api/devices</span>
+          <span id="device-dialog-eyebrow" class="eyebrow">Nuevo dispositivo</span>
           <h2 id="device-dialog-title">Registrar dispositivo</h2>
           <p id="device-dialog-subtitle">Incorporá un activo de red al inventario auditable.</p>
         </div>
@@ -204,7 +203,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <form id="type-form" class="device-form">
       <div class="dialog-header">
         <div>
-          <span class="eyebrow">// POST /api/device-types</span>
+          <span class="eyebrow">Nuevo tipo de dispositivo</span>
           <h2>Registrar tipo de dispositivo</h2>
           <p>Catálogo común a todas las organizaciones. Las baselines se definen por tipo.</p>
         </div>
@@ -498,7 +497,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       // Se vuelve a consultar por si se registraron sedes nuevas en otra pantalla.
       const sites = await loadSites(organizationId, true);
       sites.forEach((site) => {
-        // Una sede deshabilitada no admite dispositivos nuevos (D-33); se muestra solo si el equipo ya estaba ahí.
+        // Una sede deshabilitada no admite dispositivos nuevos; se muestra solo si el equipo ya estaba ahí.
         if (site.estado !== 'ACTIVO' && site.id !== selected) return;
         const label = `${site.nombre} · ${site.ubicacion}${site.estado !== 'ACTIVO' ? ' (deshabilitada)' : ''}`;
         siteSelect.add(new Option(label, String(site.id)));
@@ -507,11 +506,11 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       if (selected) siteSelect.value = String(selected);
     }
 
-    // ---- Alta y edición de dispositivos ------------------------------------
+    // Alta y edición de dispositivos
     function setDialogMode(device: NetworkDevice | null): void {
       state.editing = device;
       const editing = device !== null;
-      setText('#device-dialog-eyebrow', editing ? `// PUT /api/devices/${device.id}` : '// POST /api/devices');
+      setText('#device-dialog-eyebrow', editing ? 'Editar dispositivo' : 'Nuevo dispositivo');
       setText('#device-dialog-title', editing ? `Editar ${device.identificador}` : 'Registrar dispositivo');
       setText('#device-dialog-subtitle', editing
         ? 'Los cambios quedan en la bitácora de transacciones con el valor anterior y el nuevo.'
@@ -632,7 +631,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       }
     });
 
-    // ---- Baja lógica / reactivación --------------------------------------
+    // Baja lógica / reactivación
     document.querySelector('#toggle-device-status')?.addEventListener('click', async () => {
       const device = state.current;
       if (!device) return;
@@ -654,7 +653,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       showDevice(updated);
     });
 
-    // ---- Tipos de dispositivo -------------------------------------------
+    // Tipos de dispositivo
     document.querySelectorAll<HTMLButtonElement>('[data-close-dialog]').forEach((button) => {
       button.addEventListener('click', () => button.closest('dialog')?.close());
     });

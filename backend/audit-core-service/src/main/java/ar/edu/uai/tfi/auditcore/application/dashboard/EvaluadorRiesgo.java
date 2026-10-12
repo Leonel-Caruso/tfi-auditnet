@@ -11,8 +11,8 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * Nivel general de riesgo (CU-007-003, decisión D-23). Se aplica igual a una organización, una sede o un
- * dispositivo, tomando sus hallazgos pendientes y sus alertas vigentes:
+ * Nivel general de riesgo. Se aplica igual a una organización, una sede o un dispositivo, tomando sus hallazgos
+ * pendientes y sus alertas vigentes:
  * <ol>
  *   <li>SIN_DATOS: nunca se auditó.</li>
  *   <li>ALTO: hay un hallazgo CRITICA pendiente, o una alerta vigente en un dispositivo de criticidad ALTA o

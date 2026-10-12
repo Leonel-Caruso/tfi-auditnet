@@ -19,7 +19,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-/** Bloque 6 · Resumen de seguridad del panel de administración. */
+/** Resumen de seguridad del panel de administración. */
 class SeguridadResumenServiceTest {
 
     private static final Instant AHORA = Instant.parse("2026-10-11T12:00:00Z");

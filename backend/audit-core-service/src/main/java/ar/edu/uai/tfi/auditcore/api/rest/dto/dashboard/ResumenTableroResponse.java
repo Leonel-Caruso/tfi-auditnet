@@ -12,7 +12,7 @@ import ar.edu.uai.tfi.auditcore.application.dashboard.TableroService.RiesgoDispo
 import java.time.Instant;
 import java.util.List;
 
-/** GET /api/dashboard/summary (CU-006-003). Los indicadores se calculan en el momento; nada se guarda. */
+/** GET /api/dashboard/summary. Los indicadores se calculan en el momento; nada se guarda. */
 public record ResumenTableroResponse(
         Instant generado,
         String nivelRiesgo,

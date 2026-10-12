@@ -1,25 +1,19 @@
-# =====================================================================
-# AuditNet · Frontend + API Gateway (nginx)
-# ---------------------------------------------------------------------
-# 1. Sirve el sitio estático generado por Astro.
-# 2. Actúa como API Gateway simple: el navegador llama siempre al mismo
-#    origen (/api/...) y nginx deriva cada ruta al servicio que corresponde.
-#    Así los backends no se exponen a Internet y no hace falta CORS.
-#
-# ${MANAGEMENT_UPSTREAM} y ${CORE_UPSTREAM} se completan al iniciar el
-# contenedor (envsubst de la imagen oficial de nginx). Ejemplo:
-#   MANAGEMENT_UPSTREAM=https://ca-auditnet-management.internal.<dominio>
-# =====================================================================
+# Sirve el sitio de Astro y enruta /api/... a cada servicio en el mismo origen
+# (backends sin exponer y sin CORS). La imagen de nginx completa con envsubst
+# ${MANAGEMENT_UPSTREAM} y ${CORE_UPSTREAM} al iniciar el contenedor.
 
-# Caché del navegador:
-# - /_astro/: archivos con hash en el nombre; cambian de nombre en cada build, se pueden guardar un año.
-# - Páginas HTML: siempre se revalidan. Si el navegador usara una página vieja, pediría archivos /_astro/
-#   que ya no existen después de un deploy y la pantalla se vería sin estilos ni scripts.
-# - /api/: no se agrega nada (valor vacío = sin encabezado).
+# /_astro/ lleva hash en el nombre y se cachea un año. El HTML se revalida siempre: una página vieja
+# pediría archivos /_astro/ que ya no existen tras un deploy. /api/ no se guarda en disco.
 map $uri $auditnet_cache_control {
     ~^/_astro/  "public, max-age=31536000, immutable";
-    ~^/api/     "";
+    ~^/(fonts|icons)/  "public, max-age=604800";
+    ~^/api/     "no-store";
     default     "no-cache";
+}
+
+# Signo "$" literal para robots.txt ("Allow: /$" = solo la raíz); nginx no permite escribirlo directo en return.
+geo $auditnet_dolar {
+    default "$";
 }
 
 server {
@@ -37,18 +31,30 @@ server {
     # Tamaño máximo de una configuración importada (.txt / .cfg)
     client_max_body_size 5m;
 
-    # Encabezados de seguridad básicos
+    # /api/ va con "gzip off" por riesgo tipo BREACH (token junto a datos del usuario).
+    # "gzip_proxied any" porque la entrada de Azure puede agregar el encabezado Via.
+    gzip on;
+    gzip_vary on;
+    gzip_comp_level 5;
+    gzip_min_length 512;
+    gzip_proxied any;
+    gzip_types text/css application/javascript text/javascript image/svg+xml application/manifest+json text/plain application/xml text/xml;
+
+    # Astro deja __ORIGEN_PUBLICO__ en canonical / Open Graph y nginx pone el dominio real.
+    sub_filter_once off;
+    sub_filter '__ORIGEN_PUBLICO__' 'https://$host';
+
+    # HSTS sin includeSubDomains: *.azurecontainerapps.io no es nuestro. Por HTTP local se ignora.
+    add_header Strict-Transport-Security "max-age=31536000" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-Frame-Options "DENY" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     add_header Cache-Control $auditnet_cache_control always;
 
-    # Identificador de correlación: nginx genera uno por solicitud ($request_id) y lo envía a los
-    # servicios en X-Request-ID; las bitácoras lo guardan para seguir una operación de punta a punta.
+    # X-Request-ID ($request_id) permite seguir una operación en las bitácoras de ambos servicios.
 
-    # ---- audit-core-service: estado general de auditoría de una organización (CU-007-003).
-    #      La ruta cuelga de /api/client-organizations, pero los datos son de audit-core; nginx usa la
-    #      primera location regex que coincide, por eso esta va antes que la de management-service.
+    # audit-core-service. Cuelga de /api/client-organizations: va antes que la regex de
+    # management-service porque nginx usa la primera que coincide.
     location ~ ^/api/client-organizations/[0-9]+/audit-status/?$ {
         proxy_pass ${CORE_UPSTREAM};
         proxy_ssl_server_name on;
@@ -56,9 +62,10 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Request-ID $request_id;
         proxy_read_timeout 90s;
+        gzip off;
     }
 
-    # ---- management-service: acceso, usuarios, roles, organizaciones, sedes y bitácoras (admin)
+    # management-service
     location ~ ^/api/(auth|users|roles|client-organizations|sites|management|admin)(/|$) {
         proxy_pass ${MANAGEMENT_UPSTREAM};
         proxy_ssl_server_name on;
@@ -66,10 +73,10 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Request-ID $request_id;
         proxy_read_timeout 90s;
+        gzip off;
     }
 
-    # ---- audit-core-service: el resto de la API (dispositivos, baselines, reglas, configuraciones,
-    #      auditorías, hallazgos, alertas y tablero)
+    # audit-core-service: el resto de la API
     location /api/ {
         proxy_pass ${CORE_UPSTREAM};
         proxy_ssl_server_name on;
@@ -77,9 +84,30 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Request-ID $request_id;
         proxy_read_timeout 90s;
+        gzip off;
     }
 
-    # ---- Sitio estático de Astro (/devices -> /devices/index.html, sin redirecciones)
+    # Solo se indexa la pantalla de acceso; sus estilos, scripts e íconos quedan permitidos para renderizarla.
+    location = /robots.txt {
+        default_type text/plain;
+        return 200 "User-agent: *\nAllow: /login\nAllow: /${auditnet_dolar}\nAllow: /_astro/\nAllow: /fonts/\nAllow: /icons/\nAllow: /favicon\nAllow: /manifest.webmanifest\nDisallow: /\n\nSitemap: https://$host/sitemap.xml\n";
+    }
+    location = /sitemap.xml {
+        default_type application/xml;
+        return 200 '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>https://$host/login</loc><changefreq>monthly</changefreq><priority>1.0</priority></url>\n</urlset>\n';
+    }
+
+    # Si ya hay sesión, el login redirige al tablero.
+    location = / {
+        return 302 /login;
+    }
+
+    location = /manifest.webmanifest {
+        types { }
+        default_type application/manifest+json;
+    }
+
+    # /devices -> /devices/index.html sin redirección
     location / {
         try_files $uri $uri/index.html $uri.html =404;
     }

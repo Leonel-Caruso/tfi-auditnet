@@ -18,15 +18,9 @@ import java.time.Instant;
 import java.util.Locale;
 
 /**
- * Registra errores en la bitácora de excepciones (MongoDB).
- *
- * Nivel configurable con la variable BITACORA_EXCEPCIONES_NIVEL:
- * <ul>
- *   <li>ERROR (por defecto): solo fallas inesperadas.</li>
- *   <li>WARN: además, errores de uso rechazados (4xx).</li>
- *   <li>OFF: no persiste nada (los errores siguen en el log del servicio).</li>
- * </ul>
- * La escritura es asíncrona: si MongoDB está lento o caído, la respuesta al usuario no se demora.
+ * Registra errores en la bitácora de excepciones (MongoDB). BITACORA_EXCEPCIONES_NIVEL: ERROR (por defecto, solo
+ * fallas inesperadas), WARN (además los 4xx) u OFF. La escritura es asíncrona para no demorar la respuesta si
+ * MongoDB está lento o caído.
  */
 @ApplicationScoped
 public class MongoBitacoraExcepcionesAdapter implements BitacoraExcepcionesPort {

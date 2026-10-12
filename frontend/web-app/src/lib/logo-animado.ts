@@ -1,5 +1,5 @@
-// Logo del login (Bloque 7): el "_" titila como un cursor y cada tanto se escribe "AuditNet_", queda un momento y se
-// borra hasta volver a "A_". Con "reducir movimiento" activado en el sistema, el logo queda fijo.
+// Logo del login: el "_" titila como un cursor y cada tanto se escribe "AuditNet_" y se borra hasta volver a "A_".
+// Con "reducir movimiento" activado en el sistema queda fijo.
 
 const PALABRA = 'uditNet';
 const ESPERA_INICIAL = 1800;

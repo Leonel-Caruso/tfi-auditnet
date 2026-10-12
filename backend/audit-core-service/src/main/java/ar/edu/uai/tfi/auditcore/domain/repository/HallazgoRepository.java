@@ -26,9 +26,8 @@ public interface HallazgoRepository {
     List<HallazgoAuditoria> buscar(FiltroHallazgos filtro);
 
     /**
-     * Cambia solo el estado de seguimiento; el resto del hallazgo no se modifica. Bloquea la fila y verifica
-     * que el estado siga siendo {@code estadoEsperado}: si otro usuario lo cambió mientras tanto, lanza
-     * IllegalStateException (409) en lugar de pisar ese cambio.
+     * Cambia solo el estado de seguimiento. Bloquea la fila y verifica que el estado siga siendo
+     * {@code estadoEsperado}: si otro usuario lo cambió, lanza IllegalStateException (409) en lugar de pisarlo.
      */
     HallazgoAuditoria actualizarEstado(Long id, EstadoHallazgo estadoEsperado, EstadoHallazgo estado,
                                        String usuario, Instant fecha);

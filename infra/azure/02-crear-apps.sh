@@ -1,15 +1,8 @@
 #!/usr/bin/env bash
-# =====================================================================
-# AuditNet · Paso 2 de infraestructura en Azure
-# Crea las 3 Container Apps a partir de las imágenes publicadas en GHCR:
-#   - management-service y audit-core-service con ingress INTERNO
-#     (no son accesibles desde Internet).
-#   - web (nginx + Astro) con ingress EXTERNO: sirve el sitio y enruta
-#     /api/... a los dos servicios (API Gateway simple).
-# Requiere haber ejecutado 01-crear-base.sh y que GitHub Actions haya
-# publicado las imágenes.
+# Crea las 3 Container Apps desde GHCR: los dos servicios con ingress interno y
+# web (nginx + Astro) con ingress externo, que enruta /api/... a ambos.
+# Requiere 01-crear-base.sh y las imágenes ya publicadas.
 # Uso: bash 02-crear-apps.sh [etiqueta]   (por defecto: entrega-2)
-# =====================================================================
 set -euo pipefail
 cd "$(dirname "$0")"
 source ./variables.sh

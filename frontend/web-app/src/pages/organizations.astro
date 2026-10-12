@@ -5,7 +5,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 <MasterLayout
   title="Organizaciones y sedes"
   section="Control de acceso"
-  description="Clientes registrados y sus sedes operativas. Se modifican y se deshabilitan sin borrar su historial (baja lógica)."
+  description="Registrá clientes y sus sedes. Al deshabilitarlos se conserva su historial."
 >
   <section id="organization-access-error" class="alert alert-error is-hidden"></section>
   <section id="organization-message" class="alert is-hidden" role="status"></section>
@@ -59,7 +59,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         <div>
           <span class="eyebrow" id="organization-dialog-eyebrow">Alta de organización</span>
           <h2 id="organization-dialog-title">Registrar organización</h2>
-          <p id="organization-dialog-help">Incorporá un cliente a la plataforma (RF-015).</p>
+          <p id="organization-dialog-help">Incorporá un cliente a la plataforma.</p>
         </div>
         <button class="dialog-close" type="button" data-close-dialog aria-label="Cerrar">×</button>
       </div>
@@ -93,7 +93,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         <div>
           <span class="eyebrow" id="site-dialog-eyebrow">Alta de sede</span>
           <h2 id="site-dialog-title">Registrar sede</h2>
-          <p id="site-dialog-context">Sede de la organización seleccionada (RF-016).</p>
+          <p id="site-dialog-context">Sede de la organización seleccionada.</p>
         </div>
         <button class="dialog-close" type="button" data-close-dialog aria-label="Cerrar">×</button>
       </div>
@@ -325,7 +325,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       toSelect?.click();
     }
 
-    // ---- Diálogos -------------------------------------------------------
+    // Diálogos
     document.querySelectorAll<HTMLButtonElement>('[data-close-dialog]').forEach((button) => {
       button.addEventListener('click', () => button.closest('dialog')?.close());
     });
@@ -342,7 +342,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       text('#organization-dialog-title', organization ? organization.razonSocial : 'Registrar organización');
       text('#organization-dialog-help', organization
         ? 'El identificador y la razón social siguen siendo únicos en la plataforma.'
-        : 'Incorporá un cliente a la plataforma (RF-015).');
+        : 'Incorporá un cliente a la plataforma.');
       text('#organization-dialog-state', `estado = ${organization?.estado ?? 'ACTIVO'}`);
       text('#organization-submit', organization ? 'Guardar cambios' : 'Registrar organización');
       if (organization) {
@@ -365,7 +365,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       text('#site-dialog-title', site ? site.nombre : 'Registrar sede');
       text('#site-dialog-context', site
         ? `Sede de ${selectedOrganization.razonSocial}. El nombre sigue siendo único dentro de la organización.`
-        : `Nueva sede de ${selectedOrganization.razonSocial} (RF-016).`);
+        : `Nueva sede de ${selectedOrganization.razonSocial}.`);
       text('#site-submit', site ? 'Guardar cambios' : 'Registrar sede');
       if (site) {
         document.querySelector<HTMLInputElement>('#site-name')!.value = site.nombre;

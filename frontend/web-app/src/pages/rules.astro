@@ -5,13 +5,13 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 <MasterLayout
   title="Reglas"
   section="Operación técnica"
-  description="Catálogo de controles que convierten una baseline en condiciones verificables de cumplimiento."
+  description="Reglas que se verifican en cada auditoría. Definí la condición a revisar, su severidad y la recomendación."
 >
   <section id="rule-message" class="alert is-hidden" role="status"></section>
 
   <section class="policy-toolbar panel compact-panel">
     <div class="device-toolbar-copy">
-      <span class="eyebrow">// rule engine</span>
+      <span class="eyebrow">Reglas de control</span>
       <div>
         <strong id="rule-count">0 reglas</strong>
         <span>controles técnicos configurados</span>
@@ -50,10 +50,9 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <article class="panel policy-list-panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">// compliance controls</span>
+          <span class="eyebrow">Controles</span>
           <h2>Controles de configuración</h2>
         </div>
-        <span class="technical-hint">GET /api/rules</span>
       </div>
 
       <div class="table-wrap">
@@ -74,7 +73,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
       <div id="rules-empty" class="empty-state compact-empty is-hidden">
         <div>
-          <code>rules.count = 0</code>
+          <code>0 reglas</code>
           <p>No hay reglas configuradas con los filtros actuales.</p>
         </div>
       </div>
@@ -83,14 +82,14 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <aside class="panel policy-inspector" aria-label="Detalle de regla">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">// rule inspector</span>
+          <span class="eyebrow">Regla seleccionada</span>
           <h2>Detalle del control</h2>
         </div>
         <span class="inspector-led"></span>
       </div>
 
       <div id="rule-inspector-empty" class="inspector-empty">
-        <code>select rule;</code>
+        <code>sin selección</code>
         <p>Seleccioná una regla para revisar condición, severidad, impacto y recomendación.</p>
       </div>
 
@@ -103,9 +102,9 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         <p id="rule-inspector-description" class="policy-description">—</p>
         <dl class="technical-definition-list">
           <div><dt>baseline</dt><dd id="rule-inspector-baseline">—</dd></div>
-          <div><dt>condition</dt><dd id="rule-inspector-type">—</dd></div>
-          <div><dt>severity</dt><dd id="rule-inspector-severity">—</dd></div>
-          <div><dt>resource.id</dt><dd id="rule-inspector-id">—</dd></div>
+          <div><dt>condición</dt><dd id="rule-inspector-type">—</dd></div>
+          <div><dt>severidad</dt><dd id="rule-inspector-severity">—</dd></div>
+          <div><dt>identificador</dt><dd id="rule-inspector-id">—</dd></div>
         </dl>
         <div class="rule-expression-block">
           <span id="rule-inspector-pattern-label">pattern</span>
@@ -139,7 +138,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <form id="rule-form" class="device-form">
       <div class="dialog-header">
         <div>
-          <span id="rule-dialog-eyebrow" class="eyebrow">{'// POST /api/baselines/{id}/rules'}</span>
+          <span id="rule-dialog-eyebrow" class="eyebrow">Nueva regla</span>
           <h2 id="rule-dialog-title">Crear regla</h2>
           <p id="rule-dialog-subtitle">Convertí una condición de configuración en un control auditable.</p>
         </div>
@@ -463,7 +462,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       if (baselineSelect) baselineSelect.disabled = rule !== null;
       if (codeInput) codeInput.disabled = rule !== null;
 
-      setText('#rule-dialog-eyebrow', rule ? `// PUT /api/rules/${rule.id}` : '// POST /api/baselines/{id}/rules');
+      setText('#rule-dialog-eyebrow', rule ? 'Editar regla' : 'Nueva regla');
       setText('#rule-dialog-title', rule ? `Editar ${rule.codigo}` : 'Crear regla');
       setText('#rule-dialog-subtitle', rule
         ? 'El código y la baseline no cambian. El cambio queda en la bitácora con el valor anterior y el nuevo.'

@@ -21,12 +21,9 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 /**
- * Repositorio de archivos sobre Azure Blob Storage con la API REST (Bloque 7, D-35). El contenedor es privado: solo
- * accede el servicio con la clave de la cuenta, guardada como secreto de Container Apps. En local se usa Azurite
- * (emulador oficial) con su cuenta pública de desarrollo.
- *
- * Sin configuración (pruebas automáticas, o antes de crear la cuenta en Azure) el adaptador queda "no configurado":
- * las operaciones de negocio siguen funcionando y los archivos quedan pendientes de subir desde el panel.
+ * Repositorio de archivos sobre la API REST de Azure Blob Storage (Azurite en local). El contenedor es privado y la
+ * clave de la cuenta es un secreto de Container Apps. Sin configuración el adaptador queda "no configurado": el
+ * negocio sigue funcionando y los archivos quedan pendientes de subir desde el panel.
  */
 @ApplicationScoped
 public class BlobStorageAdapter implements AlmacenArchivosPort {

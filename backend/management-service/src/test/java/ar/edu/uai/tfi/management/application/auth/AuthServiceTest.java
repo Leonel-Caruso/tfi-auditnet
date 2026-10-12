@@ -24,8 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Bloque 2.3a · El login registra éxitos y rechazos en la bitácora de sistema.
- * Bloque 6 · Bloqueo temporal por intentos fallidos, organización deshabilitada y cambio de la propia contraseña.
+ * Login con registro en la bitácora de sistema, bloqueo temporal por intentos fallidos, organización deshabilitada
+ * y cambio de la propia contraseña.
  */
 class AuthServiceTest {
 

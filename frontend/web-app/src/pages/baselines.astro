@@ -5,13 +5,13 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 <MasterLayout
   title="Baselines"
   section="Operación técnica"
-  description="Definición del estado esperado de configuración para los dispositivos auditables."
+  description="Definí la configuración esperada para cada tipo de dispositivo y administrá sus versiones."
 >
   <section id="baseline-message" class="alert is-hidden" role="status"></section>
 
   <section class="policy-toolbar panel compact-panel">
     <div class="device-toolbar-copy">
-      <span class="eyebrow">// baseline registry</span>
+      <span class="eyebrow">Baselines</span>
       <div>
         <strong id="baseline-count">0 baselines</strong>
         <span>modelos de configuración esperada</span>
@@ -43,10 +43,9 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <article class="panel policy-list-panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">// expected state</span>
+          <span class="eyebrow">Estado esperado</span>
           <h2>Modelos y versiones</h2>
         </div>
-        <span class="technical-hint">GET /api/baselines</span>
       </div>
 
       <div class="table-wrap">
@@ -70,7 +69,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
       <div id="baselines-empty" class="empty-state compact-empty is-hidden">
         <div>
-          <code>baseline.count = 0</code>
+          <code>0 baselines</code>
           <p>Todavía no hay modelos baseline disponibles con los filtros actuales.</p>
         </div>
       </div>
@@ -79,14 +78,14 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <aside class="panel policy-inspector" aria-label="Detalle de baseline">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">// policy inspector</span>
+          <span class="eyebrow">Baseline seleccionada</span>
           <h2>Detalle del modelo</h2>
         </div>
         <span class="inspector-led"></span>
       </div>
 
       <div id="baseline-inspector-empty" class="inspector-empty">
-        <code>select baseline;</code>
+        <code>sin selección</code>
         <p>Seleccioná un modelo para consultar su alcance y reglas asociadas.</p>
       </div>
 
@@ -100,12 +99,12 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         <p id="baseline-inspector-description" class="policy-description">—</p>
 
         <dl class="technical-definition-list">
-          <div><dt>organization</dt><dd id="baseline-inspector-organization">—</dd></div>
-          <div><dt>device.type</dt><dd id="baseline-inspector-type">—</dd></div>
-          <div><dt>version</dt><dd id="baseline-inspector-version">—</dd></div>
-          <div><dt>rules.count</dt><dd id="baseline-inspector-rules">—</dd></div>
-          <div><dt>audits.count</dt><dd id="baseline-inspector-audits">—</dd></div>
-          <div><dt>resource.id</dt><dd id="baseline-inspector-id">—</dd></div>
+          <div><dt>organización</dt><dd id="baseline-inspector-organization">—</dd></div>
+          <div><dt>tipo de dispositivo</dt><dd id="baseline-inspector-type">—</dd></div>
+          <div><dt>versión</dt><dd id="baseline-inspector-version">—</dd></div>
+          <div><dt>reglas</dt><dd id="baseline-inspector-rules">—</dd></div>
+          <div><dt>auditorías</dt><dd id="baseline-inspector-audits">—</dd></div>
+          <div><dt>identificador</dt><dd id="baseline-inspector-id">—</dd></div>
         </dl>
 
         <div class="inspector-footnote">
@@ -131,7 +130,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <form id="baseline-form" class="device-form">
       <div class="dialog-header">
         <div>
-          <span class="eyebrow">// POST /api/baselines</span>
+          <span class="eyebrow">Nueva baseline</span>
           <h2>Crear baseline</h2>
           <p>Definí el modelo de configuración esperado para un tipo de dispositivo.</p>
         </div>
@@ -181,7 +180,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <form id="baseline-change-form" class="device-form">
       <div class="dialog-header">
         <div>
-          <span id="baseline-change-eyebrow" class="eyebrow">{'// PUT /api/baselines/{id}'}</span>
+          <span id="baseline-change-eyebrow" class="eyebrow">Editar baseline</span>
           <h2 id="baseline-change-title">Editar descripción</h2>
           <p id="baseline-change-subtitle">—</p>
         </div>
@@ -469,7 +468,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       await reloadAndInspect(created.id);
     });
 
-    // ---- Editar descripción / nueva versión -----------------------------
+    // Editar descripción / nueva versión
     function openChangeDialog(mode: 'description' | 'version'): void {
       const baseline = state.current;
       if (!baseline || !changeDescription) return;
@@ -484,14 +483,14 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         && item.tipoDispositivoId === baseline.tipoDispositivoId);
 
       if (mode === 'description') {
-        setText('#baseline-change-eyebrow', `// PUT /api/baselines/${baseline.id}`);
+        setText('#baseline-change-eyebrow', 'Editar baseline');
         setText('#baseline-change-title', `Editar ${baseline.nombre} v${baseline.version}`);
         setText('#baseline-change-subtitle', 'La descripción no cambia los criterios de auditoría: no genera versión.');
         setText('#baseline-change-code', 'operacion = MODIFICACION');
         setText('#baseline-change-text', 'El cambio queda en la bitácora de transacciones con el valor anterior y el nuevo.');
         setText('#baseline-change-submit', 'Guardar descripción');
       } else {
-        setText('#baseline-change-eyebrow', `// POST /api/baselines/${baseline.id}/versions`);
+        setText('#baseline-change-eyebrow', 'Nueva versión de la baseline');
         setText('#baseline-change-title', `Nueva versión: ${baseline.nombre} v${next}`);
         setText('#baseline-change-subtitle', `Se genera a partir de v${baseline.version}. La versión anterior y sus auditorías no se modifican.`);
         setText('#baseline-change-code', `reglas copiadas = ${copied}`);
@@ -531,7 +530,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       await reloadAndInspect(saved.id);
     });
 
-    // ---- Activar / desactivar -------------------------------------------
+    // Activar / desactivar
     document.querySelector('#baseline-toggle')?.addEventListener('click', async () => {
       const baseline = state.current;
       if (!baseline) return;

@@ -21,8 +21,8 @@ import java.util.NoSuchElementException;
 import java.util.function.Supplier;
 
 /**
- * Baselines (CU-003-001). Lectura para todos los perfiles; gestión para el administrador y el
- * auditor técnico (este último solo sobre su organización).
+ * Baselines. Lectura para todos los perfiles; gestión para el administrador y el auditor técnico (este último
+ * solo sobre su organización).
  */
 @Path("/api/baselines")
 @Produces(MediaType.APPLICATION_JSON)

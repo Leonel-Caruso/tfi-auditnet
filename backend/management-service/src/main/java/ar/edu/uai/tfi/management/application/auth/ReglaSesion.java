@@ -4,14 +4,9 @@ import java.time.Instant;
 import java.util.Optional;
 
 /**
- * Verificación de la sesión en cada solicitud (Bloque 6, D-31). Un token firmado sigue siendo válido hasta que
- * vence; esta regla lo deja sin efecto en el acto si:
- * <ul>
- *   <li>el usuario ya no existe o fue deshabilitado;</li>
- *   <li>su organización fue deshabilitada (salvo para el administrador de la plataforma);</li>
- *   <li>el token se emitió antes de un cambio de contraseña, roles u organización.</li>
- * </ul>
- * audit-core-service aplica la misma regla (copia de esta clase) sobre la base compartida.
+ * Un token firmado vale hasta que vence; esta regla lo anula en el acto si el usuario ya no existe o fue
+ * deshabilitado, si su organización fue deshabilitada (salvo para el administrador) o si se emitió antes de un
+ * cambio de contraseña, roles u organización. audit-core-service tiene una copia de esta clase.
  */
 public final class ReglaSesion {
 

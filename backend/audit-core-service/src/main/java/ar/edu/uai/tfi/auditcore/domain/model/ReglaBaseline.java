@@ -1,7 +1,7 @@
 package ar.edu.uai.tfi.auditcore.domain.model;
 
 /**
- * Regla de auditoría de una baseline (RF-006).
+ * Regla de auditoría de una baseline.
  *
  * @param patron        texto buscado (DEBE_CONTENER / NO_DEBE_CONTENER) o parámetro evaluado (VALOR_ESPERADO)
  * @param valorEsperado valor que debe tener el parámetro; solo para VALOR_ESPERADO (null en los demás tipos)

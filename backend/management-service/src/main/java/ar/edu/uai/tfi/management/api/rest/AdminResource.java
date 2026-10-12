@@ -17,8 +17,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Panel de administración (Puntos Mandatorios: "panel de administrador web: seguridad, bitácoras, salud de
- * servicios"). La salud de audit-core-service se consulta en ese servicio (GET /api/system/health).
+ * Panel de administración: seguridad, bitácoras y salud del servicio. La salud de audit-core-service se consulta
+ * en ese servicio (GET /api/system/health).
  */
 @Path("/api/admin")
 @Produces(MediaType.APPLICATION_JSON)

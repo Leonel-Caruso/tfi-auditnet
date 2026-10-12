@@ -23,8 +23,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Bloque 2.3a · Crear un usuario deja en la bitácora la creación y la asignación de privilegios.
- * Bloque 6 · Modificación, habilitación, restablecimiento de contraseña, desbloqueo y reglas de protección.
+ * Alta con registro de creación y privilegios en la bitácora; modificación, habilitación, restablecimiento de
+ * contraseña, desbloqueo y reglas de protección.
  */
 class UsuarioServiceTest {
 

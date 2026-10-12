@@ -1,5 +1,5 @@
-// Política de contraseñas (D-30), igual que PoliticaContrasena en management-service. El backend la vuelve a
-// validar; acá solo se muestra el avance mientras se escribe.
+// Política de contraseñas, igual que PoliticaContrasena en management-service. Acá solo se muestra el avance
+// mientras se escribe; el backend la vuelve a validar.
 
 export type PasswordRule = { id: string; text: string; ok: (password: string, username: string) => boolean };
 

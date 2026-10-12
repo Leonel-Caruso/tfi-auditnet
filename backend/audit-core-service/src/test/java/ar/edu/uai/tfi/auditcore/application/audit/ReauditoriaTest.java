@@ -11,7 +11,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Re-auditoría de un equipo (D-26): una sola alerta por regla y resolución automática cuando la regla cumple. */
+/** Re-auditoría de un equipo: una sola alerta por regla y resolución automática cuando la regla cumple. */
 class ReauditoriaTest {
 
     private static final String CON_TELNET = "hostname RTR\nline vty 0 4\n transport input telnet ssh\n";

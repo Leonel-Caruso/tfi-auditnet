@@ -19,7 +19,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 
-/** Gestión de usuarios (CU-001-002). Solo el administrador del sistema. */
+/** Gestión de usuarios. Solo el administrador del sistema. */
 @Path("/api/users")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)

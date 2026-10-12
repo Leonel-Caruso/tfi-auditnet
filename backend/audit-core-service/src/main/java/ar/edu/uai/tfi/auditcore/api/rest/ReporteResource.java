@@ -27,8 +27,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Reportes de auditoría (RF-011, CU-006-001). Todos los perfiles consultan y descargan los reportes de su
- * organización; los generan el administrador, el analista de redes y el auditor técnico.
+ * Reportes de auditoría. Todos los perfiles consultan y descargan los reportes de su organización; los generan
+ * el administrador, el analista de redes y el auditor técnico.
  */
 @Path("/api/reports")
 @Produces(MediaType.APPLICATION_JSON)
@@ -51,9 +51,7 @@ public class ReporteResource {
         this.repositorioArchivos = repositorioArchivos;
     }
 
-    /**
-     * Genera el reporte: 201 con el reporte, o 200 con un mensaje si los criterios no devuelven auditorías.
-     */
+    /** 201 con el reporte, o 200 con un mensaje si los criterios no devuelven auditorías. */
     @POST
     @Path("/audits")
     @RolesAllowed({"ADMINISTRADOR_SISTEMA", "ANALISTA_RED", "AUDITOR_TECNICO"})
@@ -100,14 +98,13 @@ public class ReporteResource {
     public Response descargar(@PathParam("id") Long id) {
         return ejecutar(() -> {
             ReporteAuditoria reporte = service.buscar(id, UsuarioAutenticado.organizacion(jwt));
-            // Bloque 7: si el CSV está en el repositorio de archivos se entrega ese (verificado contra su SHA-256);
-            // los reportes anteriores al repositorio se arman de nuevo con los mismos datos.
+            // Si el CSV está en el repositorio se entrega ese, verificado contra su SHA-256; si no, se arma de nuevo.
             Optional<byte[]> guardado;
             try {
                 guardado = repositorioArchivos.buscar(TipoArchivo.REPORTE, reporte.id())
                         .map(archivo -> repositorioArchivos.descargar(TipoArchivo.REPORTE, reporte.id()).contenido());
             } catch (AlmacenArchivosPort.AlmacenamientoException noDisponible) {
-                // Si el repositorio no responde, el reporte se sigue pudiendo descargar armado con los mismos datos.
+                // Si el repositorio no responde, se arma con los mismos datos.
                 guardado = Optional.empty();
             }
             Response.ResponseBuilder respuesta = guardado.isPresent()

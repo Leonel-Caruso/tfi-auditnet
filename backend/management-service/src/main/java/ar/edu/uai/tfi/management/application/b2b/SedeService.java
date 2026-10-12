@@ -68,7 +68,7 @@ public class SedeService {
         return creada;
     }
 
-    /** Modifica nombre y ubicación (PUT /api/sites/{id}); el nombre sigue siendo único dentro de la organización. */
+    /** El nombre sigue siendo único dentro de la organización. */
     @Transactional
     public Sede actualizar(Long id, String nombre, String ubicacion) {
         Sede anterior = buscarPorId(id);
@@ -87,10 +87,7 @@ public class SedeService {
         return actualizada;
     }
 
-    /**
-     * Habilita o deshabilita la sede (baja lógica, CU-007-002 regla 5). Una sede deshabilitada no admite nuevos
-     * dispositivos; los que ya tenía conservan su historial.
-     */
+    /** Baja lógica: una sede deshabilitada no admite dispositivos nuevos; los que tenía conservan su historial. */
     @Transactional
     public Sede cambiarEstado(Long id, String estado) {
         Sede anterior = buscarPorId(id);

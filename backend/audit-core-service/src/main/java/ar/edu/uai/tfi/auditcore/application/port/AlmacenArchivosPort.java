@@ -3,8 +3,8 @@ package ar.edu.uai.tfi.auditcore.application.port;
 import java.util.Map;
 
 /**
- * Almacenamiento de archivos (repositorio seguro de archivos del diagrama de despliegue). En Azure es un contenedor
- * privado de Blob Storage; en local, el emulador Azurite. Los archivos no se sobrescriben ni se borran.
+ * Almacenamiento de archivos. En Azure es un contenedor privado de Blob Storage; en local, el emulador Azurite.
+ * Los archivos no se sobrescriben ni se borran.
  */
 public interface AlmacenArchivosPort {
 

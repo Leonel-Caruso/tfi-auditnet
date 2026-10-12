@@ -41,11 +41,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * Tablero de control (RF-013, CU-006-003) y estado general del cliente (RF-017, CU-007-003).
- *
- * Solo lectura: calcula los indicadores con los datos registrados y no modifica nada. Los cálculos se hacen en
- * memoria sobre los datos del alcance (una organización, o todas para el administrador); alcanza para el
- * volumen del prototipo.
+ * Tablero de control y estado general del cliente. Solo lectura. Los cálculos se hacen en memoria sobre los datos
+ * del alcance, lo que alcanza para el volumen del prototipo.
  */
 @ApplicationScoped
 public class TableroService {
@@ -124,16 +121,11 @@ public class TableroService {
                                 List<RiesgoDispositivo> dispositivos, List<ReporteAuditoria> reportes) {
     }
 
-    /**
-     * GET /api/dashboard/summary.
-     *
-     * @param organizacionId null para el administrador sin filtro (todas las organizaciones)
-     */
+    /** @param organizacionId null para el administrador sin filtro (todas las organizaciones) */
     public ResumenTablero resumen(Long organizacionId, Instant ahora) {
         return armarResumen(cargar(organizacionId), ahora);
     }
 
-    /** GET /api/client-organizations/{id}/audit-status. */
     public EstadoCliente estadoCliente(Long organizacionId, Instant ahora) {
         if (organizacionId == null || organizacionId <= 0) {
             throw new IllegalArgumentException("El campo organizationId debe ser un identificador válido.");

@@ -13,9 +13,8 @@ import jakarta.transaction.Transactional;
 import java.util.List;
 
 /**
- * Perfiles de acceso (CU-001-002). Son los cuatro perfiles fijos de la tesis (D-29): sus permisos están en el
- * código ({@code @RolesAllowed}) y se documentan en {@link MatrizPermisos}. Desde el panel solo se edita la
- * descripción; no se crean perfiles nuevos porque no tendrían permisos.
+ * Los cuatro perfiles son fijos: sus permisos están en el código ({@code @RolesAllowed}) y se documentan en
+ * {@link MatrizPermisos}. Solo se edita la descripción; un perfil nuevo no tendría permisos.
  */
 @ApplicationScoped
 public class RolService {

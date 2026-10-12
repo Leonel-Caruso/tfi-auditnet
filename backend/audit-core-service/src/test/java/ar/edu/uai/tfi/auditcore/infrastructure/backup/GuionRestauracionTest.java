@@ -9,7 +9,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Bloque 7 · Orden de restauración por claves foráneas y guion de restauración. */
+/** Orden de restauración por claves foráneas y guion de restauración. */
 class GuionRestauracionTest {
 
     private static EstructuraBase estructura() {

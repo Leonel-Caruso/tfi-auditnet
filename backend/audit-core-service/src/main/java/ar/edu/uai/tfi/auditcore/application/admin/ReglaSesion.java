@@ -4,15 +4,9 @@ import java.time.Instant;
 import java.util.Optional;
 
 /**
- * Verificación de la sesión en cada solicitud (Bloque 6, D-31). Un token firmado sigue siendo válido hasta que
- * vence; esta regla lo deja sin efecto en el acto si:
- * <ul>
- *   <li>el usuario ya no existe o fue deshabilitado;</li>
- *   <li>su organización fue deshabilitada (salvo para el administrador de la plataforma);</li>
- *   <li>el token se emitió antes de un cambio de contraseña, roles u organización.</li>
- * </ul>
- * Copia de la regla de management-service: los dos servicios la aplican sobre la base compartida (no hay un
- * módulo común entre servicios).
+ * Invalida en el acto un token todavía vigente si el usuario o su organización fueron deshabilitados (la
+ * organización no aplica al administrador de la plataforma), o si se emitió antes de un cambio de contraseña, roles
+ * u organización. Es copia de la regla de management-service: no hay un módulo común entre servicios.
  */
 public final class ReglaSesion {
 

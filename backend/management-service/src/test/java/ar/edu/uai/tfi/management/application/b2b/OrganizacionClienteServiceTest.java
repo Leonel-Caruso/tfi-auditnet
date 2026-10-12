@@ -21,8 +21,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- * Bloque 2.3b · El alta de una organización queda en la bitácora de transacciones con su valor nuevo.
- * Bloque 6 · Modificación y baja lógica de organizaciones y sedes (CU-007-001 y CU-007-002).
+ * Alta de organizaciones con registro en la bitácora de transacciones; modificación y baja lógica de
+ * organizaciones y sedes.
  */
 class OrganizacionClienteServiceTest {
 

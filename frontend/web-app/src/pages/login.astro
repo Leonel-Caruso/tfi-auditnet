@@ -2,7 +2,12 @@
 import PublicLayout from '../layouts/PublicLayout.astro';
 ---
 
-<PublicLayout title="Acceso a consola">
+<PublicLayout
+  title="Acceso a consola"
+  description="AuditNet: auditoría y control de configuraciones de red Cisco IOS/IOS-XE para organizaciones. Ingresá a la consola con tu usuario."
+  indexable
+  path="/login"
+>
   <main class="login-screen">
     <section class="login-brand-panel">
       <div class="login-brand-content">
@@ -42,12 +47,12 @@ import PublicLayout from '../layouts/PublicLayout.astro';
         </div>
 
         <label class="field">
-          <span>identity</span>
-          <input id="identity" name="identity" type="text" autocomplete="username" placeholder="usuario o correo" required autofocus />
+          <span>usuario o correo</span>
+          <input id="identity" name="identity" type="text" autocomplete="username" placeholder="tu.usuario o nombre@empresa.com" required autofocus />
         </label>
 
         <label class="field">
-          <span>password</span>
+          <span>contraseña</span>
           <input id="password" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required />
         </label>
 
@@ -59,7 +64,7 @@ import PublicLayout from '../layouts/PublicLayout.astro';
 
         <div class="login-security-note">
           <span class="security-dot"></span>
-          secure_session / protected_access
+          conexión cifrada · sesión protegida
         </div>
       </form>
     </section>

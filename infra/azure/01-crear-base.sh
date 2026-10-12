@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
-# =====================================================================
-# AuditNet · Paso 1 de infraestructura en Azure
-# Crea: grupo de recursos, PostgreSQL Flexible Server (B1ms, 32 GB,
-# backups de 7 días), la base de datos y el entorno de Container Apps.
-# Ejecutar en Azure Cloud Shell (Bash): bash 01-crear-base.sh
-# Tarda entre 5 y 15 minutos (el servidor PostgreSQL es lo más lento).
-# =====================================================================
+# Crea el grupo de recursos, PostgreSQL Flexible Server (B1ms, 32 GB, backups
+# de 7 días), la base de datos y el entorno de Container Apps.
+# Uso (Azure Cloud Shell): bash 01-crear-base.sh   (tarda 5 a 15 minutos)
 set -euo pipefail
 cd "$(dirname "$0")"
 source ./variables.sh
@@ -18,7 +14,10 @@ echo "Elegí la contraseña del administrador de PostgreSQL ($PG_ADMIN)."
 echo "Guardala en un lugar seguro FUERA del repositorio: la vas a necesitar en el paso 2."
 pedir_clave "Contraseña de PostgreSQL" PG_CLAVE
 
-echo; echo "[1/4] Grupo de recursos..."
+echo; echo "[0/4] Proveedores de recursos de la suscripción..."
+registrar_proveedores Microsoft.DBforPostgreSQL Microsoft.App Microsoft.OperationalInsights
+
+echo "[1/4] Grupo de recursos..."
 az group create -n "$RG" -l "$UBICACION" --tags proyecto=auditnet entorno=tesis -o none
 
 echo "[2/4] PostgreSQL Flexible Server (esto tarda varios minutos)..."

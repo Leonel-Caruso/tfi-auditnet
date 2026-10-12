@@ -18,11 +18,9 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
- * Estado general de auditoría de una organización cliente (RF-017, CU-007-003). Solo lectura.
- *
- * La ruta cuelga de /api/client-organizations (management-service), pero los datos son de audit-core: el
- * gateway (nginx) deriva /audit-status a este servicio. Un único GET reemplaza a /summary y /risk de la
- * especificación (decisión D-24).
+ * Estado general de auditoría de una organización cliente (solo lectura). La ruta cuelga de
+ * /api/client-organizations (management-service), pero el gateway deriva /audit-status a este servicio.
+ * Un único GET reemplaza a /summary y /risk.
  */
 @Path("/api/client-organizations/{organizationId}/audit-status")
 @Produces(MediaType.APPLICATION_JSON)

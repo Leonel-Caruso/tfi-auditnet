@@ -82,7 +82,7 @@ code, .code-text { font-family: var(--mono); }
 .alert { padding: 12px 14px; border-radius: 7px; font-size: 0.88rem; }
 .alert-error { color: var(--danger); background: var(--danger-soft); border: 1px solid #fecdca; }
 
-/* Public / Login */
+/* Acceso */
 .public-body { min-height: 100vh; background: #171a1f; }
 .login-screen { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1.08fr) minmax(430px, .92fr); }
 .login-brand-panel {
@@ -162,7 +162,7 @@ code, .code-text { font-family: var(--mono); }
 .login-security-note { display: flex; gap: 8px; align-items: center; justify-content: center; margin-top: 16px; color: var(--muted); font-family: var(--mono); font-size: .7rem; }
 .security-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); box-shadow: 0 0 0 3px rgba(20,122,82,.10); }
 
-/* Master layout · Command Rail */
+/* Consola y barra lateral */
 .app-body { min-height: 100vh; }
 .app-shell { min-height: 100vh; display: grid; grid-template-columns: 72px minmax(0, 1fr); }
 .command-rail {
@@ -351,7 +351,7 @@ code, .code-text { font-family: var(--mono); }
 .spinner { width: 26px; height: 26px; border: 2px solid #ccd1d5; border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Content */
+/* Contenido */
 .hero-card, .panel, .metric-card, .module-placeholder { border: 1px solid var(--border); border-radius: var(--radius); background: rgba(248,249,249,.94); box-shadow: var(--shadow); }
 .hero-card { position: relative; display: flex; justify-content: space-between; align-items: stretch; gap: 28px; padding: 27px 29px; margin-bottom: 18px; overflow: hidden; }
 .hero-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); }
@@ -391,7 +391,7 @@ code, .code-text { font-family: var(--mono); }
 .architecture-stack i { padding-left: 12px; color: var(--muted); font-family: var(--mono); font-size: .65rem; font-style: normal; }
 .counter-chip { min-width: 30px; padding: 5px 8px; border: 1px solid #ead2bc; border-radius: 6px; text-align: center; color: var(--accent-dark); background: var(--accent-faint); font-family: var(--mono); font-size: .75rem; font-weight: 800; }
 
-/* B2B */
+/* Listas de selección */
 .select-list, .data-list { display: grid; gap: 7px; }
 .select-row { width: 100%; display: flex; justify-content: space-between; gap: 14px; align-items: center; padding: 12px; border: 1px solid var(--border); border-radius: 7px; text-align: left; color: var(--text); background: rgba(255,255,255,.65); cursor: pointer; }
 .select-row:hover { border-color: #c7b29f; background: var(--accent-faint); }
@@ -405,7 +405,7 @@ code, .code-text { font-family: var(--mono); }
 .skeleton-row { height: 46px; border-radius: 6px; background: linear-gradient(90deg,#f1f2f3 25%,#e5e7e9 37%,#f1f2f3 63%); background-size: 400% 100%; animation: shimmer 1.4s ease infinite; }
 @keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
 
-/* Tables */
+/* Tablas */
 .table-wrap { overflow-x: auto; }
 .data-table { width: 100%; border-collapse: collapse; font-size: .8rem; }
 .data-table th { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--muted); text-align: left; font-family: var(--mono); font-size: .64rem; letter-spacing: .03em; text-transform: uppercase; }
@@ -415,7 +415,7 @@ code, .code-text { font-family: var(--mono); }
 .data-table td small { margin-top: 2px; color: var(--muted); font-family: var(--mono); }
 .role-chip { display: inline-flex; margin: 2px 3px 2px 0; padding: 4px 7px; border: 1px solid #dadde0; border-radius: 5px; color: #4a5056; background: #f1f2f3; font-family: var(--mono); font-size: .62rem; font-weight: 700; }
 
-/* Future modules */
+/* Módulos en construcción */
 .module-placeholder { min-height: 360px; display: grid; place-items: center; align-content: center; padding: 48px 28px; text-align: center; box-shadow: none; }
 .module-placeholder-icon { display: grid; place-items: center; width: 58px; height: 58px; margin-bottom: 17px; border: 1px solid #e3c5a7; border-radius: 8px; color: var(--accent-dark); background: var(--accent-faint); font-family: var(--mono); font-size: .7rem; font-weight: 900; }
 .module-placeholder h2 { margin: 12px 0 8px; font-size: 1.42rem; letter-spacing: -0.025em; }
@@ -456,7 +456,7 @@ code, .code-text { font-family: var(--mono); }
   .rail-link::after { display: none; }
 }
 
-/* Devices · Block 5 */
+/* Dispositivos */
 .alert-success { color: var(--success); background: var(--success-soft); border: 1px solid #ccebdd; }
 .compact-panel { padding: 14px 16px; }
 .device-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 18px; box-shadow: none; }
@@ -536,7 +536,7 @@ code, .code-text { font-family: var(--mono); }
   .technical-definition-list > div { grid-template-columns: 105px minmax(0,1fr); }
 }
 
-/* Baselines + Rules · Block 6 */
+/* Baselines y reglas */
 .policy-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 18px; box-shadow: none; }
 .policy-workspace { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(320px, .7fr); gap: 18px; align-items: start; }
 .policy-list-panel, .policy-inspector { margin-bottom: 0; }
@@ -568,7 +568,7 @@ code, .code-text { font-family: var(--mono); }
   .field-span-2 { grid-column: auto; }
 }
 
-/* Audit + Findings · Block 7 */
+/* Auditorías y hallazgos */
 .audit-toolbar, .finding-toolbar {
   display: flex;
   align-items: center;
@@ -720,7 +720,7 @@ code, .code-text { font-family: var(--mono); }
   .finding-summary-grid { grid-template-columns: 1fr; }
 }
 
-/* Bitácoras (Bloque 2.3d) */
+/* Bitácoras */
 .log-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
 .log-tab { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: center; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; color: var(--text); background: rgba(248,249,249,.94); text-align: left; cursor: pointer; transition: 120ms ease; }
 .log-tab code { grid-row: span 2; display: grid; place-items: center; width: 40px; height: 34px; border: 1px solid #ead1b7; border-radius: 6px; color: var(--accent-dark); background: var(--accent-faint); font-size: .68rem; font-weight: 900; }
@@ -757,7 +757,7 @@ code, .code-text { font-family: var(--mono); }
   .log-heading-meta .technical-hint { display: none; }
 }
 
-/* Gestión de activos, baselines y reglas (Bloque 3) */
+/* Gestión de activos, baselines y reglas */
 .panel-heading-actions { display: flex; align-items: center; gap: 8px; }
 .inspector-actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; }
 .inspector-actions .button { flex: 1 1 auto; }
@@ -778,7 +778,7 @@ code, .code-text { font-family: var(--mono); }
   .panel-heading { flex-wrap: wrap; }
 }
 
-/* Seguimiento de hallazgos e historial (Bloque 4) */
+/* Seguimiento de hallazgos e historial */
 .finding-row.is-critical { box-shadow: inset 3px 0 #b42318; }
 .finding-row.is-critical.is-selected { box-shadow: inset 3px 0 #b42318, inset 0 0 0 1px #f4bbb5; }
 .finding-row.is-closed td { opacity: .62; }
@@ -807,7 +807,7 @@ code, .code-text { font-family: var(--mono); }
 .compare-chip.compare-corregido { color: var(--success); background: var(--success-soft); }
 .compare-chip.compare-persistente { color: var(--warning); background: var(--warning-soft); }
 
-/* Bloque 5.1 · tablero, estado del cliente y alertas */
+/* Tablero, estado del cliente y alertas */
 .dashboard-scope { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .dashboard-scope h2 { margin: 0; }
 .dashboard-scope-actions { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
@@ -828,7 +828,7 @@ code, .code-text { font-family: var(--mono); }
 .risk-banner.risk-bajo { border-left-color: var(--success); background: var(--success-soft); }
 .risk-badge { font-size: .74rem; text-transform: none; }
 
-/* Gráficos: una serie = un color; dos series = slots 1 y 2 validados (azul / naranja). Texto siempre en tokens de texto. */
+/* Gráficos: una serie usa un color; dos series, azul y naranja. */
 .viz-series-1 { --viz-color: #2a78d6; }
 .viz-series-2 { --viz-color: #eb6834; }
 .viz-bars { display: grid; gap: 10px; }
@@ -871,7 +871,7 @@ code, .code-text { font-family: var(--mono); }
   .dashboard-row .compare-item > :last-child { grid-column: 1 / -1; }
 }
 
-/* Bloque 5.2 · reportes */
+/* Reportes */
 .report-workspace { display: grid; grid-template-columns: minmax(300px, .8fr) minmax(0, 1.2fr); gap: 18px; align-items: start; }
 .report-workspace > .panel { min-width: 0; margin-bottom: 18px; }
 .report-criteria { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -884,7 +884,7 @@ code, .code-text { font-family: var(--mono); }
 .report-toolbar strong { display: block; color: var(--text-strong); font-family: var(--mono); }
 .report-toolbar .eyebrow { margin-bottom: 2px; }
 
-/* Bloque 6 · documento del reporte (pantalla y PDF). Tipografía sobria, colores de la consola, sin adornos. */
+/* Documento del reporte (pantalla y PDF) */
 .report-document { background: #fff; }
 .rpt { max-width: 980px; margin: 0 auto; color: #1d2126; font-size: .86rem; line-height: 1.55; }
 .rpt-masthead { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-bottom: 14px; border-bottom: 3px solid var(--accent); }
@@ -968,8 +968,8 @@ code, .code-text { font-family: var(--mono); }
   .rpt-finding dl { grid-template-columns: 1fr; }
 }
 
-/* "Descargar PDF" imprime solo el documento (el navegador permite guardarlo como PDF). El pie con el número de
-   reporte y la paginación se agrega desde lib/report-document.ts (printPageStyle). */
+/* "Descargar PDF" imprime solo el documento. El pie con número de reporte y página lo agrega
+   printPageStyle en lib/report-document.ts. */
 @media print {
   @page { size: A4; margin: 16mm 14mm 18mm; }
   html, body { background: #fff !important; }
@@ -987,8 +987,8 @@ code, .code-text { font-family: var(--mono); }
 }
 .client-reports-heading { margin-top: 20px; }
 
-/* Ajuste visual · barra lateral en pantallas bajas y separación de métricas */
-/* El logo "A_" no se achica nunca (antes se comprimía cuando el menú no entraba en la altura de la pantalla). */
+/* Barra lateral en pantallas bajas y separación de métricas */
+/* El logo "A_" no se achica aunque el menú no entre en la altura. */
 .rail-brand { flex-shrink: 0; font-size: .86rem; }
 .rail-runtime { flex-shrink: 0; }
 .rail-nav { flex: 1 1 auto; min-height: 0; align-content: start; }
@@ -998,10 +998,10 @@ code, .code-text { font-family: var(--mono); }
   .rail-link { height: 36px; }
   .rail-separator { margin: 4px 0; }
 }
-/* Si el menú igual no entra, se desplaza dentro de la barra (el resto de la página no cambia). La etiqueta
-   flotante se reemplaza por el title del enlace, porque quedaría recortada dentro del área con desplazamiento. */
+/* Si el menú no entra, se desplaza dentro de la barra. La etiqueta flotante se reemplaza por el title del
+   enlace porque quedaría recortada. */
 @media (max-height: 700px) {
-  /* Se desplaza con la rueda o el touchpad, sin barra visible; un degradado indica que hay más ítems arriba o abajo. */
+  /* Sin barra visible; un degradado indica que hay más ítems arriba o abajo. */
   .rail-nav { overflow-y: auto; overflow-x: hidden; margin-inline: -9px; padding: 0 9px 6px; scrollbar-width: none; -ms-overflow-style: none; overscroll-behavior: contain; }
   .rail-nav::-webkit-scrollbar { display: none; }
   .rail-nav.has-more-bottom { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent); }
@@ -1014,7 +1014,7 @@ code, .code-text { font-family: var(--mono); }
 }
 .finding-summary-grid { margin-bottom: 18px; }
 
-/* Bloque 6 · calendario propio para los campos de fecha (lib/datepicker.ts) */
+/* Calendario de los campos de fecha (lib/datepicker.ts) */
 .dp-field { position: relative; min-width: 0; }
 .dp-native { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; border: 0 !important; opacity: 0; pointer-events: none; }
 .dp-trigger { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; text-align: left; cursor: pointer; }
@@ -1045,7 +1045,7 @@ code, .code-text { font-family: var(--mono); }
 .dp-link { padding: 3px 6px; border: 0; border-radius: 5px; color: var(--accent-dark); background: transparent; font-family: var(--mono); font-size: .68rem; font-weight: 700; cursor: pointer; }
 .dp-link:hover { background: var(--accent-faint); }
 
-/* Bloque 6 · cuentas, perfiles y panel de administración */
+/* Cuentas, perfiles y panel de administración */
 a.user-popover-action { display: block; }
 .users-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
 .users-toolbar .terminal-search { flex: 1 1 260px; max-width: 420px; }
@@ -1106,13 +1106,13 @@ a.user-popover-action { display: block; }
 }
 .page-content > .alert { margin-bottom: 16px; }
 
-/* Bloque 7 · logo del login: "A_" con cursor que titila y escribe "AuditNet_" cada tanto (lib/logo-animado.ts) */
+/* Logo animado del login (lib/logo-animado.ts) */
 .hero-mark { display: inline-flex; place-items: initial; align-items: center; justify-content: center; width: auto; min-width: 48px; padding: 0 13px; letter-spacing: 0; }
 .hero-mark-cursor { animation: cursor-titila 1.05s steps(1, end) infinite; }
 .hero-mark.is-typing .hero-mark-cursor, .hero-mark.is-static .hero-mark-cursor { animation: none; }
 @keyframes cursor-titila { 50% { opacity: 0; } }
 
-/* Bloque 7 · repositorio de archivos y respaldos en el panel de administración */
+/* Repositorio de archivos y respaldos */
 .storage-totals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
 .storage-totals > div { padding: 10px 12px; border: 1px solid var(--border); border-radius: 7px; background: #fff; }
 .storage-totals span { display: block; color: var(--muted); font-family: var(--mono); font-size: .6rem; font-weight: 700; text-transform: uppercase; }
@@ -1126,10 +1126,44 @@ a.user-popover-action { display: block; }
 @media (max-width: 650px) {
   .storage-totals { grid-template-columns: 1fr; }
 }
-/* Auditorías en pantallas angostas: las columnas no se ensanchan por los rótulos técnicos de los encabezados. */
+/* Auditorías en pantallas angostas: los rótulos técnicos no ensanchan las columnas. */
 @media (max-width: 760px) {
   .audit-workspace > *, .audit-main-column > * { min-width: 0; }
   .audit-panel .panel-heading, .audit-inspector .panel-heading { flex-wrap: wrap; }
   .audit-panel .technical-hint { white-space: normal; overflow-wrap: anywhere; }
 }
 .backup-cell small { max-width: none !important; white-space: normal !important; overflow-wrap: anywhere; }
+
+/* Marca: misma tipografía que el ícono (JetBrains Mono ExtraBold, licencia OFL) */
+@font-face {
+  font-family: "AuditNet Mono";
+  src: url("/fonts/jetbrains-mono-800.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF;
+}
+.hero-mark { color: #fff; font-family: "AuditNet Mono", var(--mono); font-weight: 800; letter-spacing: 0; margin-bottom: 16px; }
+/* Leyenda debajo del logo, para que no se mueva cuando el logo escribe "AuditNet_". */
+.login-brand-content > .eyebrow-light { display: flex; }
+.rail-brand { color: #fff; border-color: var(--accent); background: var(--accent); font-family: "AuditNet Mono", var(--mono); font-weight: 800; box-shadow: 0 6px 18px rgba(245,124,0,.18); }
+.rail-brand:hover { color: #fff; border-color: #ff9a33; background: #ff8a14; }
+
+/* Paginador de tablas */
+.pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+.pager.is-hidden { display: none; }
+.pager-body { display: contents; }
+.pager-announce { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.pager-range, .pager-page { color: var(--muted); font-family: var(--mono); font-size: .68rem; font-weight: 700; white-space: nowrap; }
+.pager-controls { display: flex; align-items: center; gap: 10px; }
+.pager-controls .button { white-space: nowrap; }
+.pager-controls .button:disabled { opacity: .45; cursor: not-allowed; }
+.pager-size { display: flex; align-items: center; gap: 8px; color: var(--muted); font-family: var(--mono); font-size: .64rem; }
+.pager-size .technical-select { width: auto; min-width: 64px; padding-top: 5px; padding-bottom: 5px; }
+@media (max-width: 760px) {
+  .pager { justify-content: center; }
+  .pager-word { display: none; }
+  .pager-controls .button { min-width: 40px; }
+  .pager-range { order: 2; width: 100%; text-align: center; }
+  .pager-size { order: 3; }
+}

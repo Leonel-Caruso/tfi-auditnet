@@ -36,7 +36,7 @@ public class PanacheReporteRepository implements PanacheRepository<ReporteEntity
         entity.fechaGeneracion = reporte.fechaGeneracion();
         persist(entity);
         flush();
-        // Referencia a cada auditoría usada como fuente (CU-006-001, regla 4).
+        // Referencia a cada auditoría usada como fuente.
         for (Long auditoriaId : new LinkedHashSet<>(auditoriaIds)) {
             getEntityManager()
                     .createNativeQuery("INSERT INTO reportes_auditoria_auditorias (id_reporte, id_auditoria) VALUES (?1, ?2)")

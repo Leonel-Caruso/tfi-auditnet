@@ -15,8 +15,8 @@ import java.util.Locale;
 import java.util.NoSuchElementException;
 
 /**
- * Gestión de dispositivos de red (RF-003, CU-002-001).
- * El identificador es único dentro de cada organización y la baja es siempre lógica.
+ * Gestión de dispositivos de red. El identificador es único dentro de cada organización y la baja es siempre
+ * lógica.
  */
 @ApplicationScoped
 public class DispositivoService {

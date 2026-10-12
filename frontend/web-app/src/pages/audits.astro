@@ -5,14 +5,14 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 <MasterLayout
   title="Auditorías"
   section="Motor de auditoría"
-  description="Carga de configuraciones y ejecución del control automático contra la baseline aplicable."
+  description="Importá configuraciones de dispositivos y auditalas contra la baseline que les corresponde."
 >
   <div id="audit-success" class="alert alert-success is-hidden"></div>
   <div id="audit-error" class="alert alert-error is-hidden"></div>
 
   <section class="panel compact-panel audit-toolbar">
     <div class="device-toolbar-copy">
-      <span class="eyebrow">Audit pipeline</span>
+      <span class="eyebrow">Auditorías</span>
       <div>
         <strong id="configuration-count">0 configuraciones</strong>
         <span>versiones auditables disponibles</span>
@@ -34,10 +34,9 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       <article class="panel audit-panel">
         <div class="panel-heading">
           <div>
-            <span class="eyebrow">Input repository</span>
+            <span class="eyebrow">Configuraciones</span>
             <h2>Configuraciones auditables</h2>
           </div>
-          <span class="technical-hint">GET /api/configurations/auditable</span>
         </div>
 
         <div class="table-wrap">
@@ -56,7 +55,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           </table>
           <div id="configuration-empty" class="empty-state compact-empty">
             <div>
-              <code>config.count = 0</code>
+              <code>0 configuraciones</code>
               <p>Todavía no hay configuraciones importadas para auditar.</p>
             </div>
           </div>
@@ -66,10 +65,9 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       <article class="panel audit-panel">
         <div class="panel-heading">
           <div>
-            <span class="eyebrow">Execution history</span>
+            <span class="eyebrow">Ejecuciones</span>
             <h2>Auditorías ejecutadas</h2>
           </div>
-          <span class="technical-hint">GET /api/audits/history</span>
         </div>
 
         <div class="table-wrap">
@@ -89,7 +87,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           </table>
           <div id="audit-empty" class="empty-state compact-empty">
             <div>
-              <code>audit.count = 0</code>
+              <code>0 auditorías</code>
               <p>No hay auditorías ejecutadas todavía.</p>
             </div>
           </div>
@@ -100,14 +98,14 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <aside class="panel audit-inspector">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Execution inspector</span>
+          <span class="eyebrow">Auditoría seleccionada</span>
           <h2>Contexto de auditoría</h2>
         </div>
         <span class="inspector-led"></span>
       </div>
 
       <div id="audit-inspector-empty" class="inspector-empty">
-        <code>select config | audit;</code>
+        <code>sin selección</code>
         <p>Seleccioná una configuración para revisar su contexto o una auditoría para ver resultados.</p>
       </div>
 
@@ -119,7 +117,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <form id="config-form" class="device-form">
       <div class="dialog-header">
         <div>
-          <span class="eyebrow">{'// POST /api/devices/{id}/configurations'}</span>
+          <span class="eyebrow">Importar configuración</span>
           <h2>Cargar configuración</h2>
           <p>Importá un running-config mediante texto pegado o archivo TXT/CFG.</p>
         </div>
@@ -135,12 +133,12 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         </label>
 
         <label class="field field-span-2">
-          <span>source_file</span>
+          <span>archivo (opcional)</span>
           <input id="config-file" type="file" accept=".txt,.cfg,text/plain" />
         </label>
 
         <label class="field field-span-2">
-          <span>running_config *</span>
+          <span>configuración (running-config) *</span>
           <textarea
             id="config-content"
             class="mono-input config-editor"
@@ -152,9 +150,9 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       </div>
 
       <div class="rule-help">
-        <code>evidence.original</code>
+        <code>original</code>
         <span>Se conserva exactamente el contenido recibido.</span>
-        <code>evidence.normalized</code>
+        <code>normalizada</code>
         <span>Se genera una copia normalizada para comparar reglas sin alterar el original.</span>
       </div>
 
@@ -372,7 +370,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       }
     };
 
-    /** Bloque 7: baja el archivo original del repositorio; el servidor lo verifica contra su SHA-256. */
+    /** Baja el archivo original del repositorio; el servidor lo verifica contra su SHA-256. */
     const downloadOriginal = async (id: number) => {
       const box = document.querySelector<HTMLElement>('#config-file-status');
       const message = document.querySelector<HTMLElement>('#config-file-message');
@@ -415,16 +413,16 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <span class="status-badge status-ready">AUDITABLE</span>
         </div>
         <dl class="technical-definition-list">
-          <div><dt>device</dt><dd>${escapeHtml(device?.nombre ?? '—')}</dd></div>
-          <div><dt>source</dt><dd>${escapeHtml(configuration.nombreFuente)}</dd></div>
-          <div><dt>format</dt><dd>${escapeHtml(configuration.formato)}</dd></div>
-          <div><dt>version</dt><dd>v${configuration.version}</dd></div>
-          <div><dt>imported.by</dt><dd>${escapeHtml(configuration.usuarioResponsable)}</dd></div>
+          <div><dt>dispositivo</dt><dd>${escapeHtml(device?.nombre ?? '—')}</dd></div>
+          <div><dt>origen</dt><dd>${escapeHtml(configuration.nombreFuente)}</dd></div>
+          <div><dt>formato</dt><dd>${escapeHtml(configuration.formato)}</dd></div>
+          <div><dt>versión</dt><dd>v${configuration.version}</dd></div>
+          <div><dt>importó</dt><dd>${escapeHtml(configuration.usuarioResponsable)}</dd></div>
           <div><dt>baseline</dt><dd>${escapeHtml(baseline?.nombre ?? 'Sin baseline aplicable')}</dd></div>
-          <div><dt>rules.active</dt><dd>${ruleCount}</dd></div>
+          <div><dt>reglas activas</dt><dd>${ruleCount}</dd></div>
         </dl>
         <div class="config-preview">
-          <span>normalized.preview</span>
+          <span>vista previa normalizada</span>
           <pre>${escapeHtml(preview)}</pre>
         </div>
         <div id="config-file-status" class="file-integrity">
@@ -484,16 +482,16 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         </div>
         <dl class="technical-definition-list">
           <div><dt>baseline</dt><dd>${escapeHtml(baseline?.nombre ?? `#${audit.baselineId}`)}</dd></div>
-          <div><dt>config</dt><dd>CFG-${String(audit.configuracionId).padStart(3, '0')}</dd></div>
-          <div><dt>rules.total</dt><dd>${audit.totalReglas}</dd></div>
-          <div><dt>rules.pass</dt><dd>${audit.reglasCumplidas}</dd></div>
-          <div><dt>findings</dt><dd>${audit.totalHallazgos}</dd></div>
-          <div><dt>severity.max</dt><dd>${escapeHtml(audit.severidadMaxima)}</dd></div>
-          <div><dt>executed.by</dt><dd>${escapeHtml(audit.ejecutadoPor)}</dd></div>
-          <div><dt>executed.at</dt><dd>${escapeHtml(formatDate(audit.fechaEjecucion))}</dd></div>
+          <div><dt>configuración</dt><dd>CFG-${String(audit.configuracionId).padStart(3, '0')}</dd></div>
+          <div><dt>reglas evaluadas</dt><dd>${audit.totalReglas}</dd></div>
+          <div><dt>reglas cumplidas</dt><dd>${audit.reglasCumplidas}</dd></div>
+          <div><dt>hallazgos</dt><dd>${audit.totalHallazgos}</dd></div>
+          <div><dt>severidad máxima</dt><dd>${escapeHtml(audit.severidadMaxima)}</dd></div>
+          <div><dt>ejecutó</dt><dd>${escapeHtml(audit.ejecutadoPor)}</dd></div>
+          <div><dt>fecha</dt><dd>${escapeHtml(formatDate(audit.fechaEjecucion))}</dd></div>
         </dl>
         <div class="evaluation-list">
-          <span class="eyebrow">Rule evaluation</span>
+          <span class="eyebrow">Evaluación de reglas</span>
           ${evaluations}
         </div>
         ${audit.totalHallazgos > 0 ? `<a class="button button-ghost button-full" href="/results?auditoria=${audit.id}">Ver hallazgos →</a>` : ''}

@@ -5,7 +5,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 <MasterLayout
   title="Usuarios y perfiles"
   section="Control de acceso"
-  description="Alta, modificación y baja lógica de usuarios, restablecimiento de contraseñas, desbloqueo de cuentas y perfiles de acceso (CU-001-002)."
+  description="Administrá usuarios y perfiles de acceso: altas, cambios, bajas, contraseñas y desbloqueo de cuentas."
 >
   <div id="users-error" class="alert alert-error is-hidden" role="alert"></div>
   <div id="users-message" class="alert alert-success is-hidden" role="status"></div>
@@ -55,7 +55,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         </tbody>
       </table>
       <div id="users-empty" class="empty-state compact-empty is-hidden">
-        <div><code>users.count = 0</code><p>No hay usuarios que coincidan con el filtro.</p></div>
+        <div><code>0 usuarios</code><p>No hay usuarios que coincidan con el filtro.</p></div>
       </div>
     </div>
   </section>
@@ -68,7 +68,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <h2>Perfiles de acceso</h2>
         </div>
       </div>
-      <p class="log-muted">Los cuatro perfiles de la tesis son fijos: sus permisos están aplicados en los servicios. Se puede ajustar la descripción.</p>
+      <p class="log-muted">Los cuatro perfiles son fijos y sus permisos los aplican los servicios. Solo se puede ajustar la descripción.</p>
       <div id="role-list" class="role-list" style="margin-top: 12px;"><div class="skeleton-row"></div></div>
     </article>
 
@@ -364,7 +364,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       await loadUsers();
     };
 
-    // ---- Alta y modificación ------------------------------------------
+    // Alta y modificación
     const syncPasswordRules = () => updatePasswordRules($('#form-user-password-rules'), $<HTMLInputElement>('#form-user-password')?.value ?? '', value('#form-user-username'));
 
     const openUserDialog = (user: User | null) => {
@@ -416,7 +416,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         email: value('#form-user-email'),
         roles: selectedRoles,
       };
-      // Cambiar los perfiles o la organización propios cierra la sesión actual (D-31): se avisa antes.
+      // Cambiar los perfiles o la organización propios cierra la sesión actual: se avisa antes.
       const selfSessionCloses = editing !== null && editing.id === me?.userId && (
         base.organizationId !== editing.organizationId
         || selectedRoles.length !== editing.roles.length
@@ -442,7 +442,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       await loadUsers();
     });
 
-    // ---- Contraseña ----------------------------------------------------
+    // Contraseña
     const syncResetRules = () => updatePasswordRules($('#reset-password-rules'), $<HTMLInputElement>('#reset-password')?.value ?? '', resetting?.nombreUsuario ?? '');
     $('#reset-password')?.addEventListener('input', syncResetRules);
 
@@ -462,7 +462,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       await loadUsers();
     });
 
-    // ---- Acciones por fila ---------------------------------------------
+    // Acciones por fila
     $('#users-body')?.addEventListener('click', async (event) => {
       const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-action]');
       const row = button?.closest<HTMLElement>('[data-user-id]');
@@ -501,7 +501,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       await loadUsers();
     });
 
-    // ---- Perfiles ------------------------------------------------------
+    // Perfiles
     $('#role-list')?.addEventListener('click', (event) => {
       const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-role-id]');
       editingRole = roles.find((role) => role.id === Number(button?.dataset.roleId)) ?? null;

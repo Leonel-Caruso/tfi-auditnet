@@ -14,15 +14,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Último recurso para errores que ninguna otra parte del código atendió.
- * <ul>
- *   <li>Excepción inesperada: se registra con nivel ERROR y se responde 500 con un mensaje genérico
- *       y el código de correlación, sin exponer detalles internos al cliente.</li>
- *   <li>WebApplicationException sin cuerpo (por ejemplo, ruta inexistente): se respeta su respuesta
- *       original y se registra con nivel WARN (4xx) o ERROR (5xx).</li>
- * </ul>
- * Los errores que los recursos ya convierten en respuestas con mensaje (400, 404, 409) y los de
- * seguridad (401, 403) tienen su propio tratamiento y no pasan por aquí.
+ * Último recurso para errores que ningún recurso atendió: los inesperados se registran como ERROR y responden 500
+ * con el código de correlación, sin detalles internos. Una WebApplicationException conserva su respuesta original.
  */
 public class ErrorInesperadoMapper {
 
@@ -47,21 +40,20 @@ public class ErrorInesperadoMapper {
         }
 
         if (error instanceof AlmacenArchivosPort.AlmacenamientoException almacenamiento) {
-            // Bloque 7: el repositorio de archivos no respondió. La operación se revirtió; se puede reintentar.
+            // El repositorio de archivos no respondió. La operación se revirtió; se puede reintentar.
             bitacora.registrar(error, NivelExcepcion.ERROR, 503);
             return conMensaje(Response.Status.SERVICE_UNAVAILABLE, "REPOSITORIO_NO_DISPONIBLE",
                     almacenamiento.getMessage() + " La operación no se guardó; intentá de nuevo en unos minutos.");
         }
 
         if (error instanceof RepositorioArchivosService.ArchivoAlteradoException alterado) {
-            // Bloque 7: el archivo no coincide con su hash (RNF-012). Es un incidente de integridad: nivel ERROR.
+            // El archivo no coincide con su hash: es un incidente de integridad.
             bitacora.registrar(error, NivelExcepcion.ERROR, 409);
             return conMensaje(Response.Status.CONFLICT, "ARCHIVO_ALTERADO", alterado.getMessage());
         }
 
         if (esViolacionDeRestriccion(error)) {
-            // Dos solicitudes simultáneas pasaron la validación del servicio y la base rechazó la segunda
-            // (por ejemplo, el mismo identificador en la misma organización): es un conflicto, no un error interno.
+            // Dos solicitudes simultáneas pasaron la validación y la base rechazó la segunda: es un conflicto.
             bitacora.registrar(error, NivelExcepcion.WARN, 409);
             Map<String, String> cuerpo = new LinkedHashMap<>();
             cuerpo.put("error", "CONFLICTO");

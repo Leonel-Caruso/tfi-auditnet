@@ -52,7 +52,7 @@ export type User = {
   ultimoAcceso: string | null;
 };
 
-/** Perfil de acceso fijo (D-29): solo se edita la descripción. */
+/** Perfil de acceso fijo: solo se edita la descripción. */
 export type Role = {
   id: number;
   nombre: string;
@@ -94,7 +94,7 @@ export type SecuritySummary = {
   desde: string;
 };
 
-// Bloque 7: repositorio de archivos y respaldos (audit-core-service, /api/system).
+// Repositorio de archivos y respaldos (audit-core-service, /api/system).
 export type StoredFile = {
   id: number;
   tipo: 'CONFIGURACION' | 'REPORTE' | 'RESPALDO';
@@ -252,7 +252,7 @@ export type AuditFinding = {
   severidad: 'BAJA' | 'MEDIA' | 'ALTA' | 'CRITICA';
   evidencia: string;
   recomendacion: string;
-  /** Copia del impacto de la regla; null en hallazgos anteriores a la Entrega 2. */
+  /** Copia del impacto de la regla; null en hallazgos creados antes de existir el campo. */
   impacto: string | null;
   estado: FindingStatus;
   fechaDeteccion: string;
@@ -321,7 +321,7 @@ export type AuditComparison = {
 };
 
 
-// Bloque 2.3d: registros de las tres bitácoras (GET /api/admin/bitacoras/...).
+// Registros de las tres bitácoras (GET /api/admin/bitacoras/...).
 export const SYSTEM_EVENTS = [
   'LOGIN_EXITOSO', 'LOGIN_RECHAZADO', 'CUENTA_BLOQUEADA', 'CUENTA_DESBLOQUEADA',
   'USUARIO_CREADO', 'USUARIO_MODIFICADO', 'USUARIO_HABILITADO', 'USUARIO_DESHABILITADO', 'ROLES_ASIGNADOS',
@@ -372,7 +372,7 @@ export type ExceptionLogRecord = {
   correlacion: string | null;
 };
 
-// Bloque 5.1: alertas críticas, tablero de control y estado general del cliente.
+// Alertas críticas, tablero de control y estado general del cliente.
 export type Severity = AuditFinding['severidad'];
 export type DeviceCriticality = NetworkDevice['criticidad'];
 export type AlertStatus = 'ACTIVA' | 'EN_ATENCION' | 'CERRADA';
@@ -474,7 +474,7 @@ export type ClientAuditStatus = {
   reportes: ReportSummary[];
 };
 
-// Bloque 5.2: reportes de auditoría (foto fija guardada al generarlos).
+// Reportes de auditoría (foto fija guardada al generarlos).
 export type ReportCriteria = {
   organizacionId: number | null;
   desde: string | null;

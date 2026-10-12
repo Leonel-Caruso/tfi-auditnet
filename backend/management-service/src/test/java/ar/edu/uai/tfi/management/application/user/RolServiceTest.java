@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Bloque 6 · Perfiles fijos (D-29): solo se edita la descripción; la matriz cubre los cuatro perfiles. */
+/** Perfiles fijos: solo se edita la descripción; la matriz cubre los cuatro perfiles. */
 class RolServiceTest {
 
     @Test

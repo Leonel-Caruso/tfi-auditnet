@@ -16,10 +16,8 @@ import java.time.Instant;
 import java.util.Map;
 
 /**
- * Tablero de control (RF-013, CU-006-003). Solo lectura.
- *
- * El tablero se resuelve con un único GET /api/dashboard/summary (indicadores, auditorías recientes, alertas y
- * evolución), en lugar de los cuatro endpoints separados de la especificación (decisión D-24).
+ * Tablero de control (solo lectura). Un único GET /api/dashboard/summary trae indicadores, auditorías recientes,
+ * alertas y evolución, en lugar de cuatro endpoints separados.
  */
 @Path("/api/dashboard")
 @Produces(MediaType.APPLICATION_JSON)

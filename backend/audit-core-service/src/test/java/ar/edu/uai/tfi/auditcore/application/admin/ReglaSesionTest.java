@@ -7,7 +7,7 @@ import java.time.Instant;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Bloque 6 · audit-core aplica la misma verificación de sesión que management (D-31). */
+/** audit-core aplica la misma verificación de sesión que management. */
 class ReglaSesionTest {
 
     private static final Instant CAMBIO = Instant.parse("2026-10-11T12:00:00Z");

@@ -14,9 +14,8 @@ import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Bitácora de excepciones en MongoDB (Cosmos DB para MongoDB en Azure): colección
- * "bitacora_excepciones", compartida por ambos servicios.
- * Cada error se guarda como un documento; el índice por fecha permite ordenar y filtrar.
+ * Colección "bitacora_excepciones" en MongoDB (Cosmos DB en Azure), compartida por ambos servicios. Un documento
+ * por error, con índice por fecha.
  */
 @ApplicationScoped
 public class MongoBitacoraExcepcionesRepository implements BitacoraExcepcionesRepository {

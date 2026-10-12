@@ -1,19 +1,15 @@
 #!/usr/bin/env bash
-# =====================================================================
-# AuditNet · Paso 5 de infraestructura en Azure (Bloque 7)
-# Crea el repositorio de archivos: una cuenta de Blob Storage con un
-# contenedor PRIVADO donde audit-core-service guarda las configuraciones
-# importadas, los CSV de los reportes y los respaldos de la base.
-#   - Standard LRS, nivel Hot, solo HTTPS con TLS 1.2, sin acceso anónimo.
-#   - Papelera (soft delete) de 7 días para archivos y contenedores.
-#   - La cadena de conexión se guarda solo como secreto de Container Apps.
-# Requiere haber ejecutado 01 y 02. Se puede volver a ejecutar.
+# Crea el Blob Storage con un contenedor privado donde audit-core-service guarda
+# configuraciones importadas, CSV de reportes y respaldos de la base.
+# Requiere 01 y 02; es reejecutable.
 # Uso: bash 05-crear-storage.sh
-# =====================================================================
 set -euo pipefail
 cd "$(dirname "$0")"
 source ./variables.sh
 az config set extension.use_dynamic_install=yes_without_prompt --only-show-errors >/dev/null
+
+# Sin el proveedor registrado Azure responde "SubscriptionNotFound".
+registrar_proveedores Microsoft.Storage
 
 echo "[1/5] Cuenta de almacenamiento $ST_CUENTA..."
 if az storage account show -n "$ST_CUENTA" -g "$RG" -o none 2>/dev/null; then

@@ -28,15 +28,9 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * Gestión de usuarios (CU-001-002): alta, modificación, habilitación, restablecimiento de contraseña y desbloqueo.
- *
- * Reglas de protección (D-29):
- * <ul>
- *   <li>Nadie puede deshabilitarse ni quitarse el perfil de administrador a sí mismo.</li>
- *   <li>Siempre queda al menos un administrador activo.</li>
- *   <li>Los usuarios no se borran: se deshabilitan (baja lógica, regla 1).</li>
- *   <li>Cambiar roles, organización o contraseña cierra las sesiones abiertas de ese usuario.</li>
- * </ul>
+ * Gestión de usuarios. Nadie puede deshabilitarse ni quitarse el perfil de administrador a sí mismo, siempre queda
+ * al menos un administrador activo y los usuarios no se borran (baja lógica). Cambiar roles, organización o
+ * contraseña cierra las sesiones abiertas de ese usuario.
  */
 @ApplicationScoped
 public class UsuarioService {
@@ -118,7 +112,7 @@ public class UsuarioService {
                 passwordPort.hashear(password),
                 EstadoRegistro.ACTIVO,
                 roles), roles);
-        // actor = null: el adaptador toma el usuario autenticado que realizó la operación
+        // actor = null: el adaptador toma el usuario autenticado.
         bitacora.registrar(EventoSistema.exito(TipoEventoSistema.USUARIO_CREADO, null, creado.id(),
                 creado.organizacionId(), "username=" + creado.nombreUsuario() + ", email=" + creado.email()));
         bitacora.registrar(EventoSistema.exito(TipoEventoSistema.ROLES_ASIGNADOS, null, creado.id(),
@@ -127,10 +121,9 @@ public class UsuarioService {
     }
 
     /**
-     * Modifica nombre, email, organización y roles (PUT /api/users/{id}). El nombre de usuario no cambia: es la
-     * identidad que aparece en las bitácoras.
+     * El nombre de usuario no cambia: es la identidad que aparece en las bitácoras.
      *
-     * @param actorId usuario administrador que hace el cambio (del token)
+     * @param actorId administrador que hace el cambio (del token)
      */
     @Transactional
     public Usuario actualizar(Long id, Long organizacionId, String nombre, String email,
@@ -176,7 +169,7 @@ public class UsuarioService {
         return actualizado;
     }
 
-    /** Habilita o deshabilita la cuenta (PATCH /api/users/{id}/status). Baja lógica: el historial se conserva. */
+    /** Baja lógica: el historial se conserva. */
     @Transactional
     public Usuario cambiarEstado(Long id, String estado, Long actorId) {
         Usuario anterior = obtener(id);
@@ -204,10 +197,7 @@ public class UsuarioService {
         return actualizado;
     }
 
-    /**
-     * El administrador asigna una contraseña nueva (POST /api/users/{id}/password): se aplica la política, se quita
-     * el bloqueo y se cierran las sesiones abiertas del usuario.
-     */
+    /** Contraseña asignada por el administrador: aplica la política, quita el bloqueo y cierra las sesiones. */
     @Transactional
     public void restablecerPassword(Long id, String password) {
         Usuario usuario = obtener(id);
@@ -217,7 +207,7 @@ public class UsuarioService {
                 usuario.organizacionId(), "username=" + usuario.nombreUsuario()));
     }
 
-    /** Quita el bloqueo por intentos fallidos antes de que venza (POST /api/users/{id}/unlock). */
+    /** Quita el bloqueo por intentos fallidos antes de que venza. */
     @Transactional
     public void desbloquear(Long id) {
         Usuario usuario = obtener(id);
@@ -230,8 +220,8 @@ public class UsuarioService {
     }
 
     /**
-     * Momento desde el que valen las sesiones, truncado al segundo: el token guarda la emisión en segundos y así el
-     * token nuevo emitido en el mismo segundo nunca queda por debajo (D-31).
+     * Truncado al segundo porque el token guarda la emisión en segundos: así un token emitido en el mismo segundo
+     * no queda por debajo de este momento.
      */
     private Instant ahora() {
         return reloj.instant().truncatedTo(ChronoUnit.SECONDS);

@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-/** Repositorios en memoria y datos de ejemplo para las pruebas de alertas y tablero (Bloque 5). */
+/** Repositorios en memoria y datos de ejemplo para las pruebas de alertas y tablero. */
 public final class EnMemoria {
 
     private EnMemoria() {
@@ -226,7 +226,7 @@ public final class EnMemoria {
         }
     }
 
-    // ---- Bloque 7: repositorio de archivos ---------------------------------------------------------------
+    // Repositorio de archivos
 
     /** Catálogo en memoria. */
     public static final class Archivos implements ArchivoRepository {

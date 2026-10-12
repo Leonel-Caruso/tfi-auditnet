@@ -1,16 +1,13 @@
 #!/usr/bin/env bash
-# =====================================================================
-# AuditNet · Paso 4 de infraestructura en Azure (Bloque 2.3c)
-# Crea Cosmos DB para MongoDB (plan gratuito: 1000 RU/s y 25 GB) para la
-# bitácora de excepciones, y conecta ambos servicios mediante un secreto.
-# Requiere haber ejecutado 01 y 02. Tarda entre 5 y 10 minutos.
-# Se puede volver a ejecutar: no recrea la cuenta ni la base si ya existen.
-# Uso: bash 04-crear-cosmos.sh
-# =====================================================================
+# Crea Cosmos DB para MongoDB (plan gratuito) para la bitácora de excepciones y
+# conecta ambos servicios con un secreto. Requiere 01 y 02; es reejecutable.
+# Uso: bash 04-crear-cosmos.sh   (tarda 5 a 10 minutos)
 set -euo pipefail
 cd "$(dirname "$0")"
 source ./variables.sh
 az config set extension.use_dynamic_install=yes_without_prompt --only-show-errors >/dev/null
+
+registrar_proveedores Microsoft.DocumentDB
 
 echo "[1/5] Cuenta de Cosmos DB para MongoDB (plan gratuito)..."
 if az cosmosdb show -n "$COSMOS_CUENTA" -g "$RG" -o none 2>/dev/null; then

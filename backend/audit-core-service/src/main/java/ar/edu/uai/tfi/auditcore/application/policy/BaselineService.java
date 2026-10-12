@@ -19,14 +19,9 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 /**
- * Gestión de baselines (RF-005, CU-003-001).
- *
- * Reglas de negocio:
- * - El alcance de una baseline es la organización y el tipo de dispositivo. Solo una baseline
- *   puede estar ACTIVA por alcance: es la que usa el motor de auditoría.
- * - El nombre y el alcance identifican a la baseline; cambiar sus criterios (reglas) genera una
- *   versión nueva, que copia las reglas activas y reemplaza a la versión vigente.
- * - Una baseline usada en auditorías no se sobrescribe: sus reglas quedan congeladas.
+ * Gestión de baselines. Por organización y tipo de dispositivo hay a lo sumo una ACTIVA, que es la que usa el
+ * motor de auditoría. Cambiar sus reglas genera una versión nueva; una baseline usada en auditorías no se
+ * sobrescribe.
  */
 @ApplicationScoped
 public class BaselineService {
@@ -84,9 +79,7 @@ public class BaselineService {
         return creada;
     }
 
-    /**
-     * Modifica la descripción. No cambia los criterios de auditoría, por lo que no genera versión.
-     */
+    /** La descripción no cambia los criterios de auditoría, por eso no genera versión. */
     @Transactional
     public BaselineConfiguracion modificarDescripcion(Long id, String descripcion, String actor) {
         validarId(id, "id");
@@ -105,9 +98,7 @@ public class BaselineService {
         return actualizada;
     }
 
-    /**
-     * Activa o desactiva una baseline. Para activarla no debe haber otra activa en el mismo alcance.
-     */
+    /** Para activarla no debe haber otra activa en el mismo alcance. */
     @Transactional
     public BaselineConfiguracion cambiarEstado(Long id, String estado, String actor) {
         validarId(id, "id");
@@ -126,9 +117,8 @@ public class BaselineService {
     }
 
     /**
-     * Genera una versión nueva a partir de una existente: copia sus reglas activas, queda ACTIVA y
-     * desactiva la baseline que estaba vigente en el mismo alcance. La versión anterior y sus
-     * auditorías no se modifican.
+     * Copia las reglas activas en una versión nueva, que queda ACTIVA y desactiva a la vigente del mismo alcance.
+     * La versión anterior y sus auditorías no se modifican.
      *
      * @param descripcion descripción de la versión nueva; si es null se conserva la de origen
      */

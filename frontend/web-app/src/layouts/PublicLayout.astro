@@ -1,25 +1,27 @@
 ---
+import HeadMeta from '../components/HeadMeta.astro';
 import '../styles/global.css';
 
 interface Props {
   title: string;
   description?: string;
+  indexable?: boolean;
+  path?: string;
 }
 
-const { title, description = 'Acceso seguro a la consola de auditoría de configuraciones de red.' } = Astro.props;
+const {
+  title,
+  description = 'Acceso seguro a la consola de auditoría de configuraciones de red.',
+  indexable = false,
+  path,
+} = Astro.props;
 ---
 
 <!doctype html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
-    <meta name="description" content={description} />
-    <title>{title} · AuditNet</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <meta name="theme-color" content="#171a1f" />
+    <HeadMeta title={`${title} · AuditNet`} description={description} indexable={indexable} path={path} />
   </head>
   <body class="public-body">
     <slot />

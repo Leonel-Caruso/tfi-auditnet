@@ -5,12 +5,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Genera {@code restaurar.sql}, el guion de psql que vuelve a cargar los datos del respaldo (Bloque 7, D-36).
- *
- * Se ejecuta con el usuario dueño de las tablas, parado en la carpeta del respaldo descomprimido, sobre una base que
- * tenga la MISMA versión de esquema (la estructura la recrea Flyway al iniciar los servicios). Todo ocurre en una
- * transacción: si algo falla, la base queda como estaba. Los triggers de solo inserción de las bitácoras se
- * desactivan únicamente durante la restauración.
+ * Genera {@code restaurar.sql}, el guion de psql que vuelve a cargar los datos del respaldo. Se ejecuta con el dueño
+ * de las tablas, desde la carpeta del respaldo, sobre una base con la misma versión de esquema. Corre en una sola
+ * transacción y desactiva los triggers de solo inserción de las bitácoras únicamente mientras restaura.
  */
 public final class GuionRestauracion {
 

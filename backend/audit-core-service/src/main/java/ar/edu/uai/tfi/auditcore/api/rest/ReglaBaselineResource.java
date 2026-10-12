@@ -18,7 +18,7 @@ import java.util.NoSuchElementException;
 import java.util.function.Supplier;
 
 /**
- * Reglas de auditoría (CU-003-002). El alta se hace sobre una baseline:
+ * Reglas de auditoría. El alta se hace sobre una baseline:
  * POST /api/baselines/{baselineId}/rules (ver {@link ReglaPorBaselineResource}).
  */
 @Path("/api/rules")

@@ -6,8 +6,7 @@ if [ -z "${JWT_SECRET:-}" ]; then
   exit 1
 fi
 
-# La misma clave HS256 se representa como JWK Base64URL
-# para verificar los tokens emitidos por management-service.
+# La clave HS256 de management-service se pasa como JWK en Base64URL para verificar sus tokens.
 SECRET_B64URL="$(printf '%s' "$JWT_SECRET" | base64 | tr '+/' '-_' | tr -d '=\r\n')"
 
 JWK_JSON="{\"kty\":\"oct\",\"k\":\"${SECRET_B64URL}\",\"alg\":\"HS256\"}"

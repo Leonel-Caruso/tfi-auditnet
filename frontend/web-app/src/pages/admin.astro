@@ -5,7 +5,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 <MasterLayout
   title="Panel de administración"
   section="Panel de administración"
-  description="Salud de los servicios, seguridad de las cuentas y acceso a las bitácoras de la plataforma. Exclusivo del administrador del sistema."
+  description="Estado de los servicios, archivos, respaldos y seguridad de las cuentas. Solo para el administrador del sistema."
 >
   <div id="admin-error" class="alert alert-error is-hidden" role="alert"></div>
 
@@ -77,12 +77,12 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <tbody id="backup-list"></tbody>
         </table>
         <div id="backup-empty" class="empty-state compact-empty is-hidden">
-          <div><code>respaldos = 0</code><p>Todavía no se generó ningún respaldo.</p></div>
+          <div><code>0 respaldos</code><p>Todavía no se generó ningún respaldo.</p></div>
         </div>
       </div>
       <p class="log-muted" style="margin-top: 12px;">
-        Cada respaldo trae los datos de todas las tablas, la versión del esquema y el guion de restauración
-        (docs/database/RESPALDOS.md). Azure conserva además copias automáticas: PostgreSQL 7 días y Cosmos DB cada 4 horas.
+        Cada respaldo trae los datos de todas las tablas, la versión del esquema y el guion de restauración.
+        Azure conserva además copias automáticas: PostgreSQL 7 días y Cosmos DB cada 4 horas.
       </p>
     </article>
   </section>
@@ -104,7 +104,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
   </dialog>
 
   <section class="metric-grid" id="admin-security-kpis">
-    <article class="metric-card"><span class="metric-label">cargando</span><strong>—</strong><small>GET /api/admin/security</small></article>
+    <article class="metric-card"><span class="metric-label">cargando</span><strong>—</strong><small>consultando…</small></article>
   </section>
 
   <section class="two-column dashboard-row">
@@ -278,7 +278,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       document.querySelector('#admin-rejections-empty')?.classList.toggle('is-hidden', summary.ultimosRechazos.length > 0);
     };
 
-    /** Hace 24 h en el formato del filtro de Bitácoras (fecha y hora local), para que el listado coincida con el número. */
+    /** Hace 24 h en el formato del filtro de Bitácoras, para que el listado coincida con el número. */
     const last24h = () => {
       const date = new Date(Date.now() - 24 * 3600 * 1000);
       const pad = (value: number) => String(value).padStart(2, '0');
@@ -286,7 +286,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     };
     const logLink = (params: string) => `/logs?${params}&desde=${encodeURIComponent(last24h())}#sistema`;
 
-    // ---- Bloque 7: repositorio de archivos y respaldos ---------------------------------
+    // Repositorio de archivos y respaldos
     const STORAGE_LABEL: Record<string, string> = { CONFIGURACION: 'Configuraciones', REPORTE: 'Reportes', RESPALDO: 'Respaldos' };
 
     const loadStorage = async () => {

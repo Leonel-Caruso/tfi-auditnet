@@ -5,7 +5,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 <MasterLayout
   title="Reportes de auditoría"
   section="Resultados y trazabilidad"
-  description="Reporte formal con auditorías, dispositivos, hallazgos, severidad, impacto y evidencia (CU-006-001). Se guarda como foto fija y se descarga en PDF o CSV."
+  description="Generá reportes de auditoría con hallazgos, severidad, impacto y evidencia. Quedan guardados y se descargan en PDF o CSV."
 >
   <div id="report-error" class="alert alert-error is-hidden report-no-print" role="alert"></div>
   <div id="report-success" class="alert alert-success is-hidden report-no-print" role="status"></div>
@@ -75,7 +75,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <tbody id="report-list"></tbody>
         </table>
         <div id="report-empty" class="empty-state compact-empty is-hidden">
-          <div><code>reports.count = 0</code><p>Todavía no se generaron reportes.</p></div>
+          <div><code>0 reportes</code><p>Todavía no se generaron reportes.</p></div>
         </div>
       </div>
     </article>
@@ -99,7 +99,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     import { loadVisibleSites } from '../lib/sites';
 
     const isAdmin = hasRole('ADMINISTRADOR_SISTEMA');
-    // CU-006-001: generan el administrador, el analista de redes y el auditor técnico; el resto consulta.
+    // Generan el administrador, el analista de redes y el auditor técnico; el resto consulta.
     const canGenerate = isAdmin || hasRole('ANALISTA_RED') || hasRole('AUDITOR_TECNICO');
     const params = new URLSearchParams(window.location.search);
 

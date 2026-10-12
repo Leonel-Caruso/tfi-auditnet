@@ -14,9 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-/**
- * Bloque 2.3b · Consulta de la bitácora de transacciones: validación de filtros.
- */
+/** Consulta de la bitácora de transacciones: validación de filtros. */
 class BitacoraTransaccionesServiceTest {
 
     private FiltroBitacoraTransacciones filtroRecibido;

@@ -141,11 +141,9 @@ public class ConfiguracionService {
         );
 
         ConfiguracionDispositivo creada = configuracionRepository.guardar(nueva);
-        // Bloque 7: el archivo original va al repositorio de archivos en la misma operación. Si el repositorio falla,
-        // la importación se revierte para no dejar una configuración sin su evidencia.
+        // Si falla el repositorio de archivos se revierte la importación: no queda configuración sin su original.
         repositorioArchivos.guardarConfiguracion(creada, actorSeguro(actor));
-        // En la bitácora no se copia la configuración completa (puede ser extensa y sensible):
-        // se registra un resumen con el hash SHA-256 del contenido original como evidencia de integridad.
+        // La bitácora guarda un resumen con el SHA-256, no la configuración completa (extensa y sensible).
         trazabilidad.registrar(new Transaccion(
                 "CONFIGURACION",
                 creada.id(),

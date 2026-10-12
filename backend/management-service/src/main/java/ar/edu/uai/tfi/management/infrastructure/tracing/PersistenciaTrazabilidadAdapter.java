@@ -16,9 +16,8 @@ import org.jboss.logging.Logger;
 import java.time.Instant;
 
 /**
- * Persiste la bitácora de transacciones (tabla bitacora_transacciones) en la MISMA transacción
- * que la operación de negocio: el registro existe solo si la operación se confirmó.
- * Los valores anterior y nuevo se guardan como JSON.
+ * Bitácora de transacciones, guardada en la misma transacción que la operación de negocio: el registro existe
+ * solo si la operación se confirmó. Los valores anterior y nuevo se guardan como JSON.
  */
 @ApplicationScoped
 public class PersistenciaTrazabilidadAdapter implements TrazabilidadPort {

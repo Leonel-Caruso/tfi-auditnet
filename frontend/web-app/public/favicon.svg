@@ -1,6 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <title>AuditNet</title>
   <rect width="64" height="64" rx="13" fill="#f57c00"/>
-  <path d="M8.5 51 L22 13 L35.5 51 M13.6 38.5 H30.4" fill="none" stroke="#171a1f" stroke-width="7.5" stroke-linejoin="miter" stroke-miterlimit="3"/>
-  <rect x="39.5" y="44" width="16" height="7" fill="#171a1f"/>
+  <path fill="#fff" d="M8.96 43.67 16.36 13.51H24.21L31.69 43.67H25.37L23.92 36.86H16.73L15.28 43.67ZM17.76 31.9H22.85L21.4 24.62Q21.11 23.05 20.8 21.5Q20.49 19.95 20.33 19.09Q20.16 19.95 19.89 21.48Q19.62 23.01 19.29 24.58ZM35.2 50.49V44.71H55.04V50.49Z"/>
 </svg>

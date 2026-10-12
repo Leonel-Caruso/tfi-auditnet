@@ -1,5 +1,5 @@
-// Documento formal del reporte de auditoría (CU-006-001, Bloque 6). Es el mismo HTML en pantalla y en el PDF
-// (el navegador lo imprime con los estilos @media print de global.css).
+// Documento formal del reporte de auditoría. Es el mismo HTML en pantalla y en el PDF (el navegador lo imprime
+// con los estilos @media print de global.css).
 import type { AuditReport, FindingStatus } from './api';
 import { code, escapeHtml } from './format';
 

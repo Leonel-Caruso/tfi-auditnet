@@ -15,16 +15,9 @@ import org.jboss.logging.Logger;
 import java.time.Instant;
 
 /**
- * Persiste la bitácora de auditoría de sistema en PostgreSQL (tabla bitacora_sistema).
- *
- * Regla de transacciones:
- * <ul>
- *   <li>FALLO (por ejemplo, un login rechazado): se guarda en una transacción nueva, para que quede
- *       registrado aunque la operación termine con error. Si no se puede guardar, se deja constancia
- *       en el log y la solicitud sigue su curso.</li>
- *   <li>EXITO: se guarda en la misma transacción de la operación. Así el registro existe solo si la
- *       operación se confirmó, y si el registro no se puede guardar la operación tampoco se confirma.</li>
- * </ul>
+ * Bitácora de auditoría de sistema en PostgreSQL. Un FALLO se guarda en una transacción nueva para que quede
+ * aunque la operación termine con error (si no se puede guardar, solo se loguea). Un EXITO va en la misma
+ * transacción de la operación: existe solo si la operación se confirmó.
  */
 @ApplicationScoped
 public class PersistenciaBitacoraSistemaAdapter implements BitacoraSistemaPort {

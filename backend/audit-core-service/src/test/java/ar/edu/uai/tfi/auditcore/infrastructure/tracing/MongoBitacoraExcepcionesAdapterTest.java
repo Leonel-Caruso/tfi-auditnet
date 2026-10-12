@@ -6,9 +6,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Bloque 2.3c · Nivel configurable de la bitácora de excepciones.
- */
+/** Nivel configurable de la bitácora de excepciones. */
 class MongoBitacoraExcepcionesAdapterTest {
 
     private MongoBitacoraExcepcionesAdapter conNivel(String nivel) {

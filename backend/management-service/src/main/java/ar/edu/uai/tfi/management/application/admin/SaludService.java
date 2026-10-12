@@ -9,9 +9,8 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Salud del servicio para el panel de administración (Puntos Mandatorios: "salud de servicios"). Informa versión,
- * tiempo en línea, memoria y el estado de cada componente. Estado general: UP si todo responde, DEGRADADO si el
- * servicio responde pero falla algún componente.
+ * Salud del servicio para el panel de administración: versión, tiempo en línea, memoria y estado de cada
+ * componente. Estado general: UP si todo responde, DEGRADADO si el servicio responde pero falla algún componente.
  */
 @ApplicationScoped
 public class SaludService {

@@ -23,3 +23,6 @@ Thumbs.db
 
 # Render / deploy local
 .render/
+
+# Prueba de carga (k6): el JSON completo se revisa y se resume en docs/entrega-2/CARGA.md
+resultado-carga*.json

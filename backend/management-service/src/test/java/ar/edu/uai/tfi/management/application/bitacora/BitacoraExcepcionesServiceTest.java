@@ -13,9 +13,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-/**
- * Bloque 2.3c · Consulta de la bitácora de excepciones: filtros por servicio y nivel.
- */
+/** Consulta de la bitácora de excepciones: filtros por servicio y nivel. */
 class BitacoraExcepcionesServiceTest {
 
     private FiltroBitacoraExcepciones filtroRecibido;

@@ -26,11 +26,8 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 /**
- * Repositorio seguro de archivos (Bloque 7, D-35): guarda el archivo original de cada configuración importada y el
- * CSV de cada reporte, con su hash SHA-256 en el catálogo {@code archivos_repositorio}. Al descargar se vuelve a
- * calcular el hash: si no coincide, el archivo fue alterado y no se entrega (RNF-012).
- *
- * Los datos para consultar siguen en PostgreSQL; el repositorio conserva el archivo como evidencia.
+ * Guarda como evidencia el original de cada configuración importada y el CSV de cada reporte, con su SHA-256 en
+ * {@code archivos_repositorio}. Al descargar se recalcula el hash y, si no coincide, el archivo no se entrega.
  */
 @ApplicationScoped
 public class RepositorioArchivosService {
@@ -70,9 +67,8 @@ public class RepositorioArchivosService {
     }
 
     /**
-     * Guarda el archivo original de una configuración recién importada. Se llama dentro de la transacción de la
-     * importación: si el repositorio falla, la importación se revierte (no queda una configuración sin evidencia).
-     * Sin repositorio configurado no hace nada y la configuración queda pendiente de subir.
+     * Corre dentro de la transacción de la importación, así un fallo del repositorio la revierte. Sin repositorio
+     * configurado no hace nada y la configuración queda pendiente de subir.
      */
     public Optional<ArchivoRepositorio> guardarConfiguracion(ConfiguracionDispositivo configuracion, String usuario) {
         if (!almacen.configurado()) {
@@ -126,8 +122,8 @@ public class RepositorioArchivosService {
         try {
             almacen.subir(ruta, contenido, tipoContenido, metadatos);
         } catch (AlmacenamientoException exception) {
-            // Ya existe (por ejemplo, se subió y después falló el registro en la base): si es el mismo contenido se
-            // registra; si es distinto no se toca, porque los archivos del repositorio nunca se reemplazan.
+            // Ya existe (se subió y falló el registro en la base): si el contenido es igual se registra; si no, no
+            // se reemplaza.
             if (exception.estadoHttp() != 409) {
                 throw exception;
             }
@@ -185,9 +181,9 @@ public class RepositorioArchivosService {
     }
 
     /**
-     * Sube los archivos de las configuraciones y reportes anteriores al Bloque 7 (o importados mientras el repositorio
-     * no estaba configurado). Procesa hasta {@value #LOTE_SINCRONIZACION} de cada tipo por vez; cada archivo se
-     * registra en su propia transacción, así un corte a mitad de camino no pierde lo ya subido.
+     * Sube los archivos de configuraciones y reportes que todavía no tienen uno, hasta
+     * {@value #LOTE_SINCRONIZACION} de cada tipo. Cada archivo se registra en su propia transacción para que un
+     * corte no pierda lo ya subido.
      */
     public ResultadoSincronizacion sincronizarPendientes(String usuario) {
         if (!almacen.configurado()) {

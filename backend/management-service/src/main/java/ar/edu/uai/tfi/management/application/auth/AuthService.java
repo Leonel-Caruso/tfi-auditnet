@@ -22,10 +22,8 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 /**
- * Inicio de sesión (CU-001-001) y cambio de la propia contraseña.
- *
- * Protección contra intentos repetidos (D-30): 5 contraseñas incorrectas seguidas bloquean la cuenta 15 minutos.
- * Mientras está bloqueada no se valida la contraseña. El administrador puede desbloquearla antes.
+ * Inicio de sesión y cambio de la propia contraseña. 5 contraseñas incorrectas seguidas bloquean la cuenta
+ * 15 minutos; mientras dura el bloqueo no se valida la contraseña y solo el administrador puede quitarlo antes.
  */
 @ApplicationScoped
 public class AuthService {
@@ -103,10 +101,7 @@ public class AuthService {
         return new AuthResult(token, jwtPort.duracionSegundos(), usuario);
     }
 
-    /**
-     * El usuario autenticado cambia su contraseña (POST /api/auth/password). Las demás sesiones abiertas quedan sin
-     * efecto; se devuelve un token nuevo para seguir trabajando en esta.
-     */
+    /** Las demás sesiones abiertas quedan sin efecto; se devuelve un token nuevo para seguir en esta. */
     @Transactional
     public AuthResult cambiarPasswordPropia(Long usuarioId, String actual, String nueva) {
         Usuario usuario = usuarioRepository.buscarPorId(usuarioId)
@@ -136,7 +131,7 @@ public class AuthService {
             throw new ExcepcionAplicacion(ErrorAplicacion.SOLICITUD_INVALIDA,
                     "La contraseña nueva tiene que ser distinta de la actual.");
         }
-        // Truncado al segundo: el token nuevo (emisión en segundos) no puede quedar antes de este momento (D-31).
+        // Truncado al segundo: el token nuevo (emisión en segundos) no puede quedar antes de este momento.
         usuarioRepository.cambiarPassword(usuario.id(), passwordPort.hashear(nueva), ahora.truncatedTo(ChronoUnit.SECONDS));
         bitacora.registrar(EventoSistema.exito(TipoEventoSistema.CONTRASENA_CAMBIADA, usuario.nombreUsuario(),
                 usuario.id(), usuario.organizacionId(), "origen=propio usuario"));
@@ -161,9 +156,8 @@ public class AuthService {
     }
 
     /**
-     * Registra el intento fallido. Si la identidad corresponde a un usuario existente se guarda su id,
-     * para poder detectar intentos repetidos sobre una misma cuenta. La respuesta al cliente es
-     * siempre la misma, para no revelar si el usuario existe.
+     * Si la identidad corresponde a un usuario existente se guarda su id, para detectar intentos repetidos sobre
+     * una cuenta. La respuesta es siempre la misma para no revelar si el usuario existe.
      */
     private ExcepcionAplicacion credencialesInvalidas(String identidad, Usuario usuario) {
         bitacora.registrar(EventoSistema.fallo(TipoEventoSistema.LOGIN_RECHAZADO, identidad.trim(),

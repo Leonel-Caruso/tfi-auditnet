@@ -18,7 +18,7 @@ import jakarta.persistence.UniqueConstraint;
 @Entity
 @Table(
         name = "dispositivos_red",
-        // V2 (Bloque 3): el identificador es único dentro de cada organización.
+        // El identificador es único dentro de cada organización.
         uniqueConstraints = @UniqueConstraint(
                 name = "uk_dispositivos_red_org_identificador",
                 columnNames = {"id_organizacion", "identificador"}

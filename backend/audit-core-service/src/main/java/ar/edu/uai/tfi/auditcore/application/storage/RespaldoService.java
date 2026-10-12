@@ -27,10 +27,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Respaldos lógicos de la base de datos (Bloque 7, D-36; RNF-009 y punto mandatorio "histórico del modelo de datos:
- * recuperar datos y estructura a través del tiempo"). El administrador genera un respaldo desde el panel: datos de
- * todas las tablas, versión del esquema (Flyway) y el guion de restauración, en un ZIP que se guarda en el
- * repositorio de archivos con su SHA-256. Complementa los respaldos automáticos de 7 días de Azure.
+ * Respaldos lógicos de la base generados desde el panel: datos, versión del esquema y guion de restauración en un
+ * ZIP que se guarda en el repositorio de archivos con su SHA-256. Complementan los respaldos automáticos de Azure.
  */
 @ApplicationScoped
 public class RespaldoService {

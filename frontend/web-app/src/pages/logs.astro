@@ -6,7 +6,7 @@ import { SYSTEM_EVENTS } from '../lib/api';
 <MasterLayout
   title="Bitácoras"
   section="Panel de administración"
-  description="Registros inmutables de seguridad, de operaciones de negocio y de errores de la plataforma. Solo lectura y exclusivo del administrador del sistema."
+  description="Registros de accesos y seguridad, operaciones de negocio y errores de la plataforma. Solo lectura, para el administrador del sistema."
 >
   <div id="log-error" class="alert alert-error is-hidden" role="alert"></div>
 
@@ -133,11 +133,10 @@ import { SYSTEM_EVENTS } from '../lib/api';
     <article id="log-panel" class="panel finding-list-panel" role="tabpanel" aria-labelledby="tab-sistema">
       <div class="panel-heading">
         <div>
-          <span id="log-eyebrow" class="eyebrow">bitacora_sistema</span>
+          <span id="log-eyebrow" class="eyebrow">Bitácora de sistema</span>
           <h2 id="log-title">Auditoría de sistema</h2>
         </div>
         <div class="log-heading-meta">
-          <span id="log-endpoint" class="technical-hint">GET /api/admin/bitacoras/sistema</span>
           <span id="log-count" class="counter-chip">—</span>
         </div>
       </div>
@@ -150,24 +149,25 @@ import { SYSTEM_EVENTS } from '../lib/api';
         <div id="log-loading" class="log-loading is-hidden"><div class="skeleton-row"></div><div class="skeleton-row"></div></div>
         <div id="log-empty" class="empty-state compact-empty is-hidden">
           <div>
-            <code>registros = 0</code>
+            <code>0 registros</code>
             <p>No hay registros para los filtros actuales.</p>
           </div>
         </div>
       </div>
+      <nav id="log-pager" class="pager is-hidden" aria-label="Páginas de la bitácora"></nav>
     </article>
 
     <aside class="panel finding-inspector" aria-live="polite">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Inspector</span>
+          <span class="eyebrow">Registro seleccionado</span>
           <h2>Detalle del registro</h2>
         </div>
         <span class="inspector-led"></span>
       </div>
 
       <div id="log-inspector-empty" class="inspector-empty">
-        <code>select registro;</code>
+        <code>sin selección</code>
         <p>Seleccioná un registro para ver todos sus campos.</p>
       </div>
 
@@ -178,6 +178,7 @@ import { SYSTEM_EVENTS } from '../lib/api';
   <script>
     import { authFetch } from '../lib/auth';
     import { readApiError } from '../lib/api';
+    import { crearPaginador } from '../lib/paginador';
     import type {
       ExceptionLogRecord,
       Organization,
@@ -191,7 +192,7 @@ import { SYSTEM_EVENTS } from '../lib/api';
     type TabConfig = {
       title: string;
       eyebrow: string;
-      endpoint: string;
+      endpoint: string; // ruta de la API (no se muestra en pantalla)
       params: string[];
       columns: string[];
     };
@@ -199,21 +200,21 @@ import { SYSTEM_EVENTS } from '../lib/api';
     const TABS: Record<Tab, TabConfig> = {
       sistema: {
         title: 'Auditoría de sistema',
-        eyebrow: 'bitacora_sistema',
+        eyebrow: 'Bitácora de sistema',
         endpoint: '/api/admin/bitacoras/sistema',
         params: ['evento', 'resultado', 'actor', 'desde', 'hasta', 'limite'],
         columns: ['ID', 'FECHA', 'EVENTO', 'RESULTADO', 'ACTOR', 'ORIGEN', 'SEGUIMIENTO'],
       },
       transacciones: {
         title: 'Transacciones',
-        eyebrow: 'bitacora_transacciones',
+        eyebrow: 'Bitácora de transacciones',
         endpoint: '/api/admin/bitacoras/transacciones',
         params: ['entidad', 'entidadId', 'operacion', 'actor', 'desde', 'hasta', 'limite'],
         columns: ['ID', 'FECHA', 'ENTIDAD', 'OPERACIÓN', 'ACTOR', 'SERVICIO', 'SEGUIMIENTO'],
       },
       excepciones: {
         title: 'Excepciones',
-        eyebrow: 'bitacora_excepciones (MongoDB)',
+        eyebrow: 'Bitácora de excepciones',
         endpoint: '/api/admin/bitacoras/excepciones',
         params: ['servicio', 'nivel', 'desde', 'hasta', 'limite'],
         columns: ['FECHA', 'NIVEL', 'EXCEPCIÓN', 'SOLICITUD', 'HTTP', 'SERVICIO', 'SEGUIMIENTO'],
@@ -236,6 +237,8 @@ import { SYSTEM_EVENTS } from '../lib/api';
 
     const form = document.querySelector<HTMLFormElement>('#log-filters');
     const search = document.querySelector<HTMLInputElement>('#log-search');
+    // Los registros se traen hasta el "límite" elegido y se paginan en el navegador.
+    const paginador = crearPaginador(document.querySelector<HTMLElement>('#log-pager'), { alCambiar: () => render() });
 
     const escapeHtml = (value: unknown) =>
       String(value ?? '')
@@ -287,10 +290,7 @@ import { SYSTEM_EVENTS } from '../lib/api';
       node.classList.toggle('is-hidden', !message);
     };
 
-    // ---------------------------------------------------------------
-    // Filtros: solo se envían los parámetros de la bitácora activa.
-    // Las fechas del formulario están en hora local y se envían en UTC (ISO-8601).
-    // ---------------------------------------------------------------
+    // Filtros: solo se envían los de la bitácora activa. Las fechas se cargan en hora local y se envían en UTC.
     const buildQuery = (tab: Tab): string => {
       if (!form) return '';
       const data = new FormData(form);
@@ -329,9 +329,7 @@ import { SYSTEM_EVENTS } from '../lib/api';
       });
     };
 
-    // ---------------------------------------------------------------
     // Tabla
-    // ---------------------------------------------------------------
     const haystack = (record: LogRecord) =>
       Object.values(record).map((value) => String(value ?? '')).join(' ').toLowerCase();
 
@@ -388,7 +386,7 @@ import { SYSTEM_EVENTS } from '../lib/api';
         .map((record, index) => ({ record, index }))
         .filter(({ record }) => !term || haystack(record).includes(term));
 
-      body.innerHTML = visible.map(({ record, index }) => `
+      body.innerHTML = paginador.recortar(visible).map(({ record, index }) => `
         <tr class="finding-row ${index === selectedIndex ? 'is-selected' : ''}" data-index="${index}" tabindex="0">
           ${rowCells(record).map((cell) => `<td>${cell}</td>`).join('')}
         </tr>`).join('');
@@ -412,9 +410,7 @@ import { SYSTEM_EVENTS } from '../lib/api';
       });
     };
 
-    // ---------------------------------------------------------------
     // Inspector
-    // ---------------------------------------------------------------
     const definition = (label: string, value: unknown) =>
       `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value ?? '—')}</dd></div>`;
 
@@ -445,10 +441,10 @@ import { SYSTEM_EVENTS } from '../lib/api';
           <dl class="technical-definition-list">
             ${definition('fecha', formatDate(r.fecha))}
             ${definition('actor', r.actor)}
-            ${definition('usuario.afectado', r.usuarioAfectadoId == null ? null : `#${r.usuarioAfectadoId}`)}
+            ${definition('usuario afectado', r.usuarioAfectadoId == null ? null : `#${r.usuarioAfectadoId}`)}
             ${definition('organización', orgLabel(r.organizacionId))}
-            ${definition('origen.ip', r.origenIp)}
-            ${definition('user.agent', r.userAgent)}
+            ${definition('IP de origen', r.origenIp)}
+            ${definition('navegador', r.userAgent)}
           </dl>
           ${block('detalle', r.detalle, 'sin detalle')}
           ${correlationAction(r.correlacion)}`;
@@ -483,7 +479,7 @@ import { SYSTEM_EVENTS } from '../lib/api';
           ${definition('fecha', formatDate(r.fecha))}
           ${definition('tipo', r.tipo)}
           ${definition('solicitud', [r.metodoHttp, r.ruta].filter(Boolean).join(' ') || null)}
-          ${definition('http.status', r.estadoHttp)}
+          ${definition('código HTTP', r.estadoHttp)}
           ${definition('usuario', r.usuario)}
         </dl>
         <div class="finding-evidence-block">
@@ -519,14 +515,13 @@ import { SYSTEM_EVENTS } from '../lib/api';
       content.querySelector<HTMLButtonElement>('[data-follow]')?.addEventListener('click', (event) => {
         const value = (event.currentTarget as HTMLButtonElement).dataset.follow ?? '';
         if (search) search.value = value;
+        paginador.reiniciar();
         render();
         search?.focus();
       });
     };
 
-    // ---------------------------------------------------------------
     // Carga
-    // ---------------------------------------------------------------
     const setLoading = (loading: boolean) => {
       document.querySelector('#log-loading')?.classList.toggle('is-hidden', !loading);
       const submit = document.querySelector<HTMLButtonElement>('#log-submit');
@@ -550,12 +545,13 @@ import { SYSTEM_EVENTS } from '../lib/api';
         if (sequence !== requestSequence) return;
         if (!response.ok) {
           showError(response.status === 403
-            ? 'Solo el ADMINISTRADOR_SISTEMA puede consultar las bitácoras.'
+            ? 'Solo el administrador del sistema puede consultar las bitácoras.'
             : await readApiError(response));
           return;
         }
         state[tab].records = await response.json() as LogRecord[];
         state[tab].loaded = true;
+        if (tab === activeTab) paginador.reiniciar();
       } catch (error) {
         if (sequence === requestSequence) {
           showError(error instanceof Error ? error.message : 'No se pudo consultar la bitácora.');
@@ -582,9 +578,7 @@ import { SYSTEM_EVENTS } from '../lib/api';
       }
     };
 
-    // ---------------------------------------------------------------
     // Pestañas
-    // ---------------------------------------------------------------
     const tabButtons = Array.from(document.querySelectorAll<HTMLButtonElement>('.log-tab'));
 
     const activate = (tab: Tab, focus = false) => {
@@ -602,14 +596,13 @@ import { SYSTEM_EVENTS } from '../lib/api';
       document.querySelector('#log-panel')?.setAttribute('aria-labelledby', `tab-${tab}`);
       const title = document.querySelector('#log-title');
       const eyebrow = document.querySelector('#log-eyebrow');
-      const endpoint = document.querySelector('#log-endpoint');
       if (title) title.textContent = config.title;
       if (eyebrow) eyebrow.textContent = config.eyebrow;
-      if (endpoint) endpoint.textContent = `GET ${config.endpoint}`;
 
       history.replaceState(null, '', `#${tab}`);
       syncFilterVisibility();
       clearInspector();
+      paginador.reiniciar();
       render();
       if (!state[tab].loaded) load(tab);
     };
@@ -642,7 +635,10 @@ import { SYSTEM_EVENTS } from '../lib/api';
       load(activeTab);
     });
 
-    search?.addEventListener('input', render);
+    search?.addEventListener('input', () => {
+      paginador.reiniciar();
+      render();
+    });
 
     // Filtros que llegan desde el panel de administración (ej: /logs?evento=CUENTA_BLOQUEADA#sistema).
     const urlFilters = new URLSearchParams(window.location.search);

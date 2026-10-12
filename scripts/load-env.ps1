@@ -56,8 +56,7 @@ if ($env:JWT_SECRET.Length -lt 32) {
     throw "JWT_SECRET debe tener al menos 32 caracteres."
 }
 
-# La misma clave simétrica se representa como JWK Base64URL para que
-# SmallRye JWT pueda verificar correctamente los tokens HS256 en HTTP.
+# SmallRye JWT verifica los tokens HS256 con la misma clave expresada como JWK Base64URL.
 $secretBytes = [System.Text.Encoding]::UTF8.GetBytes($env:JWT_SECRET)
 $secretBase64Url = [Convert]::ToBase64String($secretBytes)
 $secretBase64Url = $secretBase64Url.TrimEnd('=').Replace('+', '-').Replace('/', '_')

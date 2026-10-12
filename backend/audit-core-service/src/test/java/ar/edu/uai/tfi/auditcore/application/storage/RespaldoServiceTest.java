@@ -22,7 +22,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Bloque 7 · Respaldos: nombre, ubicación, hash, catálogo y registro en la bitácora de transacciones. */
+/** Respaldos: nombre, ubicación, hash, catálogo y registro en la bitácora de transacciones. */
 class RespaldoServiceTest {
 
     private final EnMemoria.Configuraciones configuraciones = new EnMemoria.Configuraciones();

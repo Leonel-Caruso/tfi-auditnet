@@ -69,10 +69,7 @@ public class OrganizacionClienteService {
         return creada;
     }
 
-    /**
-     * Modifica identificador y razón social (PUT /api/client-organizations/{id}). Ambos siguen siendo únicos en la
-     * plataforma (CU-007-001, regla 1).
-     */
+    /** Modifica identificador y razón social; ambos siguen siendo únicos en la plataforma. */
     @Transactional
     public OrganizacionCliente actualizar(Long id, String identificador, String razonSocial) {
         OrganizacionCliente anterior = buscarPorId(id);
@@ -95,10 +92,7 @@ public class OrganizacionClienteService {
         return actualizada;
     }
 
-    /**
-     * Habilita o deshabilita la organización (baja lógica, CU-007-001 reglas 2 y 6). Mientras está deshabilitada,
-     * sus usuarios no pueden ingresar ni operar (D-31); sus datos se conservan.
-     */
+    /** Baja lógica: mientras está deshabilitada sus usuarios no pueden ingresar ni operar; los datos se conservan. */
     @Transactional
     public OrganizacionCliente cambiarEstado(Long id, String estado) {
         OrganizacionCliente anterior = buscarPorId(id);
@@ -109,7 +103,7 @@ public class OrganizacionClienteService {
         OrganizacionCliente actualizada = repository.actualizar(new OrganizacionCliente(id, anterior.identificador(),
                 anterior.razonSocial(), nuevo));
         if (nuevo == EstadoRegistro.DESHABILITADO) {
-            // Si después se vuelve a habilitar, los tokens emitidos antes de la baja no recuperan validez (D-31).
+            // Si después se vuelve a habilitar, los tokens emitidos antes de la baja no recuperan validez.
             usuarioRepository.invalidarSesionesDeOrganizacion(id, reloj.instant().truncatedTo(ChronoUnit.SECONDS));
         }
         trazabilidad.registrar(new Transaccion("ORGANIZACION", id, OperacionTransaccion.CAMBIO_ESTADO, id,

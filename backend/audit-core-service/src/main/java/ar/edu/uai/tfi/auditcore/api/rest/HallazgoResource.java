@@ -22,10 +22,9 @@ import java.util.NoSuchElementException;
 import java.util.function.Supplier;
 
 /**
- * Hallazgos (CU-005-001). Todos los perfiles consultan; el seguimiento lo actualizan el administrador, el
- * analista de redes y el auditor técnico. Los usuarios que no son administradores solo ven su organización.
- *
- * Ejemplo: GET /api/findings?estado=ABIERTO&severidad=CRITICA&dispositivoId=4&desde=2026-10-01T00:00:00Z
+ * Hallazgos. Todos los perfiles consultan; el seguimiento lo actualizan el administrador, el analista de redes y
+ * el auditor técnico. Quien no es administrador solo ve su organización.
+ * Ejemplo: GET /api/findings?estado=ABIERTO&severidad=CRITICA&dispositivoId=4&pagina=1&porPagina=25
  */
 @Path("/api/findings")
 @Produces(MediaType.APPLICATION_JSON)
@@ -51,16 +50,21 @@ public class HallazgoResource {
     /**
      * Lista priorizada; los filtros se aplican en el servidor y no modifican la información guardada.
      * {@code estado=PENDIENTES} devuelve ABIERTO y EN_REVISION (lo usan los enlaces del tablero).
+     * La prioridad se calcula sobre todos los que cumplen los filtros y recién después se corta la página, así el
+     * orden es el mismo con o sin paginar.
      */
     @GET
-    public List<HallazgoResponse> listar(@QueryParam("estado") String estado,
+    public Response listar(@QueryParam("estado") String estado,
                                          @QueryParam("severidad") String severidad,
                                          @QueryParam("dispositivoId") String dispositivoId,
                                          @QueryParam("baselineId") String baselineId,
                                          @QueryParam("auditoriaId") String auditoriaId,
                                          @QueryParam("desde") String desde,
-                                         @QueryParam("hasta") String hasta) {
+                                         @QueryParam("hasta") String hasta,
+                                         @QueryParam("pagina") String pagina,
+                                         @QueryParam("porPagina") String porPagina) {
         try {
+            Paginacion paginacion = Paginacion.de(pagina, porPagina);
             boolean soloPendientes = estado != null && estado.trim().equalsIgnoreCase("PENDIENTES");
             FiltroHallazgos filtro = new FiltroHallazgos(
                     organizacionDelUsuario(),
@@ -72,10 +76,11 @@ public class HallazgoResource {
                     FiltrosConsulta.fecha(desde, "desde"),
                     FiltrosConsulta.fecha(hasta, "hasta")
             );
-            return service.buscarPriorizados(filtro).stream()
+            List<HallazgoResponse> hallazgos = service.buscarPriorizados(filtro).stream()
                     .filter(priorizado -> !soloPendientes || priorizado.hallazgo().estado().pendiente())
                     .map(HallazgoResource::aResponse)
                     .toList();
+            return Paginacion.responder(hallazgos, paginacion);
         } catch (IllegalArgumentException exception) {
             throw error(Response.Status.BAD_REQUEST, exception.getMessage());
         }

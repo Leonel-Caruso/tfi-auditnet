@@ -22,7 +22,7 @@ public interface ArchivoRepository {
     /** Cantidad de archivos y bytes totales por tipo. */
     Map<TipoArchivo, long[]> totalesPorTipo();
 
-    /** Configuraciones importadas que todavía no tienen su archivo en el repositorio (anteriores al Bloque 7). */
+    /** Configuraciones importadas que todavía no tienen su archivo en el repositorio. */
     List<Long> configuracionesSinArchivo(int limite);
 
     /** Reportes generados que todavía no tienen su archivo en el repositorio. */

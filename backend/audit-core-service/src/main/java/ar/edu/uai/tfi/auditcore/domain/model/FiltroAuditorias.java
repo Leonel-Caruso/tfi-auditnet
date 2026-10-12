@@ -3,7 +3,7 @@ package ar.edu.uai.tfi.auditcore.domain.model;
 import java.time.Instant;
 
 /**
- * Criterios de consulta del historial de auditorías (CU-005-002). Todos son opcionales.
+ * Criterios de consulta del historial de auditorías. Todos son opcionales.
  *
  * @param severidadMaxima NINGUNA, BAJA, MEDIA, ALTA o CRITICA
  * @param resultado       CUMPLE o CON_HALLAZGOS

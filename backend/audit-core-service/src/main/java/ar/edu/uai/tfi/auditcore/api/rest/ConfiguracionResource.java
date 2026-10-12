@@ -65,8 +65,8 @@ public class ConfiguracionResource {
     }
 
     /**
-     * Archivo original de la configuración, leído del repositorio de archivos y verificado contra su SHA-256
-     * (Bloque 7). Los encabezados X-AuditNet-SHA256 y X-AuditNet-Integridad informan el resultado.
+     * Archivo original de la configuración, leído del repositorio de archivos y verificado contra su SHA-256.
+     * Los encabezados X-AuditNet-SHA256 y X-AuditNet-Integridad informan el resultado.
      */
     @GET
     @Path("/{id}/file")

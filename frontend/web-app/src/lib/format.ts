@@ -1,4 +1,4 @@
-// Utilidades de presentación compartidas por las pantallas de hallazgos e historial (Bloque 4).
+// Utilidades de presentación compartidas entre pantallas.
 import type { AlertStatus, FindingStatus, RiskLevel } from './api';
 
 /** Escapa texto antes de insertarlo como HTML (los datos vienen de usuarios y de configuraciones). */
@@ -55,7 +55,7 @@ export const findingStatusBadge = (status: FindingStatus) => {
   return `<span class="status-badge ${kind}">${escapeHtml(status)}</span>`;
 };
 
-// Bloque 5.1 ---------------------------------------------------------------
+// Nivel general de riesgo
 
 export const RISK_LABEL: Record<RiskLevel, string> = {
   ALTO: 'riesgo alto',
@@ -64,7 +64,7 @@ export const RISK_LABEL: Record<RiskLevel, string> = {
   SIN_DATOS: 'sin auditorías',
 };
 
-/** Qué significa cada nivel (D-23), para mostrarlo junto al indicador. */
+/** Qué significa cada nivel, para mostrarlo junto al indicador. */
 export const RISK_HELP: Record<RiskLevel, string> = {
   ALTO: 'Hay hallazgos CRITICA pendientes o alertas vigentes en equipos de criticidad ALTA o CRITICA.',
   MEDIO: 'Hay hallazgos ALTA pendientes en equipos de criticidad media o baja.',

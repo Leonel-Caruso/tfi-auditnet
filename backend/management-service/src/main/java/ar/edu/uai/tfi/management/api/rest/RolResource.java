@@ -13,8 +13,8 @@ import jakarta.ws.rs.core.MediaType;
 import java.util.List;
 
 /**
- * Perfiles de acceso (CU-001-002). Son fijos (D-29): se consultan, se ve su matriz de permisos y se edita la
- * descripción. No hay alta de perfiles nuevos.
+ * Perfiles de acceso. Son fijos: se consultan, se ve su matriz de permisos y se edita la descripción. No hay alta
+ * de perfiles nuevos.
  */
 @Path("/api/roles")
 @Produces(MediaType.APPLICATION_JSON)

@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Copia lógica de la base de datos (Bloque 7, D-36): datos de todas las tablas en CSV, versión del esquema según
- * Flyway y el guion para restaurarlos, empaquetados en un ZIP.
+ * Copia lógica de la base de datos: datos de todas las tablas en CSV, versión del esquema según Flyway y el guion
+ * para restaurarlos, empaquetados en un ZIP.
  */
 public interface ExportadorBaseDatosPort {
 

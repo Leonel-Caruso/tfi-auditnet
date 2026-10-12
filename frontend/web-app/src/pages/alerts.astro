@@ -5,7 +5,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 <MasterLayout
   title="Alertas críticas"
   section="Resultados y trazabilidad"
-  description="Alertas internas generadas por hallazgos CRITICA o ALTA, priorizadas por severidad, criticidad del dispositivo y fecha."
+  description="Alertas por hallazgos de severidad crítica o alta, ordenadas por prioridad. Seleccioná una para ver el hallazgo y derivarla a un perfil técnico."
 >
   <div id="alert-error" class="alert alert-error is-hidden" role="alert"></div>
   <div id="alert-success" class="alert alert-success is-hidden" role="status"></div>
@@ -83,11 +83,10 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <article class="panel finding-list-panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Critical alerts</span>
+          <span class="eyebrow">Alertas críticas</span>
           <h2>Alertas priorizadas</h2>
         </div>
         <div class="log-heading-meta">
-          <span id="alert-endpoint" class="technical-hint">GET /api/alerts/critical</span>
           <span id="alert-count" class="counter-chip">—</span>
         </div>
       </div>
@@ -108,7 +107,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         </table>
         <div id="alert-empty" class="empty-state compact-empty is-hidden">
           <div>
-            <code>alerts.count = 0</code>
+            <code>0 alertas</code>
             <p id="alert-empty-text">No hay alertas críticas pendientes.</p>
           </div>
         </div>
@@ -118,14 +117,14 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <aside class="panel finding-inspector" aria-live="polite">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Alert inspector</span>
+          <span class="eyebrow">Alerta seleccionada</span>
           <h2>Detalle y derivación</h2>
         </div>
         <span class="inspector-led"></span>
       </div>
 
       <div id="alert-inspector-empty" class="inspector-empty">
-        <code>select alert;</code>
+        <code>sin selección</code>
         <p>Seleccioná una alerta para ver el hallazgo que la originó y derivarla a un perfil técnico.</p>
       </div>
 
@@ -156,7 +155,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     const params = new URLSearchParams(window.location.search);
     const initialAlert = Number(params.get('alerta')) || null;
 
-    // CU-006-002: derivan o devuelven el administrador, el responsable de gestión IT y el analista de redes.
+    // Derivan o devuelven el administrador, el responsable de gestión IT y el analista de redes.
     const canManage = hasRole('ADMINISTRADOR_SISTEMA') || hasRole('RESPONSABLE_GESTION_IT') || hasRole('ANALISTA_RED');
 
     const form = document.querySelector<HTMLFormElement>('#alert-filters');
@@ -300,12 +299,12 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         </div>
         ${finding ? '' : '<div class="alert alert-error">No se pudo obtener el hallazgo asociado; se muestra la información disponible.</div>'}
         <dl class="technical-definition-list">
-          <div><dt>device</dt><dd>${escapeHtml(alert.dispositivoIdentificador ?? `#${alert.dispositivoId}`)} · criticidad ${escapeHtml(alert.criticidadDispositivo ?? '—')}</dd></div>
-          <div><dt>site</dt><dd>${escapeHtml(siteName(alert.sedeId))}</dd></div>
-          <div><dt>finding</dt><dd><a class="inline-link" href="/results?hallazgo=${alert.hallazgoId}">${code('FND', alert.hallazgoId)} →</a> ${finding ? findingStatusBadge(finding.estado) : ''}</dd></div>
-          <div><dt>audit.id</dt><dd><a class="inline-link" href="/history?auditoria=${alert.auditoriaId}">${code('AUD', alert.auditoriaId)} →</a></dd></div>
-          <div><dt>assigned.to</dt><dd>${escapeHtml(alert.perfilAsignado ?? 'sin derivar')}</dd></div>
-          <div><dt>status.changed</dt><dd>${alert.fechaEstado
+          <div><dt>dispositivo</dt><dd>${escapeHtml(alert.dispositivoIdentificador ?? `#${alert.dispositivoId}`)} · criticidad ${escapeHtml(alert.criticidadDispositivo ?? '—')}</dd></div>
+          <div><dt>sede</dt><dd>${escapeHtml(siteName(alert.sedeId))}</dd></div>
+          <div><dt>hallazgo</dt><dd><a class="inline-link" href="/results?hallazgo=${alert.hallazgoId}">${code('FND', alert.hallazgoId)} →</a> ${finding ? findingStatusBadge(finding.estado) : ''}</dd></div>
+          <div><dt>auditoría</dt><dd><a class="inline-link" href="/history?auditoria=${alert.auditoriaId}">${code('AUD', alert.auditoriaId)} →</a></dd></div>
+          <div><dt>derivada a</dt><dd>${escapeHtml(alert.perfilAsignado ?? 'sin derivar')}</dd></div>
+          <div><dt>último cambio</dt><dd>${alert.fechaEstado
             ? `${escapeHtml(formatDate(alert.fechaEstado))} · ${escapeHtml(alert.usuarioEstado)}`
             : 'sin cambios'}</dd></div>
         </dl>
@@ -383,8 +382,6 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const open = openResponse.ok ? await openResponse.json() as CriticalAlert[] : data;
       if (seq !== loadSeq) return;
       alerts = data;
-      const endpoint = document.querySelector('#alert-endpoint');
-      if (endpoint) endpoint.textContent = `GET /api/alerts/critical${query}`;
       renderMetrics(open);
       render();
     };

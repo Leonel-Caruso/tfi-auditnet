@@ -3,8 +3,8 @@ package ar.edu.uai.tfi.management.domain.model;
 import java.time.Instant;
 
 /**
- * Estado de acceso de una cuenta (V4): intentos fallidos, bloqueo temporal, último acceso y desde cuándo valen
- * sus sesiones.
+ * Estado de acceso de una cuenta: intentos fallidos, bloqueo temporal, último acceso y desde cuándo valen sus
+ * sesiones.
  *
  * @param sesionesValidasDesde los tokens emitidos antes de este momento ya no valen (null = todos valen)
  */

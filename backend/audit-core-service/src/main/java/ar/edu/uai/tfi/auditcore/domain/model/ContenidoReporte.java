@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Contenido del reporte (CU-006-001, paso 10): resumen, auditorías incluidas y hallazgos con su evidencia. Es una
- * foto fija tomada al generarlo: si después cambian los datos de origen, el reporte no cambia (regla 5).
+ * Contenido del reporte: resumen, auditorías incluidas y hallazgos con su evidencia. Es una foto fija tomada al
+ * generarlo: si después cambian los datos de origen, el reporte no cambia.
  */
 public record ContenidoReporte(
         Resumen resumen,
@@ -35,7 +35,7 @@ public record ContenidoReporte(
     ) {
     }
 
-    /** Auditoría de origen con el dispositivo, la configuración y la baseline usadas (regla 4). */
+    /** Auditoría de origen con el dispositivo, la configuración y la baseline usadas. */
     public record AuditoriaIncluida(
             Long id,
             Instant fechaEjecucion,
@@ -58,7 +58,7 @@ public record ContenidoReporte(
     ) {
     }
 
-    /** Hallazgo con severidad, impacto, evidencia y estado al momento de generar el reporte (regla 3). */
+    /** Hallazgo con severidad, impacto, evidencia y estado al momento de generar el reporte. */
     public record HallazgoIncluido(
             Long id,
             Long auditoriaId,

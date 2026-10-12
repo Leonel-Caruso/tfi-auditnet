@@ -495,6 +495,87 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
 - **Prueba:** `RespaldoServiceTest`, `GuionRestauracionTest`; exportación y restauración reales sobre PostgreSQL 16
   (20 tablas idénticas, secuencias y triggers correctos, rechazo con versión distinta).
 
+## D-37 · HTTPS con el dominio de Azure y HSTS (Bloque 8)
+
+- **Decisión:** el sitio publicado usa el dominio que asigna Azure (`*.azurecontainerapps.io`) con el certificado que
+  Azure emite y renueva solo. El ingress de `ca-auditnet-web` no admite HTTP (`allowInsecure: false`, redirige a
+  HTTPS) y nginx agrega `Strict-Transport-Security: max-age=31536000` (sin `includeSubDomains`: el dominio padre es de
+  Azure). Cumple el punto mandatorio "certificado SSL en el dominio del sitio publicado".
+- **Alternativa descartada:** dominio propio con certificado administrado (gratuito en Container Apps). Agrega el costo
+  del dominio y la configuración DNS sin cambiar la seguridad del prototipo. Queda como mejora si se comercializa.
+- **Impacto financiero:** ninguno (el certificado del dominio de Azure no tiene costo).
+- **Prueba:** CP-B8-10 y CP-B8-11; la prueba de humo del despliegue verifica el encabezado HSTS.
+
+## D-38 · Despliegue continuo con aprobación manual y OIDC (Bloque 8)
+
+- **Decisión:** después de publicar las imágenes, GitHub Actions despliega en Azure (`03-actualizar-imagenes.sh` con
+  `sha-<commit>`) solo cuando el autor aprueba el entorno `azure` (revisor obligatorio). Inicia sesión con **OIDC**:
+  una identidad administrada de Azure confía en los tokens que GitHub emite para ese repositorio y ese entorno; no se
+  guarda ninguna contraseña ni clave en GitHub. Al final, una prueba de humo verifica login, ambos servicios y HSTS.
+- **Permisos acotados:** Colaborador solo sobre las 3 Container Apps y Lector del grupo de recursos: no puede crear ni
+  borrar recursos ni modificar PostgreSQL, Cosmos DB o Storage. **Limitación:** sobre las apps puede leer sus secretos y
+  cambiar la imagen; por eso la federación solo acepta el entorno `azure` y cada despliegue exige aprobación manual. Un
+  rol personalizado sin lectura de secretos sería más fino (mejora futura).
+- **Requisito:** los revisores obligatorios de un entorno están disponibles en repositorios públicos; el repositorio
+  de la tesis lo es.
+- **Por qué identidad administrada y no un *service principal* con secreto:** no hay secreto que rotar ni que pueda
+  filtrarse, y en suscripciones de estudiante crear registros de aplicación en Entra ID puede estar restringido.
+- **Por qué con aprobación:** el flujo de trabajo de la tesis exige validar antes de desplegar
+  (LOCAL → TESTS → VALIDACIÓN → COMMIT → GITHUB → DEPLOY → SMOKE TEST); la aprobación conserva ese control.
+- **Impacto financiero:** GitHub Actions es gratuito en repositorios públicos; el despliegue no agrega recursos.
+- **Prueba:** CP-B8-15 y CP-B8-16.
+
+## D-39 · Paginación de hallazgos, historial y bitácoras (Bloque 8)
+
+- **Decisión:** `GET /api/findings` y `GET /api/audits/history` aceptan `pagina` y `porPagina` (máximo 100) y siempre
+  informan el total en `X-Total-Count`; sin parámetros responden como antes (compatibilidad con reportes, tablero y
+  scripts). Resuelve el pendiente de paginación anotado en el Bloque 4.
+- **En pantalla:** el historial pide cada página al servidor. Hallazgos pagina en el navegador: sus métricas y la
+  búsqueda rápida necesitan todos los hallazgos filtrados. Bitácoras pagina lo cargado según el "límite" (máx. 500).
+- **Limitación:** la página se corta después de consultar (la prioridad de hallazgos combina datos de dispositivos y
+  no se puede ordenar en SQL). Alcanza para el volumen del prototipo; con miles de registros por organización se
+  pasaría a paginar en la consulta (`LIMIT/OFFSET`) con la prioridad precalculada.
+- **Prueba:** `PaginacionTest` (4 casos), CP-B8-02 a CP-B8-07.
+
+## D-40 · App instalable (PWA) sin datos sin conexión (Bloque 8)
+
+- **Decisión:** manifiesto con íconos 192/512/maskable y un service worker mínimo que solo guarda una página "Sin
+  conexión", el ícono y la fuente. **Nunca** intercepta `/api/` ni guarda pantallas con datos: la información de
+  auditoría es confidencial (RNF-011) y no debe quedar en el dispositivo. Siempre se pide primero a la red.
+- **Alcance:** cubre "app responsive + PWA" (punto extra). No se reclama el punto "funcionalidad offline-online": sin
+  conexión no se puede operar, solo se informa.
+- **Prueba:** CP-B8-13 y CP-B8-14.
+
+## D-41 · SEO de la pantalla de acceso y compresión (Bloque 8)
+
+- **Decisión:** solo `/login` es indexable (descripción, Open Graph, canonical, JSON-LD); la consola lleva `noindex`.
+  nginx genera `robots.txt` y `sitemap.xml` con el dominio real y comprime con gzip HTML, CSS, JS, SVG y el
+  manifiesto. Las respuestas de `/api/` **no** se comprimen (`gzip off`): pueden llevar el token de sesión junto a
+  datos que escribe el usuario (riesgo tipo BREACH); además salen con `Cache-Control: no-store` para que el navegador
+  no las guarde en disco.
+- **Evaluación:** SEO Optimer sobre `/login`; las observaciones que no aplican a una consola privada se justifican
+  en `SEO.md`.
+- **Prueba:** CP-B8-11, CP-B8-12 y CP-B8-19.
+
+## D-42 · Prueba de carga con k6 (Bloque 8)
+
+- **Decisión:** script k6 (`tests/carga/auditnet-carga.js`) con 10 usuarios simultáneos que solo leen: tablero,
+  hallazgos y alertas pendientes, historial. Criterios: p95 < 1,5 s (tablero < 2 s), errores < 1 %. Un solo inicio de
+  sesión por prueba (no dispara el bloqueo por intentos) y espera previa a que las apps salgan de cero réplicas.
+- **Por qué k6:** gratuito, un solo ejecutable, escenarios y umbrales como código versionado junto al sistema.
+- **Impacto financiero:** despreciable (cientos de solicitudes contra 2 millones gratuitas por mes).
+- **Prueba:** CP-B8-18; resultados en `CARGA.md`.
+
+## D-43 · Marca y lenguaje de usuario (Bloque 8)
+
+- **Decisión:** ícono "A_" blanca en JetBrains Mono ExtraBold (licencia SIL OFL, se incluye el texto de la licencia)
+  convertida a trazos, sobre el cuadrado naranja; la misma fuente (solo los caracteres latinos, 21 KB) en el logo del
+  login y del menú. Se reemplazaron en pantalla las rutas de API y las etiquetas técnicas en inglés por texto en
+  castellano (RNF-004). En los filtros las opciones se muestran en palabras ("en revisión", "crítica"); en insignias,
+  mensajes, reportes y bitácoras se mantienen los códigos de estado (EN_REVISION, CRITICA) porque son los que guarda
+  el sistema.
+- **Prueba:** CP-B8-01, CP-B8-08 y CP-B8-09.
+
 ## Pendientes detectados (para migraciones futuras)
 
 - `auditorias_configuracion.estado` solo admite `FINALIZADA` (CHECK de Hibernate). Alcanza mientras la auditoría sea
@@ -507,8 +588,8 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
 - "Una baseline activa por alcance" se controla en el servicio, no con una restricción de la base: dos solicitudes
   exactamente simultáneas podrían dejar dos activas (el motor usa la de versión más alta). Se acepta por la escala
   del prototipo. Las violaciones de unicidad por concurrencia (identificador, nombre y versión) responden 409.
-- Las consultas de hallazgos y del historial de auditorías no están paginadas (devuelven todo lo que cumple los
-  filtros). Alcanza para el volumen del prototipo; si crece, agregar `page`/`size` en Bloque 8.
+- Paginación de hallazgos e historial: resuelta en el Bloque 8 (D-39) a nivel de API; paginar dentro de la consulta
+  SQL queda para cuando el volumen por organización lo justifique.
 - La regla "siempre queda un administrador activo" se controla en el servicio: dos administradores que se deshabilitan
   mutuamente en el mismo instante podrían dejar cero. Se acepta por la escala del prototipo (D-29).
 - Si se audita varias veces un equipo sin corregir, cada auditoría conserva su hallazgo (evidencia) y todos cuentan

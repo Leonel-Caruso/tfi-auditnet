@@ -5,7 +5,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 <MasterLayout
   title="Estado del cliente"
   section="Consola"
-  description="Vista consolidada de una organización cliente: sedes, dispositivos, hallazgos, alertas y nivel general de riesgo (CU-007-003)."
+  description="Estado de una organización cliente: sedes, dispositivos, hallazgos, alertas y nivel general de riesgo."
 >
   <div id="client-error" class="alert alert-error is-hidden" role="alert"></div>
 
@@ -13,7 +13,6 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <div>
       <span class="eyebrow">Organización cliente</span>
       <h2 id="client-title">Estado general de auditoría</h2>
-      <small id="client-endpoint" class="technical-hint">{'GET /api/client-organizations/{id}/audit-status'}</small>
     </div>
     <div class="dashboard-scope-actions">
       <label class="log-filter" id="client-org-filter" hidden>
@@ -42,7 +41,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         <tbody id="client-sites"></tbody>
       </table>
       <div id="client-sites-empty" class="empty-state compact-empty is-hidden">
-        <div><code>devices.count = 0</code><p>La organización todavía no tiene dispositivos registrados.</p></div>
+        <div><code>0 dispositivos</code><p>La organización todavía no tiene dispositivos registrados.</p></div>
       </div>
     </div>
   </section>
@@ -51,7 +50,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <article class="panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Findings</span>
+          <span class="eyebrow">Hallazgos</span>
           <h2>Hallazgos pendientes por severidad</h2>
         </div>
       </div>
@@ -154,8 +153,6 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const organization = organizations.find((item) => item.id === organizationId);
       const title = document.querySelector('#client-title');
       if (title) title.textContent = organization ? organization.razonSocial : `Organización #${organizationId}`;
-      const endpoint = document.querySelector('#client-endpoint');
-      if (endpoint) endpoint.textContent = `GET /api/client-organizations/${organizationId}/audit-status`;
 
       const summary = status.resumen;
       set('#client-risk', riskBannerHtml(summary, organization?.razonSocial ?? 'organización'));

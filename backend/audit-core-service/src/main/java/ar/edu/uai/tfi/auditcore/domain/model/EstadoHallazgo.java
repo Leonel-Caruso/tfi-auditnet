@@ -4,13 +4,8 @@ import java.util.EnumSet;
 import java.util.Set;
 
 /**
- * Estado de seguimiento de un hallazgo (CU-005-001).
- * <ul>
- *   <li>ABIERTO: recién detectado o reabierto; pendiente de análisis.</li>
- *   <li>EN_REVISION: alguien lo está analizando o corrigiendo.</li>
- *   <li>RESUELTO: se aplicó la corrección (se confirma con una nueva auditoría).</li>
- *   <li>ACEPTADO: la organización acepta el riesgo de forma justificada (excepción o falso positivo).</li>
- * </ul>
+ * Estado de seguimiento de un hallazgo. RESUELTO se confirma con una nueva auditoría; ACEPTADO es un riesgo
+ * asumido de forma justificada (excepción o falso positivo).
  */
 public enum EstadoHallazgo {
     ABIERTO,
@@ -18,7 +13,7 @@ public enum EstadoHallazgo {
     RESUELTO,
     ACEPTADO;
 
-    /** Transiciones permitidas. Un hallazgo cerrado (RESUELTO o ACEPTADO) solo puede reabrirse. */
+    /** Un hallazgo cerrado (RESUELTO o ACEPTADO) solo puede reabrirse. */
     public Set<EstadoHallazgo> siguientesPermitidos() {
         return switch (this) {
             case ABIERTO -> EnumSet.of(EN_REVISION, RESUELTO, ACEPTADO);
@@ -32,7 +27,7 @@ public enum EstadoHallazgo {
         return this != EN_REVISION;
     }
 
-    /** Pendiente de atención: se prioriza antes que los cerrados. */
+    /** Los pendientes se priorizan antes que los cerrados. */
     public boolean pendiente() {
         return this == ABIERTO || this == EN_REVISION;
     }

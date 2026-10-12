@@ -22,8 +22,8 @@ import java.util.Optional;
 
 /**
  * Verifica en cada solicitud autenticada que el usuario y su organización sigan activos y que el token no sea
- * anterior a un cambio de contraseña, roles u organización (D-31). Si no, responde 401 y el frontend vuelve al
- * login. Usa JDBC directo porque corre durante la autenticación, antes de que exista el contexto de Hibernate.
+ * anterior a un cambio de contraseña, roles u organización; si no, responde 401. Usa JDBC directo porque corre
+ * durante la autenticación, antes de que exista el contexto de Hibernate.
  */
 @ApplicationScoped
 public class VerificacionSesionAugmentor implements SecurityIdentityAugmentor {

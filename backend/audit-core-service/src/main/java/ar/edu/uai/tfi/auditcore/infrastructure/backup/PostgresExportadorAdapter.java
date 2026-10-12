@@ -33,16 +33,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 /**
- * Respaldo lógico de PostgreSQL con COPY (Bloque 7, D-36). Lee todas las tablas del esquema public dentro de una
- * única transacción de solo lectura con aislamiento REPEATABLE READ, así los datos son consistentes entre sí aunque
- * se estén usando los servicios. Contenido del ZIP:
- * <ul>
- *   <li>{@code datos/<tabla>.csv}: datos de cada tabla (CSV con encabezado, UTF-8);</li>
- *   <li>{@code esquema/<historial>.csv}: historial de Flyway de cada servicio (versión de la estructura);</li>
- *   <li>{@code restaurar.sql}: guion de psql para cargarlo en una base con la misma versión;</li>
- *   <li>{@code manifiesto.json}: fecha, usuario, versiones, filas y SHA-256 de cada archivo; {@code LEEME.txt}.</li>
- * </ul>
- * La bitácora de excepciones (MongoDB) no se incluye: Cosmos DB tiene sus propios respaldos automáticos.
+ * Respaldo lógico de PostgreSQL con COPY: datos/, esquema/ (historiales de Flyway), restaurar.sql y manifiesto.json
+ * en un ZIP. Lee todo en una transacción de solo lectura REPEATABLE READ para que los datos sean consistentes aunque
+ * los servicios estén en uso. MongoDB no se incluye: Cosmos DB tiene sus propios respaldos.
  */
 @ApplicationScoped
 public class PostgresExportadorAdapter implements ExportadorBaseDatosPort {
@@ -58,8 +51,8 @@ public class PostgresExportadorAdapter implements ExportadorBaseDatosPort {
     }
 
     /**
-     * NOT_SUPPORTED: la conexión no se debe asociar a una transacción JTA (Agroal no permite cambiarla a solo
-     * lectura ni hacer rollback de una conexión asociada). Si se llamara dentro de una transacción, se suspende.
+     * NOT_SUPPORTED: Agroal no permite pasar a solo lectura ni hacer rollback de una conexión asociada a una
+     * transacción JTA.
      */
     @Override
     @Transactional(Transactional.TxType.NOT_SUPPORTED)

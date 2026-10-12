@@ -105,7 +105,7 @@ public class DispositivoResource {
         }
     }
 
-    /** Modifica los datos del dispositivo (RF-003). Registra MODIFICACION con valor anterior y nuevo. */
+    /** Modifica los datos del dispositivo. Registra MODIFICACION con valor anterior y nuevo. */
     @PUT
     @Path("/{id}")
     @RolesAllowed(ADMIN)

@@ -12,15 +12,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Último recurso para errores que ninguna otra parte del código atendió.
- * <ul>
- *   <li>Excepción inesperada: se registra con nivel ERROR y se responde 500 con un mensaje genérico
- *       y el código de correlación, sin exponer detalles internos al cliente.</li>
- *   <li>WebApplicationException sin cuerpo (por ejemplo, ruta inexistente): se respeta su respuesta
- *       original y se registra con nivel WARN (4xx) o ERROR (5xx).</li>
- * </ul>
- * Los errores que los recursos ya convierten en respuestas con mensaje (400, 404, 409) y los de
- * seguridad (401, 403) tienen su propio tratamiento y no pasan por aquí.
+ * Último recurso para errores no atendidos. Una excepción inesperada se registra como ERROR y responde 500 con un
+ * mensaje genérico y la correlación, sin detalles internos. Una WebApplicationException (por ejemplo, ruta
+ * inexistente) conserva su respuesta y se registra como WARN (4xx) o ERROR (5xx).
  */
 public class ErrorInesperadoMapper {
 
