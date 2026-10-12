@@ -73,6 +73,10 @@ seguir usando a mano desde Cloud Shell.
 Los revisores obligatorios solo existen en repositorios **públicos** (en uno privado requieren GitHub Enterprise; sin
 ellos el job desplegaría sin esperar). El repositorio de la tesis es público.
 
+GitHub envía el sujeto del token con los ids numéricos del dueño y del repositorio
+(`repo:Leonel-Caruso@111381248/tfi-auditnet@1366741898:environment:azure`). El script 06 registra ese formato y el
+de solo nombres; si el login falla con `AADSTS700213`, comparar el *subject claim* del log con `REPO_GITHUB_IDS`.
+
 Si el primer despliegue falla con `AuthorizationFailed` sobre `cae-auditnet` (acción
 `Microsoft.App/managedEnvironments/join/action`), asignar a la identidad el rol *Contributor* también sobre el entorno
 de Container Apps y volver a ejecutar el job.

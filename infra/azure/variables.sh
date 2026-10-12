@@ -37,6 +37,8 @@ REGISTRO="ghcr.io/leonel-caruso"
 # Despliegue desde GitHub Actions con OIDC (ver 06-configurar-github-oidc.sh).
 IDENTIDAD_GITHUB="id-auditnet-github"
 REPO_GITHUB="Leonel-Caruso/tfi-auditnet"
+# GitHub también firma el token con los ids numéricos del dueño y del repo; Azure exige coincidencia exacta.
+REPO_GITHUB_IDS="Leonel-Caruso@111381248/tfi-auditnet@1366741898"
 ENTORNO_GITHUB="azure"
 
 # Datos del administrador inicial (la contraseña se pide al ejecutar)

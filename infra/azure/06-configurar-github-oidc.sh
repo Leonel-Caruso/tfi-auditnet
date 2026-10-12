@@ -17,14 +17,18 @@ fi
 CLIENT_ID=$(az identity show -g "$RG" -n "$IDENTIDAD_GITHUB" --query clientId -o tsv)
 PRINCIPAL_ID=$(az identity show -g "$RG" -n "$IDENTIDAD_GITHUB" --query principalId -o tsv)
 
-echo "[2/3] Credencial federada para repo:$REPO_GITHUB:environment:$ENTORNO_GITHUB..."
-CREDENCIAL="github-${ENTORNO_GITHUB}"
-if ! az identity federated-credential show -g "$RG" --identity-name "$IDENTIDAD_GITHUB" -n "$CREDENCIAL" -o none 2>/dev/null; then
-  az identity federated-credential create -g "$RG" --identity-name "$IDENTIDAD_GITHUB" -n "$CREDENCIAL" \
-    --issuer "https://token.actions.githubusercontent.com" \
-    --subject "repo:${REPO_GITHUB}:environment:${ENTORNO_GITHUB}" \
-    --audiences "api://AzureADTokenExchange" -o none
-fi
+echo "[2/3] Credenciales federadas para el entorno $ENTORNO_GITHUB..."
+crear_credencial() {
+  local nombre="$1" sujeto="$2"
+  if ! az identity federated-credential show -g "$RG" --identity-name "$IDENTIDAD_GITHUB" -n "$nombre" -o none 2>/dev/null; then
+    az identity federated-credential create -g "$RG" --identity-name "$IDENTIDAD_GITHUB" -n "$nombre" \
+      --issuer "https://token.actions.githubusercontent.com" \
+      --subject "$sujeto" --audiences "api://AzureADTokenExchange" -o none
+  fi
+  echo "      $sujeto"
+}
+crear_credencial "github-${ENTORNO_GITHUB}" "repo:${REPO_GITHUB}:environment:${ENTORNO_GITHUB}"
+crear_credencial "github-${ENTORNO_GITHUB}-ids" "repo:${REPO_GITHUB_IDS}:environment:${ENTORNO_GITHUB}"
 
 echo "[3/3] Permisos acotados..."
 asignar() {
