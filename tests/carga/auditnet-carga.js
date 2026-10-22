@@ -32,6 +32,7 @@ export const options = {
     'http_req_failed{fase:medicion}': ['rate<0.01'], // menos del 1 % de errores
     'http_req_duration{fase:medicion}': ['p(95)<1500'], // 95 % de las respuestas en menos de 1,5 s
     'checks{fase:medicion}': ['rate>0.99'],
+    'http_reqs{fase:medicion}': ['count>0'], // sin solicitudes medidas la prueba no puede darse por aprobada
     auditnet_tablero_ms: ['p(95)<2000'],
     auditnet_hallazgos_ms: ['p(95)<1500'],
   },
@@ -99,15 +100,17 @@ export default function (datos) {
 // Resumen legible por consola y detalle completo en JSON.
 export function handleSummary(data) {
   const m = data.metrics;
-  const ms = (valor) => (valor === undefined ? '—' : `${Math.round(valor)} ms`);
+  const medidas = m['http_reqs{fase:medicion}']?.values.count ?? 0;
+  const ms = (valor) => (medidas === 0 || valor === undefined ? '—' : `${Math.round(valor)} ms`);
   const fila = (nombre, metrica) => `  ${nombre.padEnd(22)} p95 ${ms(m[metrica]?.values['p(95)']).padStart(8)}   promedio ${ms(m[metrica]?.values.avg).padStart(8)}   máx ${ms(m[metrica]?.values.max).padStart(8)}`;
+  const estado = (r) => (medidas === 0 ? 'SIN MEDICIÓN' : r.ok ? 'OK' : 'FALLA');
   const umbrales = Object.entries(m)
     .filter(([, metrica]) => metrica.thresholds)
-    .flatMap(([nombre, metrica]) => Object.entries(metrica.thresholds).map(([regla, r]) => `  ${r.ok ? 'OK   ' : 'FALLA'} ${nombre} ${regla}`));
+    .flatMap(([nombre, metrica]) => Object.entries(metrica.thresholds).map(([regla, r]) => `  ${estado(r).padEnd(12)} ${nombre} ${regla}`));
   const texto = [
     '',
     `AuditNet · prueba de carga contra ${BASE_URL}`,
-    `  usuarios simultáneos: ${VUS} · solicitudes: ${m.http_reqs?.values.count ?? 0} (${(m.http_reqs?.values.rate ?? 0).toFixed(1)}/s, incluye calentamiento)`,
+    `  usuarios simultáneos: ${VUS} · solicitudes: ${m.http_reqs?.values.count ?? 0} (${(m.http_reqs?.values.rate ?? 0).toFixed(1)}/s, incluye calentamiento) · medidas: ${medidas}`,
     `  errores medidos: ${((m['http_req_failed{fase:medicion}']?.values.rate ?? 0) * 100).toFixed(2)} % · chequeos OK: ${((m['checks{fase:medicion}']?.values.rate ?? 0) * 100).toFixed(2)} %`,
     fila('todas las medidas', 'http_req_duration{fase:medicion}'),
     fila('tablero', 'auditnet_tablero_ms'),
@@ -116,6 +119,7 @@ export function handleSummary(data) {
     fila('historial (pág. 1)', 'auditnet_historial_ms'),
     'Criterios:',
     ...umbrales,
+    ...(medidas === 0 ? ['', 'No se midió ninguna solicitud: revisar el error de arriba (calentamiento o inicio de sesión).'] : []),
     '',
   ].join('\n');
   return { stdout: texto, [__ENV.SALIDA || 'resultado-carga.json']: JSON.stringify(data, null, 2) };

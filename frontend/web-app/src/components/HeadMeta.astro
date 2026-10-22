@@ -43,13 +43,25 @@ const origen = '__ORIGEN_PUBLICO__';
       type="application/ld+json"
       set:html={JSON.stringify({
         '@context': 'https://schema.org',
-        '@type': 'WebApplication',
-        name: 'AuditNet',
-        description,
-        applicationCategory: 'BusinessApplication',
-        operatingSystem: 'Web',
-        inLanguage: 'es',
-        url: `${origen}/`,
+        '@graph': [
+          {
+            '@type': 'Organization',
+            '@id': `${origen}/#organizacion`,
+            name: 'AuditNet',
+            url: `${origen}/`,
+            logo: `${origen}/icons/icon-512.png`,
+          },
+          {
+            '@type': 'WebApplication',
+            name: 'AuditNet',
+            description,
+            applicationCategory: 'BusinessApplication',
+            operatingSystem: 'Web',
+            inLanguage: 'es',
+            url: `${origen}/`,
+            publisher: { '@id': `${origen}/#organizacion` },
+          },
+        ],
       })}
     />
   </Fragment>
