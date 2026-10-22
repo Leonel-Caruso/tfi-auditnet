@@ -108,7 +108,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         </dl>
 
         <div class="inspector-footnote">
-          <code id="baseline-inspector-policy">policy = baseline + rules</code>
+          <code id="baseline-inspector-policy">baseline + reglas</code>
           <span id="baseline-inspector-policy-text">Este modelo será la referencia de cumplimiento utilizada por el motor de auditoría.</span>
         </div>
 
@@ -139,31 +139,31 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
       <div class="device-form-grid">
         <label class="field">
-          <span>name *</span>
+          <span>nombre *</span>
           <input id="baseline-name" type="text" maxlength="140" placeholder="Hardening Cisco IOS/XE" required />
         </label>
 
         <label class="field">
-          <span>device_type *</span>
+          <span>tipo de dispositivo *</span>
           <select id="baseline-device-type" class="form-select" required>
             <option value="">Seleccionar tipo...</option>
           </select>
         </label>
 
         <label class="field">
-          <span>organization *</span>
+          <span>organización *</span>
           <select id="baseline-organization" class="form-select" required>
             <option value="">Seleccionar organización...</option>
           </select>
         </label>
 
         <div class="device-form-context">
-          <code>version = 1</code>
+          <code>versión 1</code>
           <span>La primera versión se asigna automáticamente. Solo puede haber una baseline activa por tipo de dispositivo y organización.</span>
         </div>
 
         <label class="field field-span-2">
-          <span>description *</span>
+          <span>descripción *</span>
           <textarea id="baseline-description" rows="4" maxlength="500" placeholder="Controles mínimos esperados para routers Cisco IOS/IOS-XE." required></textarea>
         </label>
       </div>
@@ -189,7 +189,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
       <div class="device-form-grid">
         <label class="field field-span-2">
-          <span>description *</span>
+          <span>descripción *</span>
           <textarea id="baseline-change-description" rows="4" maxlength="500" required></textarea>
         </label>
         <div id="baseline-change-context" class="device-form-context field-span-2">
@@ -384,7 +384,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       setText('#baseline-inspector-rules', `${activeRules} activas · ${rules.length} en total`);
       setText('#baseline-inspector-audits', String(baseline.auditorias));
       setText('#baseline-inspector-id', String(baseline.id));
-      setText('#baseline-inspector-policy', frozen ? 'rules = congeladas' : 'policy = baseline + rules');
+      setText('#baseline-inspector-policy', frozen ? 'reglas congeladas' : 'baseline + reglas');
       setText('#baseline-inspector-policy-text', frozen
         ? 'Esta versión ya se usó en auditorías: sus reglas no se modifican para conservar la evidencia. Para cambiarlas, generá una nueva versión.'
         : baseline.estado === 'ACTIVO'

@@ -107,7 +107,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <div><dt>identificador</dt><dd id="rule-inspector-id">—</dd></div>
         </dl>
         <div class="rule-expression-block">
-          <span id="rule-inspector-pattern-label">pattern</span>
+          <span id="rule-inspector-pattern-label">patrón</span>
           <code id="rule-inspector-pattern">—</code>
         </div>
         <div id="rule-inspector-expected-block" class="rule-expression-block is-hidden">
@@ -123,7 +123,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <p id="rule-inspector-recommendation">—</p>
         </div>
         <div id="rule-inspector-frozen" class="inspector-footnote is-hidden">
-          <code>rules = congeladas</code>
+          <code>reglas congeladas</code>
           <span>Su baseline ya se usó en auditorías: para cambiar o reactivar la regla, generá una nueva versión de la baseline. La baja lógica sí está permitida.</span>
         </div>
         <div class="inspector-actions" data-roles="ADMINISTRADOR_SISTEMA,AUDITOR_TECNICO">
@@ -151,15 +151,15 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <select id="rule-baseline" class="form-select" required><option value="">Seleccionar baseline...</option></select>
         </label>
         <label class="field">
-          <span>rule_code *</span>
+          <span>código *</span>
           <input id="rule-code" type="text" maxlength="60" placeholder="SEC-SSH-01" required />
         </label>
         <label class="field">
-          <span>name *</span>
+          <span>nombre *</span>
           <input id="rule-name" type="text" maxlength="140" placeholder="Forzar SSH versión 2" required />
         </label>
         <label class="field">
-          <span>condition *</span>
+          <span>condición *</span>
           <select id="rule-type" class="form-select" required>
             <option value="DEBE_CONTENER">DEBE_CONTENER</option>
             <option value="NO_DEBE_CONTENER">NO_DEBE_CONTENER</option>
@@ -167,7 +167,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           </select>
         </label>
         <label class="field">
-          <span>severity *</span>
+          <span>severidad *</span>
           <select id="rule-severity" class="form-select" required>
             <option value="MEDIA">MEDIA</option>
             <option value="BAJA">BAJA</option>
@@ -176,23 +176,23 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           </select>
         </label>
         <label id="rule-pattern-field" class="field field-span-2">
-          <span id="rule-pattern-label">pattern *</span>
+          <span id="rule-pattern-label">patrón *</span>
           <input id="rule-pattern" class="mono-input" type="text" maxlength="500" placeholder="ip ssh version 2" required />
         </label>
         <label id="rule-expected-field" class="field field-span-2 is-hidden">
-          <span>expected_value *</span>
+          <span>valor esperado *</span>
           <input id="rule-expected" class="mono-input" type="text" maxlength="500" placeholder="16384" />
         </label>
         <label class="field field-span-2">
-          <span>description *</span>
+          <span>descripción *</span>
           <textarea id="rule-description" rows="2" maxlength="500" placeholder="La configuración debe utilizar exclusivamente SSH versión 2." required></textarea>
         </label>
         <label class="field field-span-2">
-          <span>impact *</span>
+          <span>impacto *</span>
           <textarea id="rule-impact" rows="2" maxlength="500" placeholder="Las credenciales de administración pueden viajar sin cifrar y ser interceptadas." required></textarea>
         </label>
         <label class="field field-span-2">
-          <span>recommendation *</span>
+          <span>recomendación *</span>
           <textarea id="rule-recommendation" rows="2" maxlength="500" placeholder="Configurar: ip ssh version 2" required></textarea>
         </label>
       </div>
@@ -379,7 +379,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       setText('#rule-inspector-type', rule.tipo);
       setText('#rule-inspector-severity', rule.severidad);
       setText('#rule-inspector-id', String(rule.id));
-      setText('#rule-inspector-pattern-label', expected ? 'parámetro' : 'pattern');
+      setText('#rule-inspector-pattern-label', expected ? 'parámetro' : 'patrón');
       setText('#rule-inspector-pattern', rule.patron);
       setText('#rule-inspector-expected', rule.valorEsperado ?? '—');
       setText('#rule-inspector-impact', rule.impacto);
@@ -449,7 +449,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const expected = typeSelect?.value === 'VALOR_ESPERADO';
       document.querySelector('#rule-expected-field')?.classList.toggle('is-hidden', !expected);
       if (expectedInput) expectedInput.required = expected;
-      setText('#rule-pattern-label', expected ? 'parameter *' : 'pattern *');
+      setText('#rule-pattern-label', expected ? 'parámetro *' : 'patrón *');
       const pattern = document.querySelector<HTMLInputElement>('#rule-pattern');
       if (pattern) pattern.placeholder = expected ? 'logging buffered' : 'ip ssh version 2';
     }

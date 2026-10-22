@@ -1,14 +1,15 @@
-# Tests de backend y frontend; si pasan, publica las 3 imágenes en ghcr.io y las
+# Tests de backend, frontend y pantallas; si pasan, publica las 3 imágenes en ghcr.io y las
 # despliega en Azure Container Apps tras aprobar el entorno "azure" (login por OIDC,
 # ver infra/azure/06-configurar-github-oidc.sh).
 name: CI e imagenes
 
 on:
   push:
-    branches: [entrega-2]
+    branches: [entrega-2, main]
     paths:
       - "backend/**"
       - "frontend/**"
+      - "tests/pantallas/**"
       - ".github/workflows/imagenes.yml"
   workflow_dispatch:
 
@@ -45,16 +46,44 @@ jobs:
           node-version: "24"
           cache: npm
           cache-dependency-path: frontend/web-app/package-lock.json
+      # build:pruebas llama a la API en el mismo origen, como detrás de nginx (la imagen Docker hace lo mismo).
       - name: npm ci, check y build
         working-directory: frontend/web-app
         run: |
           npm ci
           npm run check
-          npm run build
+          npm run build:pruebas
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sitio
+          path: frontend/web-app/dist
+          retention-days: 1
+
+  pantallas:
+    name: Pruebas de pantalla
+    needs: [frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: sitio
+          path: frontend/web-app/dist
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: tests/pantallas/requirements.txt
+      - name: Playwright y Chromium
+        run: |
+          pip install -r tests/pantallas/requirements.txt
+          python -m playwright install --with-deps chromium
+      - name: pytest
+        run: python -m pytest tests/pantallas
 
   imagenes:
     name: Imagen ${{ matrix.imagen }}
-    needs: [tests-backend, frontend]
+    needs: [tests-backend, frontend, pantallas]
     runs-on: ubuntu-latest
     strategy:
       # Si una imagen falla, las otras terminan igual.
@@ -91,8 +120,8 @@ jobs:
   desplegar:
     name: Desplegar en Azure (con aprobación)
     needs: [imagenes]
-    # Sin las variables de Azure el job se omite y el CI sigue en verde.
-    if: ${{ vars.AZURE_CLIENT_ID != '' }}
+    # Solo desde entrega-2 y con las variables de Azure cargadas; si no, se omite y el CI sigue en verde.
+    if: ${{ vars.AZURE_CLIENT_ID != '' && github.ref_name == 'entrega-2' }}
     runs-on: ubuntu-latest
     # El entorno "azure" tiene revisores obligatorios.
     environment:

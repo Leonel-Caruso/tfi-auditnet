@@ -26,3 +26,7 @@ Thumbs.db
 
 # Prueba de carga (k6): el JSON completo se revisa y se resume en docs/entrega-2/CARGA.md
 resultado-carga*.json
+
+# Python (pruebas de pantalla)
+__pycache__/
+.pytest_cache/

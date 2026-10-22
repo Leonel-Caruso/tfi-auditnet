@@ -576,6 +576,19 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
   el sistema.
 - **Prueba:** CP-B8-01, CP-B8-08 y CP-B8-09.
 
+## D-44 · Pruebas de pantalla automáticas en el CI (Bloque 9)
+
+- **Decisión:** las pruebas de pantalla con Playwright pasan a formar parte del repositorio (`tests/pantallas/`) y del
+  CI. Usan el sitio compilado y una API simulada con datos fijos, así son rápidas, repetibles y no dependen de
+  Azure ni de una base de datos. Cada perfil recorre todas las pantallas; se verifican errores de JavaScript, textos
+  técnicos, desborde en celular, paginación, escapado de HTML y la app instalable.
+- **Por qué:** los bloques siguientes (perfil nuevo, planes, correo, multi idioma) tocan todas las pantallas; sin
+  estas pruebas una regresión visual o de permisos en el menú pasaría desapercibida hasta la demo.
+- **Límite:** la API es simulada; la integración real con los servicios la cubren los tests de cada servicio y la
+  prueba de humo del despliegue.
+- **Impacto financiero:** ninguno (GitHub Actions gratuito en repositorio público).
+- **Prueba:** CP-B9-01 y CP-B9-02.
+
 ## Pendientes detectados (para migraciones futuras)
 
 - `auditorias_configuracion.estado` solo admite `FINALIZADA` (CHECK de Hibernate). Alcanza mientras la auditoría sea

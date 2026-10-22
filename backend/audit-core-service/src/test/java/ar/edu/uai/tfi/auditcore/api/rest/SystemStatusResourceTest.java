@@ -17,6 +17,6 @@ class SystemStatusResourceTest {
                 .statusCode(200)
                 .body("service", is("audit-core-service"))
                 .body("status", is("UP"))
-                .body("delivery", is("Entrega 1"));
+                .body("delivery", is("Entrega 2"));
     }
 }

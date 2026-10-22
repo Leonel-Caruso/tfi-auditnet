@@ -139,43 +139,43 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
       <div class="device-form-grid">
         <label class="field">
-          <span>identifier *</span>
+          <span>identificador *</span>
           <input id="device-identifier" type="text" maxlength="100" placeholder="RTR-CORE-01" required />
         </label>
 
         <label class="field">
-          <span>display_name *</span>
+          <span>nombre *</span>
           <input id="device-name" type="text" maxlength="120" placeholder="Router Core Central" required />
         </label>
 
         <label class="field">
-          <span>device_type *</span>
+          <span>tipo de dispositivo *</span>
           <select id="device-type" class="form-select" required>
             <option value="">Seleccionar tipo...</option>
           </select>
         </label>
 
         <label class="field">
-          <span>vendor</span>
+          <span>fabricante</span>
           <input id="device-vendor" type="text" readonly placeholder="Se completa según el tipo" />
         </label>
 
         <label class="field">
-          <span>organization *</span>
+          <span>organización *</span>
           <select id="device-organization" class="form-select" required>
             <option value="">Seleccionar organización...</option>
           </select>
         </label>
 
         <label class="field">
-          <span>site</span>
+          <span>sede</span>
           <select id="device-site" class="form-select" disabled>
             <option value="">Sin sede específica</option>
           </select>
         </label>
 
         <label class="field">
-          <span>criticality *</span>
+          <span>criticidad *</span>
           <select id="device-criticality" class="form-select" required>
             <option value="MEDIA">MEDIA</option>
             <option value="BAJA">BAJA</option>
@@ -185,7 +185,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         </label>
 
         <div class="device-form-context">
-          <code id="device-form-state">state = ACTIVO</code>
+          <code id="device-form-state">estado: ACTIVO</code>
           <span id="device-form-state-text">El estado inicial se asigna automáticamente. El identificador es único dentro de la organización.</span>
         </div>
       </div>
@@ -515,7 +515,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       setText('#device-dialog-subtitle', editing
         ? 'Los cambios quedan en la bitácora de transacciones con el valor anterior y el nuevo.'
         : 'Incorporá un activo de red al inventario auditable.');
-      setText('#device-form-state', editing ? `state = ${device.estado}` : 'state = ACTIVO');
+      setText('#device-form-state', editing ? `estado: ${device.estado}` : 'estado: ACTIVO');
       setText('#device-form-state-text', editing
         ? 'La organización no se cambia. El estado se modifica con "Dar de baja" o "Reactivar".'
         : 'El estado inicial se asigna automáticamente. El identificador es único dentro de la organización.');
