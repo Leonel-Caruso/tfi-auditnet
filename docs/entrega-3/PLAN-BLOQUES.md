@@ -8,7 +8,7 @@ Decisiones tomadas con el autor:
 | Tema | Decisión |
 |---|---|
 | Administrador de organización | Alcance: la organización completa (la sede es solo informativa) |
-| Límites del plan | Dispositivos activos y usuarios activos |
+| Límites del plan | Dispositivos activos (carpeta) y usuarios activos (nuevo: Piloto 5, Inicial 15, Profesional 40) |
 | Correo | Azure Communication Services Email; Mailpit en local |
 | Revisión periódica | Vencimiento por severidad, re-evaluación periódica y aviso de configuración desactualizada |
 | Orden | Funcionalidad primero; multi idioma y manuales al final para no traducir ni documentar pantallas que cambian |
@@ -80,23 +80,29 @@ Los números de migración son tentativos: se asignan en orden al implementar ca
 
 ## Bloque 11 · Planes y límites
 
-**Planes** (los de la carpeta, tabla de precios):
+**Planes** (carpeta: Tabla 20 del plan de marketing y Tabla 32 de la estructura comercial):
 
-| Código | Dispositivos | Usuarios (propuesto) | Vigencia | Precio de referencia |
+| Código | Dispositivos | Usuarios | Vigencia | Precio de lista (Año 1) |
 |---|---|---|---|---|
-| PILOTO | 10 | 5 | 90 días | Bonificado |
+| PILOTO | 10 | 5 | 60 a 90 días (90 por defecto) | Bonificado o costo simbólico |
 | INICIAL | 50 | 15 | — | USD 150/mes |
 | PROFESIONAL | 150 | 40 | — | USD 300/mes |
-| EMPRESA | a medida | a medida | — | A cotizar |
+| EMPRESA | más de 150, a medida | a medida | — | A cotizar |
 
-Los límites de usuarios son una propuesta: confirmar con el autor antes de implementar.
+- Los límites de usuarios son nuevos (confirmados por el autor): se agregan a las Tablas 20 y 32 de la carpeta en el
+  Bloque 16.
+- El precio es informativo y editable por el administrador del sistema: la carpeta lo revisa cada año (+12 % en el
+  Año 2 y +15 % en el Año 3, Tabla 33), así que no se fija en el código.
+- La solicitud de cambio muestra las condiciones comerciales de la carpeta: ampliación de Inicial a Profesional
+  USD 350 por evento, descuento del 10 % por contratación anual, implementación inicial según el plan. Son datos para
+  el cliente; no hay cobro en la plataforma.
 
 **Modelo (management V5)**
 
 - `planes`: código, nombre, máximo de dispositivos y de usuarios, días de vigencia, precio de referencia.
 - `organizaciones_cliente`: plan, fecha de inicio, vencimiento (piloto) y límites propios (EMPRESA).
-- `solicitudes_cambio_plan`: organización, plan actual, plan pedido, estado (PENDIENTE, APROBADA, RECHAZADA, CANCELADA),
-  quién y cuándo pidió y resolvió, comentario.
+- `solicitudes_cambio_plan`: organización, plan actual, plan pedido, modalidad (mensual o anual), estado (PENDIENTE,
+  APROBADA, RECHAZADA, CANCELADA), quién y cuándo pidió y resolvió, comentario.
 - Organizaciones existentes: plan INICIAL.
 
 **Reglas**
@@ -227,5 +233,6 @@ idiomas sin claves faltantes ni desbordes.
 - CU y RF nuevos: administrar usuarios de la organización, consultar plan, solicitar y aprobar cambio de plan,
   configurar notificaciones, recuperar contraseña, revisión periódica, cambiar idioma.
 - Matrices de trazabilidad y de Puntos Mandatorios, diagramas (despliegue con correo y job), diccionario de datos.
-- Presupuesto: costos reales de correo y job programado; planes del sistema iguales a los de la carpeta.
+- Presupuesto: costos reales de correo y job programado; planes del sistema iguales a los de la carpeta, con la columna
+  de usuarios agregada en las Tablas 20 y 32.
 - Tag final y unión a `main`.
