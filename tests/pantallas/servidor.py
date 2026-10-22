@@ -1,7 +1,8 @@
 """Servidor para las pruebas de pantalla: sirve el sitio compilado (frontend/web-app/dist) y simula la API.
 
 El token de sesión es el nombre del perfil (por ejemplo "Bearer ANALISTA_RED"), así cada prueba elige con qué perfil
-entra sin pasar por el login real. Las solicitudes a /api quedan registradas para poder verificarlas.
+entra sin pasar por el login real. Fuera del administrador del sistema, todos los perfiles son de la organización 2
+(ACME). Las solicitudes a /api quedan registradas, con su cuerpo, para poder verificarlas.
 """
 
 import json
@@ -89,7 +90,8 @@ class ManejadorAuditNet(SimpleHTTPRequestHandler):
         largo = int(self.headers.get("Content-Length") or 0)
         cuerpo = json.loads(self.rfile.read(largo)) if largo else None
         perfil = (self.headers.get("Authorization") or "").removeprefix("Bearer ").strip()
-        self.registro.append({"metodo": metodo, "ruta": url.path, "consulta": consulta})
+        self.perfil = perfil
+        self.registro.append({"metodo": metodo, "ruta": url.path, "consulta": consulta, "cuerpo": cuerpo})
 
         if url.path == "/api/auth/me":
             if perfil not in datos.ROLES:
@@ -123,6 +125,18 @@ def _historial(manejador, _m, consulta, _b):
     manejador._json(200, pagina, total)
 
 
+def _propias(coleccion, campo):
+    """El administrador del sistema ve todo; el resto, solo lo de su organización (la 2)."""
+    def responder(manejador, _m, _c, _b):
+        manejador._json(200, [e for e in coleccion
+                              if manejador.perfil == "ADMINISTRADOR_SISTEMA" or e[campo] == 2])
+    return responder
+
+
+def _creado(armar):
+    return lambda manejador, coincidencia, _c, cuerpo: manejador._json(201, armar(coincidencia, cuerpo or {}))
+
+
 def _por_id(coleccion, armar=lambda elemento: elemento):
     def responder(manejador, coincidencia, _c, _b):
         elemento = next((e for e in coleccion if e["id"] == int(coincidencia[1])), None)
@@ -134,7 +148,7 @@ def _por_id(coleccion, armar=lambda elemento: elemento):
 
 RUTAS = [
     (r"/api/dashboard/summary", {"GET"}, _lista(datos.resumen_tablero)),
-    (r"/api/client-organizations", {"GET"}, _lista(datos.ORGANIZACIONES)),
+    (r"/api/client-organizations", {"GET"}, _propias(datos.ORGANIZACIONES, "id")),
     (r"/api/client-organizations/(\d+)", {"GET"}, _por_id(datos.ORGANIZACIONES)),
     (r"/api/client-organizations/(\d+)/sites", {"GET"},
      lambda h, m, c, b: h._json(200, datos.SEDES.get(int(m[1]), []))),
@@ -157,7 +171,24 @@ RUTAS = [
     (r"/api/alerts/critical", {"GET"}, _lista(datos.ALERTAS)),
     (r"/api/alerts/(\d+)", {"GET"}, _por_id(datos.ALERTAS, lambda a: {"alerta": a, "hallazgo": datos.HALLAZGOS[0]})),
     (r"/api/reports", {"GET"}, _lista(datos.REPORTES)),
-    (r"/api/users", {"GET"}, _lista(datos.USUARIOS)),
+    (r"/api/users", {"GET"}, _propias(datos.USUARIOS, "organizationId")),
+    (r"/api/plans", {"GET"}, _lista(datos.PLANES)),
+    (r"/api/plans/(\w+)", {"PUT"},
+     lambda h, m, c, b: h._json(200, next(p for p in datos.PLANES if p["codigo"] == m[1]) | b)),
+    (r"/api/client-organizations/(\d+)/plan", {"GET"},
+     lambda h, m, c, b: h._json(200, datos.plan_organizacion(int(m[1])))),
+    (r"/api/client-organizations/(\d+)/plan", {"PUT"},
+     lambda h, m, c, b: h._json(200, datos.plan_organizacion(int(m[1])) | {
+         "plan": next(p for p in datos.PLANES if p["codigo"] == b["plan"])})),
+    (r"/api/client-organizations/(\d+)/plan-requests", {"GET"}, _lista(datos.SOLICITUDES)),
+    (r"/api/client-organizations/(\d+)/plan-requests", {"POST"},
+     _creado(lambda m, b: datos.SOLICITUDES[1] | {"id": 3, "planSolicitado": b["plan"], "modalidad": b["modalidad"]})),
+    (r"/api/client-organizations/(\d+)/plan-requests/(\d+)/cancel", {"POST"},
+     lambda h, m, c, b: h._json(200, datos.SOLICITUDES[1] | {"estado": "CANCELADA"})),
+    (r"/api/admin/plan-requests", {"GET"},
+     lambda h, m, c, b: h._json(200, [s for s in datos.SOLICITUDES if not c.get("estado") or s["estado"] == c["estado"]])),
+    (r"/api/admin/plan-requests/(\d+)/(approve|reject)", {"POST"},
+     lambda h, m, c, b: h._json(200, datos.SOLICITUDES[1] | {"estado": "APROBADA" if m[2] == "approve" else "RECHAZADA"})),
     (r"/api/roles", {"GET"}, _lista(datos.PERFILES)),
     (r"/api/roles/permissions", {"GET"}, _lista(datos.PERMISOS)),
     (r"/api/admin/health", {"GET"}, _lista(lambda: datos.salud("management-service"))),

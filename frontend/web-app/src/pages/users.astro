@@ -7,6 +7,10 @@ import MasterLayout from '../layouts/MasterLayout.astro';
   section="Control de acceso"
   description="Administrá usuarios y perfiles de acceso: altas, cambios, bajas, contraseñas y desbloqueo de cuentas."
 >
+  <p id="users-scope-note" class="alert alert-info is-hidden" style="margin-bottom: 14px;">
+    Gestionás los usuarios de tu organización con perfiles de operación. Los administradores los gestiona el
+    administrador del sistema.
+  </p>
   <div id="users-error" class="alert alert-error is-hidden" role="alert"></div>
   <div id="users-message" class="alert alert-success is-hidden" role="status"></div>
 
@@ -68,7 +72,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <h2>Perfiles de acceso</h2>
         </div>
       </div>
-      <p class="log-muted">Los cuatro perfiles son fijos y sus permisos los aplican los servicios. Solo se puede ajustar la descripción.</p>
+      <p class="log-muted">Los cinco perfiles son fijos y sus permisos los aplican los servicios. Solo se puede ajustar la descripción.</p>
       <div id="role-list" class="role-list" style="margin-top: 12px;"><div class="skeleton-row"></div></div>
     </article>
 
@@ -82,7 +86,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       <div class="table-wrap">
         <table class="data-table permission-table">
           <thead>
-            <tr><th>Módulo · acción</th><th title="Administrador del sistema">ADM</th><th title="Analista de redes">ANL</th><th title="Auditor técnico">AUD</th><th title="Responsable de gestión IT">RSP</th></tr>
+            <tr><th>Módulo · acción</th><th title="Administrador del sistema">ADM</th><th title="Administrador de organización">ORG</th><th title="Analista de redes">ANL</th><th title="Auditor técnico">AUD</th><th title="Responsable de gestión IT">RSP</th></tr>
           </thead>
           <tbody id="permission-body"></tbody>
         </table>
@@ -202,13 +206,18 @@ import MasterLayout from '../layouts/MasterLayout.astro';
   </dialog>
 
   <script>
-    import { authFetch, getStoredUser, logout } from '../lib/auth';
-    import { jsonRequest, readApiError, ROLE_LABEL, type Organization, type Permission, type Role, type User } from '../lib/api';
+    import { authFetch, getStoredUser, hasRole, logout } from '../lib/auth';
+    import {
+      jsonRequest, OPERATION_ROLES, PROFILE_ORDER, readApiError, ROLE_LABEL,
+      type Organization, type Permission, type Role, type User,
+    } from '../lib/api';
     import { escapeHtml, formatDate } from '../lib/format';
     import { passwordRulesHtml, updatePasswordRules } from '../lib/password';
 
-    const PROFILE_ORDER = ['ADMINISTRADOR_SISTEMA', 'ANALISTA_RED', 'AUDITOR_TECNICO', 'RESPONSABLE_GESTION_IT'];
     const me = getStoredUser();
+    // El administrador de una organización gestiona solo perfiles de operación de la suya.
+    const isSystemAdmin = hasRole('ADMINISTRADOR_SISTEMA');
+    const canManage = (user: User) => isSystemAdmin || user.roles.every((role) => OPERATION_ROLES.includes(role));
 
     let users: User[] = [];
     let organizations: Organization[] = [];
@@ -271,6 +280,16 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       body.innerHTML = visible.map((user) => {
         const self = user.id === me?.userId;
         const active = user.estado === 'ACTIVO';
+        const actions = canManage(user) ? `
+                <button class="button button-ghost button-small" type="button" data-action="edit">Editar</button>
+                ${self
+                  ? '<a class="button button-ghost button-small" href="/account" title="Tu contraseña se cambia desde Mi cuenta">Contraseña</a>'
+                  : '<button class="button button-ghost button-small" type="button" data-action="password">Contraseña</button>'}
+                ${isLocked(user) ? '<button class="button button-ghost button-small" type="button" data-action="unlock">Desbloquear</button>' : ''}
+                ${self ? '' : `<button class="button button-ghost button-small" type="button" data-action="${active ? 'disable' : 'enable'}">${active ? 'Deshabilitar' : 'Habilitar'}</button>`}`
+          : self
+            ? '<a class="button button-ghost button-small" href="/account" title="Tu contraseña se cambia desde Mi cuenta">Contraseña</a>'
+            : '<span class="log-muted">lo gestiona el administrador del sistema</span>';
         return `
           <tr class="user-row ${active ? '' : 'is-disabled'}" data-user-id="${user.id}">
             <td><strong>${escapeHtml(user.nombre)}${self ? ' <span class="role-chip">vos</span>' : ''}</strong><small>@${escapeHtml(user.nombreUsuario)} · ${escapeHtml(user.email)}</small></td>
@@ -278,16 +297,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
             <td>${user.roles.map((role) => `<span class="role-chip" title="${escapeHtml(role)}">${escapeHtml(ROLE_LABEL[role] ?? role)}</span>`).join('')}</td>
             <td>${statusBadge(user)}</td>
             <td><span class="log-nowrap">${user.ultimoAcceso ? escapeHtml(formatDate(user.ultimoAcceso)) : '<span class="log-muted">nunca ingresó</span>'}</span></td>
-            <td>
-              <div class="row-actions">
-                <button class="button button-ghost button-small" type="button" data-action="edit">Editar</button>
-                ${self
-                  ? '<a class="button button-ghost button-small" href="/account" title="Tu contraseña se cambia desde Mi cuenta">Contraseña</a>'
-                  : '<button class="button button-ghost button-small" type="button" data-action="password">Contraseña</button>'}
-                ${isLocked(user) ? '<button class="button button-ghost button-small" type="button" data-action="unlock">Desbloquear</button>' : ''}
-                ${self ? '' : `<button class="button button-ghost button-small" type="button" data-action="${active ? 'disable' : 'enable'}">${active ? 'Deshabilitar' : 'Habilitar'}</button>`}
-              </div>
-            </td>
+            <td><div class="row-actions">${actions}</div></td>
           </tr>`;
       }).join('');
 
@@ -307,12 +317,13 @@ import MasterLayout from '../layouts/MasterLayout.astro';
             <code class="log-muted"> ${escapeHtml(role.nombre)}</code>
             <p>${escapeHtml(role.descripcion)}</p>
           </div>
-          <button class="button button-ghost button-small" type="button" data-role-id="${role.id}">Editar</button>
+          ${isSystemAdmin ? `<button class="button button-ghost button-small" type="button" data-role-id="${role.id}">Editar</button>` : ''}
         </div>`).join('');
 
       const checks = $('#user-roles');
       if (checks) {
-        checks.innerHTML = `<legend>perfil *</legend>${ordered.map((role) => `
+        const assignable = ordered.filter((role) => isSystemAdmin || OPERATION_ROLES.includes(role.nombre));
+        checks.innerHTML = `<legend>perfil *</legend>${assignable.map((role) => `
           <label class="role-check">
             <input type="checkbox" name="roles" value="${escapeHtml(role.nombre)}" />
             <strong>${escapeHtml(ROLE_LABEL[role.nombre] ?? role.nombre)}</strong>
@@ -360,7 +371,9 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           const option = new Option(`${org.razonSocial}${org.estado === 'ACTIVO' ? '' : ' (deshabilitada)'}`, String(org.id));
           return option;
         }));
+        select.disabled = !isSystemAdmin;
       }
+      $('#users-scope-note')?.classList.toggle('is-hidden', isSystemAdmin);
       await loadUsers();
     };
 

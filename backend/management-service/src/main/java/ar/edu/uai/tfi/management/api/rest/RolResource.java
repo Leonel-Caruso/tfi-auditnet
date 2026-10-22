@@ -14,12 +14,12 @@ import java.util.List;
 
 /**
  * Perfiles de acceso. Son fijos: se consultan, se ve su matriz de permisos y se edita la descripción. No hay alta
- * de perfiles nuevos.
+ * de perfiles nuevos. El administrador de organización los consulta para asignarlos.
  */
 @Path("/api/roles")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@RolesAllowed("ADMINISTRADOR_SISTEMA")
+@RolesAllowed({"ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_ORGANIZACION"})
 public class RolResource {
 
     private final RolService service;
@@ -35,6 +35,7 @@ public class RolResource {
 
     @PUT
     @Path("/{id}")
+    @RolesAllowed("ADMINISTRADOR_SISTEMA")
     public RolResponse modificar(@PathParam("id") Long id, ModificarRolRequest request) {
         if (request == null) {
             throw new BadRequestException("El cuerpo de la solicitud es obligatorio.");

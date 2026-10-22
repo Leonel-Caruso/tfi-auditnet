@@ -20,6 +20,14 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     </div>
   </section>
 
+  <section class="panel compact-panel dashboard-scope">
+    <div>
+      <span class="eyebrow">Planes</span>
+      <h2 id="admin-plan-requests">Solicitudes de cambio de plan…</h2>
+    </div>
+    <a class="inline-link" href="/plans">resolver →</a>
+  </section>
+
   <section class="health-grid" id="admin-health">
     <article class="panel" data-service="management"><div class="skeleton-row"></div></article>
     <article class="panel" data-service="core"><div class="skeleton-row"></div></article>
@@ -155,7 +163,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
   <script>
     import { auditFetch, authFetch } from '../lib/auth';
-    import { readApiError, type SecuritySummary, type ServiceHealth, type StorageStatus, type StorageSyncResult, type StoredFile } from '../lib/api';
+    import { readApiError, type PlanRequest, type SecuritySummary, type ServiceHealth, type StorageStatus, type StorageSyncResult, type StoredFile } from '../lib/api';
     import { formatBytes, saveResponse } from '../lib/download';
     import { escapeHtml, formatDate } from '../lib/format';
 
@@ -401,12 +409,26 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       });
     });
 
+    const loadPlanRequests = async () => {
+      const response = await authFetch('/api/admin/plan-requests?estado=PENDIENTE');
+      const title = document.querySelector('#admin-plan-requests');
+      if (!title) return;
+      if (!response.ok) {
+        title.textContent = 'No se pudieron consultar las solicitudes de plan.';
+        return;
+      }
+      const pending = (await response.json() as PlanRequest[]).length;
+      title.textContent = pending === 0
+        ? 'Sin solicitudes de cambio de plan pendientes'
+        : `${pending} ${pending === 1 ? 'solicitud' : 'solicitudes'} de cambio de plan por resolver`;
+    };
+
     const refresh = async () => {
       showError(null);
       const button = document.querySelector<HTMLButtonElement>('#admin-refresh');
       if (button) button.disabled = true;
       try {
-        await Promise.all([loadHealth(), loadSecurity(), loadStorage(), loadBackups()]);
+        await Promise.all([loadHealth(), loadSecurity(), loadStorage(), loadBackups(), loadPlanRequests()]);
       } catch (error) {
         showError(error instanceof Error ? error.message : 'No se pudo obtener el estado de la plataforma.');
       } finally {

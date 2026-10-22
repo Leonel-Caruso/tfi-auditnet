@@ -589,6 +589,62 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
 - **Impacto financiero:** ninguno (GitHub Actions gratuito en repositorio público).
 - **Prueba:** CP-B9-01 y CP-B9-02.
 
+## D-45 · Administrador de organización (Bloque 10)
+
+- **Decisión:** perfil nuevo `ADMINISTRADOR_ORGANIZACION` (nivel 2), creado por el bootstrap como los demás. Alcanza a
+  su organización completa: consulta todo lo de ella, gestiona sus sedes y dispositivos, y los usuarios con perfiles
+  de operación (analista, auditor, responsable de gestión IT): alta, cambios, baja lógica, contraseña y desbloqueo.
+  No asigna perfiles de administrador ni modifica a otros administradores; eso queda para el administrador del
+  sistema. No ve bitácoras ni la salud de la plataforma y no crea tipos de dispositivo (catálogo común a todos los
+  clientes). Importar, auditar o atender hallazgos requiere además un perfil de operación (un usuario puede tener
+  varios).
+- **Código:** `Actor` y alcance en `UsuarioService`/`SedeService`; `@RolesAllowed` en ambos servicios;
+  `MatrizPermisos` con cinco perfiles; menú y pantallas según perfil.
+- **Prueba:** `AdministradorOrganizacionTest`, `test_perfiles.py`, CP-B10-01 a CP-B10-07.
+
+## D-46 · Planes comerciales en la base de datos (Bloque 11)
+
+- **Decisión:** el catálogo de la carpeta (Tablas 20 y 32) vive en la tabla `planes`: Piloto 10/5 (60 a 90 días),
+  Inicial 50/15, Profesional 150/40 y Empresa a medida. Los límites son de dispositivos y usuarios **activos**; los
+  administradores del sistema no cuentan. El precio y las condiciones son de referencia y los edita el administrador
+  del sistema (ajuste anual de la Tabla 33), no están fijos en el código. Las organizaciones existentes pasan a
+  Inicial; una nueva elige su plan al darse de alta (por defecto Piloto, 90 días). El plan Empresa guarda los límites
+  acordados en la organización.
+- **Código:** management V5, `PlanService`, `/api/plans`, `/api/client-organizations/{id}/plan`.
+- **Documentación:** agregar la columna de usuarios a las Tablas 20 y 32 (Bloque 16).
+- **Impacto financiero:** ninguno (no hay cobros en la plataforma).
+- **Prueba:** `PlanServiceTest`, CP-B11-01 a CP-B11-05.
+
+## D-47 · Control de límites en cada servicio (Bloque 11)
+
+- **Decisión:** cada servicio controla su recurso: management los usuarios y audit-core los dispositivos. Antes de un
+  alta o una rehabilitación bloquean la fila de la organización (`SELECT … FOR UPDATE`), así dos altas simultáneas
+  no superan el límite. audit-core lee el plan con una consulta nativa y management cuenta los dispositivos con otra:
+  ninguno mapea tablas del otro, para que la validación de esquema de cada uno no dependa del otro. Bajar de plan se
+  rechaza si el uso actual supera el límite nuevo. Una organización que ya supera el límite (por ejemplo, al migrar
+  a Inicial) conserva lo que tiene pero no suma más.
+- **Límite:** durante un despliegue, audit-core puede arrancar antes de que management aplique V5; mientras tanto,
+  dar de alta dispositivos falla. Por eso se despliega primero management (lo hace `03-actualizar-imagenes.sh`).
+- **Prueba:** `ControlPlanTest`, `AdministradorOrganizacionTest`, CP-B11-02 y CP-B11-03.
+
+## D-48 · Piloto vencido en modo consulta (Bloque 11)
+
+- **Decisión:** al vencer el período de prueba la organización sigue entrando y consultando todo, pero no suma
+  dispositivos ni usuarios (alta o rehabilitación), no importa configuraciones y no ejecuta auditorías hasta que se
+  apruebe un plan (409 con la fecha de vencimiento). El seguimiento de hallazgos y alertas sigue habilitado para no
+  dejar riesgos sin atender. El vencimiento se calcula al consultar: no hace falta un proceso programado.
+- **Prueba:** `PlanServiceTest`, `ControlPlanTest`, CP-B11-04.
+
+## D-49 · Solicitudes de cambio de plan (Bloque 11)
+
+- **Decisión:** el administrador de la organización pide otro plan (mensual o anual, con comentario); el responsable
+  de gestión IT la ve pero no la pide. Hay como mucho una pendiente por organización (índice único parcial). El
+  administrador del sistema la aprueba (el plan se aplica en el acto, con los límites si es a medida) o la rechaza
+  con un motivo que el cliente ve; el cliente puede cancelarla. El Piloto no se pide: lo asigna el administrador del
+  sistema. Todo queda en la bitácora de transacciones (`PLAN`, `SOLICITUD_PLAN`, `CATALOGO_PLAN`). El aviso por
+  correo llega en el Bloque 12.
+- **Prueba:** `PlanServiceTest`, `test_perfiles.py`, CP-B11-05 a CP-B11-08.
+
 ## Pendientes detectados (para migraciones futuras)
 
 - `auditorias_configuracion.estado` solo admite `FINALIZADA` (CHECK de Hibernate). Alcanza mientras la auditoría sea

@@ -4,28 +4,33 @@ import ar.edu.uai.tfi.management.api.rest.dto.b2b.CrearSedeRequest;
 import ar.edu.uai.tfi.management.api.rest.dto.b2b.SedeResponse;
 import ar.edu.uai.tfi.management.api.rest.dto.common.CambiarEstadoRequest;
 import ar.edu.uai.tfi.management.application.b2b.SedeService;
-import ar.edu.uai.tfi.management.domain.model.Sede;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 
-/** Sedes por id: consultar, modificar y habilitar/deshabilitar. Solo el administrador. */
+/**
+ * Sedes por id: consultar, modificar y habilitar/deshabilitar. El administrador de organización solo las de su
+ * organización.
+ */
 @Path("/api/sites")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@RolesAllowed("ADMINISTRADOR_SISTEMA")
+@RolesAllowed({"ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_ORGANIZACION"})
 public class SedeResource {
 
     private final SedeService service;
+    private final JsonWebToken jwt;
 
-    public SedeResource(SedeService service) {
+    public SedeResource(SedeService service, JsonWebToken jwt) {
         this.service = service;
+        this.jwt = jwt;
     }
 
     @GET
     @Path("/{id}")
     public SedeResponse buscar(@PathParam("id") Long id) {
-        return aResponse(service.buscarPorId(id));
+        return SedeResponse.de(service.buscarPorId(id, UsuarioAutenticado.alcance(jwt)));
     }
 
     @PUT
@@ -34,7 +39,8 @@ public class SedeResource {
         if (request == null) {
             throw new BadRequestException("El cuerpo de la solicitud es obligatorio.");
         }
-        return aResponse(service.actualizar(id, request.nombre(), request.ubicacion()));
+        return SedeResponse.de(service.actualizar(id, request.nombre(), request.ubicacion(),
+                UsuarioAutenticado.alcance(jwt)));
     }
 
     /** Habilitar o deshabilitar (baja lógica): una sede deshabilitada no admite dispositivos nuevos. */
@@ -44,16 +50,6 @@ public class SedeResource {
         if (request == null) {
             throw new BadRequestException("El cuerpo de la solicitud es obligatorio.");
         }
-        return aResponse(service.cambiarEstado(id, request.estado()));
-    }
-
-    private SedeResponse aResponse(Sede sede) {
-        return new SedeResponse(
-                sede.id(),
-                sede.organizacionId(),
-                sede.nombre(),
-                sede.ubicacion(),
-                sede.estado().name()
-        );
+        return SedeResponse.de(service.cambiarEstado(id, request.estado(), UsuarioAutenticado.alcance(jwt)));
     }
 }

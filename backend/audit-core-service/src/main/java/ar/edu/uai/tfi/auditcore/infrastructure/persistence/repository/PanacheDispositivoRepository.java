@@ -1,6 +1,7 @@
 package ar.edu.uai.tfi.auditcore.infrastructure.persistence.repository;
 
 import ar.edu.uai.tfi.auditcore.domain.model.DispositivoRed;
+import ar.edu.uai.tfi.auditcore.domain.model.EstadoDispositivo;
 import ar.edu.uai.tfi.auditcore.domain.repository.DispositivoRepository;
 import ar.edu.uai.tfi.auditcore.infrastructure.persistence.entity.DispositivoEntity;
 import ar.edu.uai.tfi.auditcore.infrastructure.persistence.entity.OrganizacionReferenciaEntity;
@@ -115,6 +116,11 @@ public class PanacheDispositivoRepository
         return find("id = ?1 and organizacion.id = ?2", id, organizacionId)
                 .firstResultOptional()
                 .map(this::convertirADominio);
+    }
+
+    @Override
+    public long contarActivosPorOrganizacion(Long organizacionId) {
+        return count("organizacion.id = ?1 and estado = ?2", organizacionId, EstadoDispositivo.ACTIVO);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package ar.edu.uai.tfi.auditcore.domain.repository;
 
 import ar.edu.uai.tfi.auditcore.domain.model.DispositivoRed;
+import ar.edu.uai.tfi.auditcore.domain.model.EstadoDispositivo;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,6 +28,13 @@ public interface DispositivoRepository {
     }
 
     Optional<DispositivoRed> buscarPorIdYOrganizacion(Long id, Long organizacionId);
+
+    /** Dispositivos activos de la organización (los que cuentan para el plan). */
+    default long contarActivosPorOrganizacion(Long organizacionId) {
+        return listarPorOrganizacion(organizacionId).stream()
+                .filter(dispositivo -> dispositivo.estado() == EstadoDispositivo.ACTIVO)
+                .count();
+    }
 
     /**
      * Indica si en la organización ya existe otro dispositivo con ese identificador (sin distinguir mayúsculas).

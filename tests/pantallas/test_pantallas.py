@@ -8,11 +8,19 @@ from conftest import CELULAR
 
 PANTALLAS = ["/dashboard", "/client-status", "/devices", "/baselines", "/rules", "/audits", "/history", "/results",
              "/alerts", "/reports", "/account"]
-PANTALLAS_ADMINISTRADOR = ["/organizations", "/users", "/logs", "/admin"]
-PERFILES = ["ADMINISTRADOR_SISTEMA", "ANALISTA_RED", "AUDITOR_TECNICO", "RESPONSABLE_GESTION_IT"]
+PERFILES = ["ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_ORGANIZACION", "ANALISTA_RED", "AUDITOR_TECNICO",
+            "RESPONSABLE_GESTION_IT"]
+# Pantallas que no ven todos los perfiles: perfil → rutas propias.
+PANTALLAS_POR_PERFIL = {
+    "ADMINISTRADOR_SISTEMA": ["/organizations", "/users", "/plans", "/logs", "/admin"],
+    "ADMINISTRADOR_ORGANIZACION": ["/organizations", "/users", "/plan"],
+    "ANALISTA_RED": [],
+    "AUDITOR_TECNICO": [],
+    "RESPONSABLE_GESTION_IT": ["/plan"],
+}
+RESTRINGIDAS = sorted({ruta for rutas in PANTALLAS_POR_PERFIL.values() for ruta in rutas})
 
-CASOS = [(perfil, ruta) for perfil in PERFILES for ruta in PANTALLAS]
-CASOS += [("ADMINISTRADOR_SISTEMA", ruta) for ruta in PANTALLAS_ADMINISTRADOR]
+CASOS = [(perfil, ruta) for perfil in PERFILES for ruta in PANTALLAS + PANTALLAS_POR_PERFIL[perfil]]
 
 # Rutas de API, etiquetas en inglés o en formato de código que no deben verse en pantalla (incluye diálogos ocultos).
 TEXTO_TECNICO = re.compile(
@@ -42,11 +50,11 @@ def test_pantalla_entra_en_un_celular(abrir, perfil, ruta):
     assert pagina.evaluate("document.documentElement.scrollWidth") <= CELULAR["width"]
 
 
-@pytest.mark.parametrize("perfil", PERFILES[1:])
-def test_menu_de_administracion_solo_para_el_administrador(abrir, perfil):
+@pytest.mark.parametrize("perfil", PERFILES)
+def test_el_menu_muestra_solo_las_pantallas_del_perfil(abrir, perfil):
     pagina = abrir("/dashboard", perfil=perfil)
-    for ruta in PANTALLAS_ADMINISTRADOR:
-        assert not pagina.locator(f".rail-link[href='{ruta}']").is_visible()
+    visibles = {ruta for ruta in RESTRINGIDAS if pagina.locator(f".rail-link[href='{ruta}']").is_visible()}
+    assert visibles == set(PANTALLAS_POR_PERFIL[perfil])
 
 
 def test_html_de_los_datos_se_muestra_como_texto(abrir):

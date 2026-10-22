@@ -5,6 +5,7 @@ import ar.edu.uai.tfi.management.api.rest.dto.user.CrearUsuarioRequest;
 import ar.edu.uai.tfi.management.api.rest.dto.user.ModificarUsuarioRequest;
 import ar.edu.uai.tfi.management.api.rest.dto.user.RestablecerPasswordRequest;
 import ar.edu.uai.tfi.management.api.rest.dto.user.UsuarioResponse;
+import ar.edu.uai.tfi.management.application.user.Actor;
 import ar.edu.uai.tfi.management.application.user.UsuarioService;
 import ar.edu.uai.tfi.management.application.user.UsuarioService.UsuarioConAcceso;
 import ar.edu.uai.tfi.management.domain.model.EstadoAcceso;
@@ -19,11 +20,14 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 
-/** Gestión de usuarios. Solo el administrador del sistema. */
+/**
+ * Gestión de usuarios: el administrador del sistema gestiona todos; el administrador de una organización, los
+ * usuarios con perfiles de operación de su organización.
+ */
 @Path("/api/users")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@RolesAllowed("ADMINISTRADOR_SISTEMA")
+@RolesAllowed({"ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_ORGANIZACION"})
 public class UsuarioResource {
 
     private final UsuarioService service;
@@ -36,13 +40,13 @@ public class UsuarioResource {
 
     @GET
     public List<UsuarioResponse> listar() {
-        return service.listarConAcceso().stream().map(UsuarioResource::aResponse).toList();
+        return service.listarConAcceso(actor()).stream().map(UsuarioResource::aResponse).toList();
     }
 
     @GET
     @Path("/{id}")
     public UsuarioResponse buscar(@PathParam("id") Long id) {
-        return aResponse(service.buscar(id));
+        return aResponse(service.buscar(id, actor()));
     }
 
     @POST
@@ -56,9 +60,10 @@ public class UsuarioResource {
                 request.email(),
                 request.nombreUsuario(),
                 request.password(),
-                request.roles());
+                request.roles(),
+                actor());
         return Response.created(URI.create("/api/users/" + creado.id()))
-                .entity(aResponse(service.buscar(creado.id()))).build();
+                .entity(aResponse(service.buscar(creado.id(), actor()))).build();
     }
 
     @PUT
@@ -67,8 +72,8 @@ public class UsuarioResource {
         if (request == null) {
             throw new BadRequestException("El cuerpo de la solicitud es obligatorio.");
         }
-        service.actualizar(id, request.organizationId(), request.nombre(), request.email(), request.roles(), actorId());
-        return aResponse(service.buscar(id));
+        service.actualizar(id, request.organizationId(), request.nombre(), request.email(), request.roles(), actor());
+        return aResponse(service.buscar(id, actor()));
     }
 
     /** Habilitar o deshabilitar (baja lógica). */
@@ -78,8 +83,8 @@ public class UsuarioResource {
         if (request == null) {
             throw new BadRequestException("El cuerpo de la solicitud es obligatorio.");
         }
-        service.cambiarEstado(id, request.estado(), actorId());
-        return aResponse(service.buscar(id));
+        service.cambiarEstado(id, request.estado(), actor());
+        return aResponse(service.buscar(id, actor()));
     }
 
     /** Contraseña nueva asignada por el administrador; cierra las sesiones abiertas del usuario. */
@@ -89,23 +94,19 @@ public class UsuarioResource {
         if (request == null) {
             throw new BadRequestException("El cuerpo de la solicitud es obligatorio.");
         }
-        service.restablecerPassword(id, request.password());
+        service.restablecerPassword(id, request.password(), actor());
         return Response.noContent().build();
     }
 
     @POST
     @Path("/{id}/unlock")
     public UsuarioResponse desbloquear(@PathParam("id") Long id) {
-        service.desbloquear(id);
-        return aResponse(service.buscar(id));
+        service.desbloquear(id, actor());
+        return aResponse(service.buscar(id, actor()));
     }
 
-    private Long actorId() {
-        try {
-            return Long.valueOf(jwt.getSubject());
-        } catch (NumberFormatException exception) {
-            throw new ForbiddenException("La sesión no identifica a un usuario válido.");
-        }
+    private Actor actor() {
+        return UsuarioAutenticado.actor(jwt);
     }
 
     private static UsuarioResponse aResponse(UsuarioConAcceso conAcceso) {

@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/** Perfiles fijos: solo se edita la descripción; la matriz cubre los cuatro perfiles. */
+/** Perfiles fijos: solo se edita la descripción; la matriz cubre los cinco perfiles. */
 class RolServiceTest {
 
     @Test
@@ -40,15 +40,17 @@ class RolServiceTest {
     }
 
     @Test
-    void laMatrizDePermisosUsaSoloLosCuatroPerfilesYElAdministradorTieneTodo() {
+    void laMatrizDePermisosUsaLosCincoPerfilesYElAdministradorTieneTodoSalvoPedirPlan() {
         Set<String> usados = new HashSet<>();
         for (MatrizPermisos.Permiso permiso : MatrizPermisos.PERMISOS) {
             assertFalse(permiso.perfiles().isEmpty(), permiso.modulo());
-            assertTrue(permiso.perfiles().contains(MatrizPermisos.ADMIN), permiso.modulo() + " / " + permiso.accion());
+            boolean pedirPlan = permiso.modulo().equals("Plan") && permiso.accion().equals("Solicitar un cambio");
+            assertEquals(!pedirPlan, permiso.perfiles().contains(MatrizPermisos.ADMIN),
+                    permiso.modulo() + " / " + permiso.accion());
             usados.addAll(permiso.perfiles());
         }
         assertEquals(Set.copyOf(MatrizPermisos.PERFILES), usados);
         assertTrue(MatrizPermisos.PERMISOS.stream().anyMatch(p -> p.modulo().equals("Mi cuenta")
-                && p.perfiles().size() == 4));
+                && p.perfiles().size() == MatrizPermisos.PERFILES.size()));
     }
 }

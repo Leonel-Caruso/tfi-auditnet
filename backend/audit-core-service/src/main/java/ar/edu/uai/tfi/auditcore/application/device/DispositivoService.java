@@ -1,5 +1,6 @@
 package ar.edu.uai.tfi.auditcore.application.device;
 
+import ar.edu.uai.tfi.auditcore.application.plan.ControlPlan;
 import ar.edu.uai.tfi.auditcore.application.port.TrazabilidadPort;
 import ar.edu.uai.tfi.auditcore.domain.model.CriticidadDispositivo;
 import ar.edu.uai.tfi.auditcore.domain.model.DispositivoRed;
@@ -16,7 +17,7 @@ import java.util.NoSuchElementException;
 
 /**
  * Gestión de dispositivos de red. El identificador es único dentro de cada organización y la baja es siempre
- * lógica.
+ * lógica. Los dispositivos activos respetan el límite del plan de la organización.
  */
 @ApplicationScoped
 public class DispositivoService {
@@ -25,13 +26,16 @@ public class DispositivoService {
 
     private final DispositivoRepository repository;
     private final TrazabilidadPort trazabilidad;
+    private final ControlPlan controlPlan;
 
     public DispositivoService(
             DispositivoRepository repository,
-            TrazabilidadPort trazabilidad
+            TrazabilidadPort trazabilidad,
+            ControlPlan controlPlan
     ) {
         this.repository = repository;
         this.trazabilidad = trazabilidad;
+        this.controlPlan = controlPlan;
     }
 
     @Transactional
@@ -54,6 +58,7 @@ public class DispositivoService {
 
         String identificadorNormalizado = normalizarIdentificador(identificador);
         validarIdentificadorDisponible(identificadorNormalizado, organizacionId, null);
+        controlPlan.verificarAltaDispositivo(organizacionId);
 
         DispositivoRed nuevo = new DispositivoRed(
                 null,
@@ -135,6 +140,9 @@ public class DispositivoService {
 
         if (anterior.estado() == nuevoEstado) {
             throw new IllegalStateException("El dispositivo " + anterior.identificador() + " ya está " + nuevoEstado + ".");
+        }
+        if (nuevoEstado == EstadoDispositivo.ACTIVO) {
+            controlPlan.verificarAltaDispositivo(anterior.organizacionId());
         }
 
         DispositivoRed actualizado = repository.actualizar(new DispositivoRed(

@@ -1,6 +1,7 @@
 """Datos de ejemplo que devuelve el servidor simulado. Incluyen textos con HTML para comprobar que se escapan."""
 
-ROLES = ["ADMINISTRADOR_SISTEMA", "ANALISTA_RED", "AUDITOR_TECNICO", "RESPONSABLE_GESTION_IT"]
+ROLES = ["ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_ORGANIZACION", "ANALISTA_RED", "AUDITOR_TECNICO",
+         "RESPONSABLE_GESTION_IT"]
 SEVERIDADES = ["CRITICA", "ALTA", "MEDIA", "BAJA"]
 
 ORGANIZACIONES = [
@@ -117,6 +118,8 @@ USUARIOS = [
      "estado": "ACTIVO", "roles": ["ANALISTA_RED"], "bloqueadoHasta": "2999-01-01T10:15:00Z", "ultimoAcceso": None},
     {"id": 3, "organizationId": 3, "nombre": "<b>Beto</b>", "email": "beto@beta.test", "nombreUsuario": "beto",
      "estado": "DESHABILITADO", "roles": ["AUDITOR_TECNICO"], "bloqueadoHasta": None, "ultimoAcceso": None},
+    {"id": 4, "organizationId": 2, "nombre": "Jefa ACME", "email": "jefa@acme.test", "nombreUsuario": "jefa",
+     "estado": "ACTIVO", "roles": ["ADMINISTRADOR_ORGANIZACION"], "bloqueadoHasta": None, "ultimoAcceso": None},
 ]
 PERFILES = [{"id": i + 1, "nombre": nombre, "descripcion": "Descripción de " + nombre, "estado": "ACTIVO"}
             for i, nombre in enumerate(ROLES)]
@@ -143,3 +146,35 @@ BITACORA_SISTEMA = [{"id": n, "fecha": "2026-10-0%dT10:00:00Z" % (1 + n % 9), "e
                      "resultado": "EXITO", "actor": "usuario%d" % n, "usuarioAfectadoId": None, "organizacionId": 2,
                      "origenIp": "10.0.0.%d" % n, "userAgent": "navegador", "correlacion": "c-%d" % n, "detalle": None}
                     for n in range(1, 61)]
+
+
+PLANES = [
+    {"codigo": "PILOTO", "nombre": "Piloto", "maxDispositivos": 10, "maxUsuarios": 5, "diasVigencia": 90,
+     "precioMensualUsd": None, "condiciones": "Prueba de 60 a 90 días."},
+    {"codigo": "INICIAL", "nombre": "Inicial", "maxDispositivos": 50, "maxUsuarios": 15, "diasVigencia": None,
+     "precioMensualUsd": 150, "condiciones": "Anual: 10 % de descuento."},
+    {"codigo": "PROFESIONAL", "nombre": "Profesional", "maxDispositivos": 150, "maxUsuarios": 40,
+     "diasVigencia": None, "precioMensualUsd": 300, "condiciones": "Anual: 10 % de descuento."},
+    {"codigo": "EMPRESA", "nombre": "Empresa", "maxDispositivos": None, "maxUsuarios": None, "diasVigencia": None,
+     "precioMensualUsd": None, "condiciones": "A medida, a cotizar."},
+]
+
+
+def _solicitud(numero, actual, pedido, estado, respuesta=None):
+    return {"id": numero, "organizationId": 2, "organizacion": "ACME S.A.", "planActual": actual,
+            "planSolicitado": pedido, "modalidad": "ANUAL", "estado": estado, "comentario": "Sumamos <b>sedes</b>",
+            "solicitadoPor": "jefa", "fechaSolicitud": "2026-10-20T12:00:00Z",
+            "resueltoPor": None if estado == "PENDIENTE" else "admin",
+            "fechaResolucion": None if estado == "PENDIENTE" else "2026-10-21T12:00:00Z", "respuesta": respuesta}
+
+
+SOLICITUDES = [_solicitud(1, "PILOTO", "INICIAL", "RECHAZADA", "Falta el contrato"),
+               _solicitud(2, "PILOTO", "EMPRESA", "PENDIENTE")]
+
+
+def plan_organizacion(organizacion):
+    """ACME: piloto con 12 días por delante, 7 de 10 dispositivos y 5 de 5 usuarios (en el límite)."""
+    return {"organizationId": organizacion, "plan": PLANES[0], "maxDispositivos": 10, "maxUsuarios": 5,
+            "dispositivosActivos": 7, "usuariosActivos": 5, "desde": "2026-08-03T12:00:00Z",
+            "vence": "2026-11-01T12:00:00Z", "diasRestantes": 12, "vencido": False,
+            "solicitudPendiente": SOLICITUDES[1]}

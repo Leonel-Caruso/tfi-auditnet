@@ -4,6 +4,7 @@ import ar.edu.uai.tfi.auditcore.api.rest.dto.audit.*;
 import ar.edu.uai.tfi.auditcore.api.rest.dto.finding.HallazgoMapper;
 import ar.edu.uai.tfi.auditcore.application.audit.AuditoriaDetalle;
 import ar.edu.uai.tfi.auditcore.application.audit.AuditoriaService;
+import ar.edu.uai.tfi.auditcore.application.plan.RestriccionPlanException;
 import ar.edu.uai.tfi.auditcore.domain.model.*;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.json.JsonNumber;
@@ -25,6 +26,7 @@ import java.util.Set;
 @Consumes(MediaType.APPLICATION_JSON)
 @RolesAllowed({
         "ADMINISTRADOR_SISTEMA",
+        "ADMINISTRADOR_ORGANIZACION",
         "ANALISTA_RED",
         "AUDITOR_TECNICO",
         "RESPONSABLE_GESTION_IT"
@@ -139,6 +141,8 @@ public class AuditoriaResource {
             return Response.created(URI.create("/api/audits/" + detalle.auditoria().id()))
                     .entity(aDetalle(detalle))
                     .build();
+        } catch (RestriccionPlanException exception) {
+            throw error(Response.Status.CONFLICT, exception.getMessage());
         } catch (IllegalStateException | IllegalArgumentException exception) {
             throw error(Response.Status.BAD_REQUEST, exception.getMessage());
         } catch (NoSuchElementException exception) {

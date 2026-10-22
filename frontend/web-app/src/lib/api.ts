@@ -121,9 +121,66 @@ export type StorageSyncResult = { configuraciones: number; reportes: number; pen
 
 export const ROLE_LABEL: Record<string, string> = {
   ADMINISTRADOR_SISTEMA: 'Administrador del sistema',
+  ADMINISTRADOR_ORGANIZACION: 'Administrador de organización',
   ANALISTA_RED: 'Analista de redes',
   AUDITOR_TECNICO: 'Auditor técnico',
   RESPONSABLE_GESTION_IT: 'Responsable de gestión IT',
+};
+
+/** Perfiles de mayor a menor alcance (orden de las listas y del perfil que se muestra en la barra). */
+export const PROFILE_ORDER = [
+  'ADMINISTRADOR_SISTEMA',
+  'ADMINISTRADOR_ORGANIZACION',
+  'ANALISTA_RED',
+  'AUDITOR_TECNICO',
+  'RESPONSABLE_GESTION_IT',
+];
+
+/** Perfiles de la operación diaria: los que asigna el administrador de una organización. */
+export const OPERATION_ROLES = ['ANALISTA_RED', 'AUDITOR_TECNICO', 'RESPONSABLE_GESTION_IT'];
+
+/** Plan del catálogo; un máximo nulo es un límite a medida y un precio nulo, a cotizar o bonificado. */
+export type Plan = {
+  codigo: string;
+  nombre: string;
+  maxDispositivos: number | null;
+  maxUsuarios: number | null;
+  diasVigencia: number | null;
+  precioMensualUsd: number | null;
+  condiciones: string | null;
+};
+
+export type PlanRequestStatus = 'PENDIENTE' | 'APROBADA' | 'RECHAZADA' | 'CANCELADA';
+
+export type PlanRequest = {
+  id: number;
+  organizationId: number;
+  organizacion: string | null;
+  planActual: string;
+  planSolicitado: string;
+  modalidad: 'MENSUAL' | 'ANUAL';
+  estado: PlanRequestStatus;
+  comentario: string | null;
+  solicitadoPor: string;
+  fechaSolicitud: string;
+  resueltoPor: string | null;
+  fechaResolucion: string | null;
+  respuesta: string | null;
+};
+
+/** Plan de una organización con su uso; los máximos ya contemplan los límites acordados. */
+export type OrganizationPlan = {
+  organizationId: number;
+  plan: Plan;
+  maxDispositivos: number | null;
+  maxUsuarios: number | null;
+  dispositivosActivos: number;
+  usuariosActivos: number;
+  desde: string;
+  vence: string | null;
+  diasRestantes: number | null;
+  vencido: boolean;
+  solicitudPendiente: PlanRequest | null;
 };
 
 /** Opciones de fetch para enviar JSON (POST, PUT, PATCH). */

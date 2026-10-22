@@ -66,7 +66,7 @@ server {
     }
 
     # management-service
-    location ~ ^/api/(auth|users|roles|client-organizations|sites|management|admin)(/|$) {
+    location ~ ^/api/(auth|users|roles|client-organizations|sites|plans|management|admin)(/|$) {
         proxy_pass ${MANAGEMENT_UPSTREAM};
         proxy_ssl_server_name on;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

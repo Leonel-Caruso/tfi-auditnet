@@ -1,0 +1,261 @@
+---
+import MasterLayout from '../layouts/MasterLayout.astro';
+---
+
+<MasterLayout
+  title="Planes y solicitudes"
+  section="Administración"
+  description="Solicitudes de cambio de plan de las organizaciones y precios de referencia del catálogo."
+>
+  <div id="plans-error" class="alert alert-error is-hidden" role="alert"></div>
+  <div id="plans-message" class="alert alert-success is-hidden" role="status"></div>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <span class="eyebrow">Pendientes</span>
+        <h2>Solicitudes por resolver</h2>
+      </div>
+      <span id="pending-count" class="counter-chip">—</span>
+    </div>
+    <ul id="pending-list" class="request-list"><li><div class="skeleton-row"></div></li></ul>
+    <div id="pending-empty" class="empty-state compact-empty is-hidden">
+      <div><code>0 pendientes</code><p>No hay solicitudes de cambio de plan por resolver.</p></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <span class="eyebrow">Catálogo</span>
+        <h2>Planes y precios de referencia</h2>
+      </div>
+    </div>
+    <div id="catalog" class="plan-catalog"><div class="skeleton-row"></div></div>
+    <p class="log-muted" style="margin-top: 12px;">
+      Los límites son los de la propuesta comercial. El precio y las condiciones se ajustan cada año y quedan en la
+      bitácora de transacciones.
+    </p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <span class="eyebrow">Historial</span>
+        <h2>Solicitudes resueltas</h2>
+      </div>
+    </div>
+    <ul id="history-list" class="request-list"></ul>
+    <div id="history-empty" class="empty-state compact-empty is-hidden">
+      <div><code>0 resueltas</code><p>Todavía no se resolvió ninguna solicitud.</p></div>
+    </div>
+  </section>
+
+  <dialog id="resolve-dialog" class="technical-dialog" style="width: min(560px, calc(100vw - 32px));">
+    <form id="resolve-form" class="device-form" novalidate>
+      <div class="dialog-header">
+        <div>
+          <span id="resolve-eyebrow" class="eyebrow">Aprobar solicitud</span>
+          <h2 id="resolve-title">—</h2>
+          <p id="resolve-help"></p>
+        </div>
+        <button class="dialog-close" type="button" data-close-dialog aria-label="Cerrar">×</button>
+      </div>
+      <div class="device-form-grid">
+        <label class="field" data-custom-limit>
+          <span>dispositivos acordados *</span>
+          <input id="resolve-devices" type="number" min="1" />
+        </label>
+        <label class="field" data-custom-limit>
+          <span>usuarios acordados *</span>
+          <input id="resolve-users" type="number" min="1" />
+        </label>
+        <label class="field field-span-2">
+          <span id="resolve-answer-label">respuesta para el cliente</span>
+          <textarea id="resolve-answer" rows="3" maxlength="500"></textarea>
+        </label>
+      </div>
+      <div id="resolve-form-error" class="alert alert-error is-hidden"></div>
+      <div class="dialog-actions">
+        <button class="button button-ghost" type="button" data-close-dialog>Cancelar</button>
+        <button id="resolve-submit" class="button button-primary" type="submit">Aprobar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="price-dialog" class="technical-dialog" style="width: min(520px, calc(100vw - 32px));">
+    <form id="price-form" class="device-form" novalidate>
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">Catálogo</span>
+          <h2 id="price-title">—</h2>
+          <p>Vacío deja el precio como "a cotizar" o "bonificado".</p>
+        </div>
+        <button class="dialog-close" type="button" data-close-dialog aria-label="Cerrar">×</button>
+      </div>
+      <label class="field">
+        <span>precio mensual de referencia (USD)</span>
+        <input id="price-value" type="number" min="0" step="0.01" />
+      </label>
+      <label class="field">
+        <span>condiciones</span>
+        <textarea id="price-conditions" rows="3" maxlength="400"></textarea>
+      </label>
+      <div id="price-form-error" class="alert alert-error is-hidden"></div>
+      <div class="dialog-actions">
+        <button class="button button-ghost" type="button" data-close-dialog>Cancelar</button>
+        <button class="button button-primary" type="submit">Guardar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    import { authFetch } from '../lib/auth';
+    import { jsonRequest, readApiError, type Plan, type PlanRequest } from '../lib/api';
+    import { escapeHtml, formatDate } from '../lib/format';
+    import { isCustomPlan, MODALITY_LABEL, planCard, requestStatusBadge } from '../lib/plans';
+
+    const $ = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector);
+    const resolveDialog = $<HTMLDialogElement>('#resolve-dialog');
+    const priceDialog = $<HTMLDialogElement>('#price-dialog');
+
+    let catalog: Plan[] = [];
+    let requests: PlanRequest[] = [];
+    let resolving: { request: PlanRequest; approve: boolean } | null = null;
+    let editingPlan: Plan | null = null;
+
+    const show = (selector: string, message: string | null) => {
+      const node = $(selector);
+      if (!node) return;
+      node.textContent = message ?? '';
+      node.classList.toggle('is-hidden', !message);
+    };
+    const notify = (message: string) => {
+      show('#plans-message', message);
+      window.setTimeout(() => show('#plans-message', null), 4500);
+    };
+    const planName = (code: string) => catalog.find((plan) => plan.codigo === code)?.nombre ?? code;
+
+    const requestItem = (request: PlanRequest, actions: boolean) => `
+      <li data-request-id="${request.id}">
+        <div>
+          <strong>${escapeHtml(request.organizacion ?? `organización #${request.organizationId}`)}: ${escapeHtml(planName(request.planActual))} → ${escapeHtml(planName(request.planSolicitado))}</strong>
+          ${requestStatusBadge(request.estado)}
+        </div>
+        <small>${escapeHtml(MODALITY_LABEL[request.modalidad])} · pedida por ${escapeHtml(request.solicitadoPor)} el ${escapeHtml(formatDate(request.fechaSolicitud))}${request.resueltoPor ? ` · resuelta por ${escapeHtml(request.resueltoPor)} el ${escapeHtml(formatDate(request.fechaResolucion))}` : ''}</small>
+        ${request.comentario ? `<p>Cliente: ${escapeHtml(request.comentario)}</p>` : ''}
+        ${request.respuesta ? `<p>Respuesta: ${escapeHtml(request.respuesta)}</p>` : ''}
+        ${actions ? `<div class="inline-actions">
+          <button class="button button-primary button-small" type="button" data-action="approve">Aprobar</button>
+          <button class="button button-ghost button-small" type="button" data-action="reject">Rechazar</button>
+        </div>` : ''}
+      </li>`;
+
+    const renderRequests = () => {
+      const pending = requests.filter((request) => request.estado === 'PENDIENTE');
+      const resolved = requests.filter((request) => request.estado !== 'PENDIENTE').reverse();
+      $('#pending-list')!.innerHTML = pending.map((request) => requestItem(request, true)).join('');
+      $('#pending-count')!.textContent = String(pending.length);
+      $('#pending-empty')?.classList.toggle('is-hidden', pending.length > 0);
+      $('#history-list')!.innerHTML = resolved.map((request) => requestItem(request, false)).join('');
+      $('#history-empty')?.classList.toggle('is-hidden', resolved.length > 0);
+    };
+
+    const renderCatalog = () => {
+      $('#catalog')!.innerHTML = catalog.map((plan) => planCard(plan, false,
+        `<button class="button button-ghost button-small" type="button" data-plan="${escapeHtml(plan.codigo)}">Editar precio</button>`)).join('');
+    };
+
+    const load = async () => {
+      const [catalogResponse, requestResponse] = await Promise.all([
+        authFetch('/api/plans'),
+        authFetch('/api/admin/plan-requests'),
+      ]);
+      if (!catalogResponse.ok) return show('#plans-error', await readApiError(catalogResponse));
+      if (!requestResponse.ok) return show('#plans-error', await readApiError(requestResponse));
+      catalog = await catalogResponse.json() as Plan[];
+      requests = await requestResponse.json() as PlanRequest[];
+      renderCatalog();
+      renderRequests();
+    };
+
+    // Aprobar o rechazar
+    $('#pending-list')?.addEventListener('click', (event) => {
+      const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-action]');
+      const id = Number(button?.closest<HTMLElement>('[data-request-id]')?.dataset.requestId);
+      const request = requests.find((item) => item.id === id);
+      if (!button || !request) return;
+      const approve = button.dataset.action === 'approve';
+      const target = catalog.find((plan) => plan.codigo === request.planSolicitado);
+      const custom = approve && target !== undefined && isCustomPlan(target);
+      resolving = { request, approve };
+      $<HTMLFormElement>('#resolve-form')?.reset();
+      show('#resolve-form-error', null);
+      $('#resolve-eyebrow')!.textContent = approve ? 'Aprobar solicitud' : 'Rechazar solicitud';
+      $('#resolve-title')!.textContent = `${request.organizacion ?? ''}: ${planName(request.planSolicitado)}`;
+      $('#resolve-help')!.textContent = approve
+        ? 'El plan se aplica en el acto. Si la organización usa más que el plan nuevo, la aprobación se rechaza.'
+        : 'El cliente ve el motivo en Mi plan.';
+      $('#resolve-answer-label')!.textContent = approve ? 'respuesta para el cliente' : 'motivo del rechazo *';
+      $('#resolve-submit')!.textContent = approve ? 'Aprobar' : 'Rechazar';
+      document.querySelectorAll<HTMLElement>('[data-custom-limit]').forEach((node) => node.classList.toggle('is-hidden', !custom));
+      resolveDialog?.showModal();
+    });
+
+    $<HTMLFormElement>('#resolve-form')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!resolving) return;
+      show('#resolve-form-error', null);
+      const { request, approve } = resolving;
+      const number = (selector: string) => {
+        const input = $<HTMLInputElement>(selector);
+        return input && !input.closest('.is-hidden') && input.value !== '' ? Number(input.value) : null;
+      };
+      const payload = {
+        respuesta: ($<HTMLTextAreaElement>('#resolve-answer')?.value ?? '').trim(),
+        limiteDispositivos: number('#resolve-devices'),
+        limiteUsuarios: number('#resolve-users'),
+      };
+      const response = await authFetch(`/api/admin/plan-requests/${request.id}/${approve ? 'approve' : 'reject'}`,
+        jsonRequest('POST', payload));
+      if (!response.ok) return show('#resolve-form-error', await readApiError(response));
+      resolveDialog?.close();
+      notify(approve
+        ? `${request.organizacion ?? 'La organización'} pasó al plan ${planName(request.planSolicitado)}.`
+        : 'Solicitud rechazada.');
+      await load();
+    });
+
+    // Precio y condiciones del catálogo
+    $('#catalog')?.addEventListener('click', (event) => {
+      const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-plan]');
+      editingPlan = catalog.find((plan) => plan.codigo === button?.dataset.plan) ?? null;
+      if (!editingPlan) return;
+      show('#price-form-error', null);
+      $('#price-title')!.textContent = `Plan ${editingPlan.nombre}`;
+      $<HTMLInputElement>('#price-value')!.value = editingPlan.precioMensualUsd === null ? '' : String(editingPlan.precioMensualUsd);
+      $<HTMLTextAreaElement>('#price-conditions')!.value = editingPlan.condiciones ?? '';
+      priceDialog?.showModal();
+    });
+
+    $<HTMLFormElement>('#price-form')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!editingPlan) return;
+      const price = $<HTMLInputElement>('#price-value')?.value ?? '';
+      const response = await authFetch(`/api/plans/${editingPlan.codigo}`, jsonRequest('PUT', {
+        precioMensualUsd: price === '' ? null : Number(price),
+        condiciones: ($<HTMLTextAreaElement>('#price-conditions')?.value ?? '').trim(),
+      }));
+      if (!response.ok) return show('#price-form-error', await readApiError(response));
+      priceDialog?.close();
+      notify(`Plan ${editingPlan.nombre} actualizado.`);
+      await load();
+    });
+
+    document.querySelectorAll<HTMLButtonElement>('[data-close-dialog]').forEach((button) => {
+      button.addEventListener('click', () => button.closest('dialog')?.close());
+    });
+
+    load().catch((error) => show('#plans-error', error instanceof Error ? error.message : 'No se pudieron cargar los planes.'));
+  </script>
+</MasterLayout>

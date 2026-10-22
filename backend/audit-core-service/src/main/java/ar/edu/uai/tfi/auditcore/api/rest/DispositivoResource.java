@@ -33,12 +33,14 @@ import java.util.function.Supplier;
 @Consumes(MediaType.APPLICATION_JSON)
 @RolesAllowed({
         "ADMINISTRADOR_SISTEMA",
+        "ADMINISTRADOR_ORGANIZACION",
         "ANALISTA_RED",
         "AUDITOR_TECNICO",
         "RESPONSABLE_GESTION_IT"
 })
 public class DispositivoResource {
     private static final String ADMIN = "ADMINISTRADOR_SISTEMA";
+    private static final String ADMIN_ORGANIZACION = "ADMINISTRADOR_ORGANIZACION";
 
     private final DispositivoService service;
     private final JsonWebToken jwt;
@@ -74,11 +76,16 @@ public class DispositivoResource {
         }
     }
 
+    /** El administrador de una organización registra dispositivos solo en la suya. */
     @POST
-    @RolesAllowed(ADMIN)
+    @RolesAllowed({ADMIN, ADMIN_ORGANIZACION})
     public Response crear(CrearDispositivoRequest request) {
         if (request == null) {
             throw error(Response.Status.BAD_REQUEST, "El cuerpo de la solicitud es obligatorio.");
+        }
+        Long alcance = UsuarioAutenticado.organizacion(jwt);
+        if (alcance != null && !alcance.equals(request.organizacionId())) {
+            throw new ForbiddenException("Solo podés registrar dispositivos en tu organización.");
         }
 
         try {
@@ -108,11 +115,12 @@ public class DispositivoResource {
     /** Modifica los datos del dispositivo. Registra MODIFICACION con valor anterior y nuevo. */
     @PUT
     @Path("/{id}")
-    @RolesAllowed(ADMIN)
+    @RolesAllowed({ADMIN, ADMIN_ORGANIZACION})
     public DispositivoResponse modificar(@PathParam("id") Long id, ModificarDispositivoRequest request) {
         if (request == null) {
             throw error(Response.Status.BAD_REQUEST, "El cuerpo de la solicitud es obligatorio.");
         }
+        verificarAlcance(id);
         return ejecutar(() -> service.modificar(
                 id,
                 request.nombre(),
@@ -128,12 +136,21 @@ public class DispositivoResource {
     /** Baja lógica ({"estado":"INACTIVO"}) o reactivación ({"estado":"ACTIVO"}). */
     @PATCH
     @Path("/{id}/status")
-    @RolesAllowed(ADMIN)
+    @RolesAllowed({ADMIN, ADMIN_ORGANIZACION})
     public DispositivoResponse cambiarEstado(@PathParam("id") Long id, CambiarEstadoRequest request) {
         if (request == null) {
             throw error(Response.Status.BAD_REQUEST, "El cuerpo de la solicitud es obligatorio.");
         }
+        verificarAlcance(id);
         return ejecutar(() -> service.cambiarEstado(id, request.estado(), jwt.getName()));
+    }
+
+    /** Un dispositivo de otra organización responde 404, igual que en la consulta. */
+    private void verificarAlcance(Long id) {
+        Long alcance = UsuarioAutenticado.organizacion(jwt);
+        if (alcance != null) {
+            ejecutar(() -> service.buscarPorIdYOrganizacion(id, alcance));
+        }
     }
 
     private DispositivoResponse ejecutar(Supplier<DispositivoRed> operacion) {

@@ -40,14 +40,14 @@ class UsuarioServiceTest {
         organizaciones.agregar(1L, "PLATAFORMA", "Plataforma", EstadoRegistro.ACTIVO);
         organizaciones.agregar(3L, "CLIENTE-1", "Cliente Uno", EstadoRegistro.ACTIVO);
         service = new UsuarioService(usuarios, organizaciones, new EnMemoriaGestion.Roles(),
-                new EnMemoriaGestion.PasswordSimple(), eventos::add);
+                new EnMemoriaGestion.PasswordSimple(), eventos::add, organizacionId -> { });
         service.reloj = new EnMemoriaGestion.RelojAjustable(AHORA);
     }
 
     @Test
     void crearUsuarioRegistraCreacionYAsignacionDeRoles() {
         Usuario creado = service.crear(3L, "Ana Pérez", "Ana@Cliente.com", "Ana", "Secreta123",
-                Set.of("analista_red"));
+                Set.of("analista_red"), admin(1L));
 
         assertEquals("ana", creado.nombreUsuario());
         assertEquals("ana@cliente.com", creado.email());
@@ -69,12 +69,12 @@ class UsuarioServiceTest {
     @Test
     void crearRechazaContrasenaDebilYUsuarioDuplicado() {
         ExcepcionAplicacion debil = assertThrows(ExcepcionAplicacion.class,
-                () -> service.crear(3L, "Ana", "ana@cliente.com", "ana", "corta1", Set.of("ANALISTA_RED")));
+                () -> service.crear(3L, "Ana", "ana@cliente.com", "ana", "corta1", Set.of("ANALISTA_RED"), admin(1L)));
         assertEquals(ErrorAplicacion.SOLICITUD_INVALIDA, debil.tipo());
 
-        service.crear(3L, "Ana", "ana@cliente.com", "ana", "Secreta1234", Set.of("ANALISTA_RED"));
+        service.crear(3L, "Ana", "ana@cliente.com", "ana", "Secreta1234", Set.of("ANALISTA_RED"), admin(1L));
         ExcepcionAplicacion duplicado = assertThrows(ExcepcionAplicacion.class,
-                () -> service.crear(3L, "Ana 2", "otra@cliente.com", "ANA", "Secreta1234", Set.of("ANALISTA_RED")));
+                () -> service.crear(3L, "Ana 2", "otra@cliente.com", "ANA", "Secreta1234", Set.of("ANALISTA_RED"), admin(1L)));
         assertEquals(ErrorAplicacion.CONFLICTO, duplicado.tipo());
     }
 
@@ -84,7 +84,7 @@ class UsuarioServiceTest {
         usuarios.agregar(usuario(1L, 1L, "admin", Set.of(ADMIN)));
 
         Usuario actualizado = service.actualizar(ana.id(), 3L, "Ana María", "ana@cliente.com",
-                Set.of("AUDITOR_TECNICO"), 1L);
+                Set.of("AUDITOR_TECNICO"), admin(1L));
 
         assertEquals(Set.of("AUDITOR_TECNICO"), actualizado.roles());
         assertEquals("ana", actualizado.nombreUsuario(), "El nombre de usuario no cambia");
@@ -98,7 +98,7 @@ class UsuarioServiceTest {
     void actualizarSoloElNombreNoCierraLasSesiones() {
         usuarios.agregar(usuario(10L, 3L, "ana", Set.of("ANALISTA_RED")));
 
-        service.actualizar(10L, 3L, "Ana María", "ana@cliente.com", Set.of("ANALISTA_RED"), 1L);
+        service.actualizar(10L, 3L, "Ana María", "ana@cliente.com", Set.of("ANALISTA_RED"), admin(1L));
 
         assertNull(usuarios.estadoAcceso(10L).sesionesValidasDesde());
         assertEquals(1, eventos.size());
@@ -111,7 +111,7 @@ class UsuarioServiceTest {
         usuarios.agregar(usuario(11L, 3L, "beto", Set.of("ANALISTA_RED")));
 
         ExcepcionAplicacion error = assertThrows(ExcepcionAplicacion.class,
-                () -> service.actualizar(10L, 3L, "Ana", "beto@cliente.com", Set.of("ANALISTA_RED"), 1L));
+                () -> service.actualizar(10L, 3L, "Ana", "beto@cliente.com", Set.of("ANALISTA_RED"), admin(1L)));
 
         assertEquals(ErrorAplicacion.CONFLICTO, error.tipo());
     }
@@ -122,9 +122,9 @@ class UsuarioServiceTest {
         usuarios.agregar(usuario(2L, 1L, "admin2", Set.of(ADMIN)));
 
         ExcepcionAplicacion perfil = assertThrows(ExcepcionAplicacion.class,
-                () -> service.actualizar(1L, 1L, "Admin", "admin@cliente.com", Set.of("AUDITOR_TECNICO"), 1L));
+                () -> service.actualizar(1L, 1L, "Admin", "admin@cliente.com", Set.of("AUDITOR_TECNICO"), admin(1L)));
         ExcepcionAplicacion estado = assertThrows(ExcepcionAplicacion.class,
-                () -> service.cambiarEstado(1L, "DESHABILITADO", 1L));
+                () -> service.cambiarEstado(1L, "DESHABILITADO", admin(1L)));
 
         assertEquals(ErrorAplicacion.CONFLICTO, perfil.tipo());
         assertEquals(ErrorAplicacion.CONFLICTO, estado.tipo());
@@ -136,12 +136,12 @@ class UsuarioServiceTest {
         usuarios.agregar(usuario(1L, 1L, "admin", Set.of(ADMIN)));
         usuarios.agregar(usuario(2L, 1L, "admin2", Set.of(ADMIN)));
 
-        service.cambiarEstado(2L, "DESHABILITADO", 1L);
+        service.cambiarEstado(2L, "DESHABILITADO", admin(1L));
         // Otro actor (por ejemplo, un administrador recién deshabilitado con un token viejo) no puede dejar 0.
         ExcepcionAplicacion ultimo = assertThrows(ExcepcionAplicacion.class,
-                () -> service.cambiarEstado(1L, "DESHABILITADO", 2L));
+                () -> service.cambiarEstado(1L, "DESHABILITADO", admin(2L)));
         ExcepcionAplicacion sinPerfil = assertThrows(ExcepcionAplicacion.class,
-                () -> service.actualizar(1L, 1L, "Admin", "admin@cliente.com", Set.of("ANALISTA_RED"), 2L));
+                () -> service.actualizar(1L, 1L, "Admin", "admin@cliente.com", Set.of("ANALISTA_RED"), admin(2L)));
 
         assertEquals(ErrorAplicacion.CONFLICTO, ultimo.tipo());
         assertEquals(ErrorAplicacion.CONFLICTO, sinPerfil.tipo());
@@ -153,12 +153,12 @@ class UsuarioServiceTest {
     void habilitarYDeshabilitarRegistraEventosYRechazaElMismoEstado() {
         usuarios.agregar(usuario(10L, 3L, "ana", Set.of("ANALISTA_RED")));
 
-        service.cambiarEstado(10L, "deshabilitado", 1L);
+        service.cambiarEstado(10L, "deshabilitado", admin(1L));
         ExcepcionAplicacion repetido = assertThrows(ExcepcionAplicacion.class,
-                () -> service.cambiarEstado(10L, "DESHABILITADO", 1L));
+                () -> service.cambiarEstado(10L, "DESHABILITADO", admin(1L)));
         ExcepcionAplicacion invalido = assertThrows(ExcepcionAplicacion.class,
-                () -> service.cambiarEstado(10L, "BORRADO", 1L));
-        service.cambiarEstado(10L, "ACTIVO", 1L);
+                () -> service.cambiarEstado(10L, "BORRADO", admin(1L)));
+        service.cambiarEstado(10L, "ACTIVO", admin(1L));
 
         assertEquals(ErrorAplicacion.CONFLICTO, repetido.tipo());
         assertEquals(ErrorAplicacion.SOLICITUD_INVALIDA, invalido.tipo());
@@ -174,8 +174,8 @@ class UsuarioServiceTest {
         usuarios.accesos.put(10L, new EstadoAcceso(10L, 0, AHORA.plusSeconds(600), null, null));
 
         ExcepcionAplicacion conUsuario = assertThrows(ExcepcionAplicacion.class,
-                () -> service.restablecerPassword(10L, "ana-2026-clave"));
-        service.restablecerPassword(10L, "Temporal2026");
+                () -> service.restablecerPassword(10L, "ana-2026-clave", admin(1L)));
+        service.restablecerPassword(10L, "Temporal2026", admin(1L));
 
         assertEquals(ErrorAplicacion.SOLICITUD_INVALIDA, conUsuario.tipo());
         assertEquals("hash:Temporal2026", usuarios.buscarPorId(10L).orElseThrow().passwordHash());
@@ -190,9 +190,10 @@ class UsuarioServiceTest {
     void desbloquearSoloAplicaAUnaCuentaBloqueada() {
         usuarios.agregar(usuario(10L, 3L, "ana", Set.of("ANALISTA_RED")));
 
-        ExcepcionAplicacion noBloqueada = assertThrows(ExcepcionAplicacion.class, () -> service.desbloquear(10L));
+        ExcepcionAplicacion noBloqueada = assertThrows(ExcepcionAplicacion.class,
+                () -> service.desbloquear(10L, admin(1L)));
         usuarios.accesos.put(10L, new EstadoAcceso(10L, 0, AHORA.plusSeconds(600), null, null));
-        service.desbloquear(10L);
+        service.desbloquear(10L, admin(1L));
 
         assertEquals(ErrorAplicacion.CONFLICTO, noBloqueada.tipo());
         assertFalse(usuarios.estadoAcceso(10L).bloqueado(AHORA));
@@ -204,7 +205,7 @@ class UsuarioServiceTest {
         usuarios.agregar(usuario(10L, 3L, "ana", Set.of("ANALISTA_RED")));
         usuarios.accesos.put(10L, new EstadoAcceso(10L, 2, AHORA.plusSeconds(60), AHORA.minusSeconds(3600), null));
 
-        UsuarioService.UsuarioConAcceso fila = service.listarConAcceso().get(0);
+        UsuarioService.UsuarioConAcceso fila = service.listarConAcceso(admin(1L)).get(0);
 
         assertEquals("ana", fila.usuario().nombreUsuario());
         assertEquals(AHORA.plusSeconds(60), fila.acceso().bloqueadoHasta());
@@ -213,8 +214,12 @@ class UsuarioServiceTest {
 
     @Test
     void usuarioInexistenteDevuelveNoEncontrado() {
-        ExcepcionAplicacion error = assertThrows(ExcepcionAplicacion.class, () -> service.buscar(99L));
+        ExcepcionAplicacion error = assertThrows(ExcepcionAplicacion.class, () -> service.buscar(99L, admin(1L)));
         assertEquals(ErrorAplicacion.NO_ENCONTRADO, error.tipo());
+    }
+
+    private static Actor admin(Long id) {
+        return new Actor(id, 1L, Set.of(ADMIN));
     }
 
     private static Usuario usuario(Long id, Long organizacionId, String nombreUsuario, Set<String> roles) {

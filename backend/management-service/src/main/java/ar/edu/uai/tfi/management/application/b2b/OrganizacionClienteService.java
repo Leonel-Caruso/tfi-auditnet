@@ -2,11 +2,13 @@ package ar.edu.uai.tfi.management.application.b2b;
 
 import ar.edu.uai.tfi.management.application.ErrorAplicacion;
 import ar.edu.uai.tfi.management.application.ExcepcionAplicacion;
+import ar.edu.uai.tfi.management.application.plan.PlanService;
 import ar.edu.uai.tfi.management.application.port.TrazabilidadPort;
 import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
 import ar.edu.uai.tfi.management.domain.model.OperacionTransaccion;
 import ar.edu.uai.tfi.management.domain.model.Transaccion;
 import ar.edu.uai.tfi.management.domain.model.OrganizacionCliente;
+import ar.edu.uai.tfi.management.domain.model.PlanOrganizacion;
 import ar.edu.uai.tfi.management.domain.repository.OrganizacionClienteRepository;
 import ar.edu.uai.tfi.management.domain.repository.UsuarioRepository;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -22,13 +24,15 @@ public class OrganizacionClienteService {
     private final OrganizacionClienteRepository repository;
     private final TrazabilidadPort trazabilidad;
     private final UsuarioRepository usuarioRepository;
+    private final PlanService planService;
     Clock reloj = Clock.systemUTC();
 
     public OrganizacionClienteService(OrganizacionClienteRepository repository, TrazabilidadPort trazabilidad,
-                                      UsuarioRepository usuarioRepository) {
+                                      UsuarioRepository usuarioRepository, PlanService planService) {
         this.repository = repository;
         this.trazabilidad = trazabilidad;
         this.usuarioRepository = usuarioRepository;
+        this.planService = planService;
     }
 
     public List<OrganizacionCliente> listar() {
@@ -45,10 +49,13 @@ public class OrganizacionClienteService {
                         "La organización cliente no fue encontrada."));
     }
 
+    /** Alta con el plan inicial; los límites solo se indican para un plan a medida. */
     @Transactional
-    public OrganizacionCliente crear(String identificador, String razonSocial) {
+    public OrganizacionCliente crear(String identificador, String razonSocial, String plan,
+                                     Integer limiteDispositivos, Integer limiteUsuarios, Integer diasPrueba) {
         validarObligatorio(identificador, "identificador");
         validarObligatorio(razonSocial, "razonSocial");
+        PlanOrganizacion planInicial = planService.planInicial(plan, limiteDispositivos, limiteUsuarios, diasPrueba);
 
         String identificadorNormalizado = identificador.trim().toUpperCase(Locale.ROOT);
         String razonSocialNormalizada = razonSocial.trim();
@@ -63,9 +70,10 @@ public class OrganizacionClienteService {
                 null,
                 identificadorNormalizado,
                 razonSocialNormalizada,
-                EstadoRegistro.ACTIVO));
+                EstadoRegistro.ACTIVO), planInicial);
 
-        trazabilidad.registrar(Transaccion.alta("ORGANIZACION", creada.id(), creada.id(), creada));
+        trazabilidad.registrar(new Transaccion("ORGANIZACION", creada.id(), OperacionTransaccion.ALTA, creada.id(),
+                null, creada, null, "plan=" + planInicial.plan().codigo()));
         return creada;
     }
 

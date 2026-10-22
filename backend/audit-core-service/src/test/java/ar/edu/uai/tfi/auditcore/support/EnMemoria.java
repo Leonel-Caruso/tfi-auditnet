@@ -2,6 +2,7 @@ package ar.edu.uai.tfi.auditcore.support;
 
 import ar.edu.uai.tfi.auditcore.domain.model.*;
 import ar.edu.uai.tfi.auditcore.domain.repository.*;
+import ar.edu.uai.tfi.auditcore.application.plan.ControlPlan;
 import ar.edu.uai.tfi.auditcore.application.port.AlmacenArchivosPort.AlmacenamientoException;
 
 import java.time.Instant;
@@ -16,6 +17,11 @@ import java.util.Set;
 public final class EnMemoria {
 
     private EnMemoria() {
+    }
+
+    /** Control del plan para organizaciones sin plan cargado: no limita nada. */
+    public static ControlPlan planSinLimites() {
+        return new ControlPlan((organizacion, bloquear) -> Optional.empty(), new Dispositivos());
     }
 
     public static DispositivoRed dispositivo(Long id, Long organizacionId, Long sedeId, CriticidadDispositivo criticidad) {

@@ -3,22 +3,32 @@ package ar.edu.uai.tfi.management.support;
 import ar.edu.uai.tfi.management.application.port.JwtPort;
 import ar.edu.uai.tfi.management.application.port.PasswordPort;
 import ar.edu.uai.tfi.management.domain.model.EstadoAcceso;
+import ar.edu.uai.tfi.management.application.port.UsoDispositivosPort;
 import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
+import ar.edu.uai.tfi.management.domain.model.EstadoSolicitudPlan;
 import ar.edu.uai.tfi.management.domain.model.OrganizacionCliente;
+import ar.edu.uai.tfi.management.domain.model.Plan;
+import ar.edu.uai.tfi.management.domain.model.PlanOrganizacion;
 import ar.edu.uai.tfi.management.domain.model.Rol;
 import ar.edu.uai.tfi.management.domain.model.Sede;
+import ar.edu.uai.tfi.management.domain.model.SolicitudCambioPlan;
 import ar.edu.uai.tfi.management.domain.model.Usuario;
 import ar.edu.uai.tfi.management.domain.repository.OrganizacionClienteRepository;
+import ar.edu.uai.tfi.management.domain.repository.PlanRepository;
 import ar.edu.uai.tfi.management.domain.repository.RolRepository;
 import ar.edu.uai.tfi.management.domain.repository.SedeRepository;
+import ar.edu.uai.tfi.management.domain.repository.SolicitudPlanRepository;
 import ar.edu.uai.tfi.management.domain.repository.UsuarioRepository;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -150,20 +160,36 @@ public final class EnMemoriaGestion {
         }
     }
 
+    /** Organizaciones con su plan (por defecto, Inicial). */
     public static class Organizaciones implements OrganizacionClienteRepository {
         public final Map<Long, OrganizacionCliente> items = new LinkedHashMap<>();
+        public final Map<Long, PlanOrganizacion> planes = new HashMap<>();
         private long secuencia = 0;
 
         public OrganizacionCliente agregar(Long id, String identificador, String razonSocial, EstadoRegistro estado) {
             OrganizacionCliente o = new OrganizacionCliente(id, identificador, razonSocial, estado);
             items.put(id, o);
+            planes.putIfAbsent(id, new PlanOrganizacion(id, Planes.INICIAL, Instant.EPOCH, null, null, null));
             secuencia = Math.max(secuencia, id);
             return o;
         }
 
         @Override
-        public OrganizacionCliente guardar(OrganizacionCliente o) {
-            return agregar(++secuencia, o.identificador(), o.razonSocial(), o.estado());
+        public OrganizacionCliente guardar(OrganizacionCliente o, PlanOrganizacion plan) {
+            OrganizacionCliente creada = agregar(++secuencia, o.identificador(), o.razonSocial(), o.estado());
+            asignarPlan(creada.id(), plan);
+            return creada;
+        }
+
+        @Override
+        public Optional<PlanOrganizacion> buscarPlan(Long organizacionId) {
+            return Optional.ofNullable(planes.get(organizacionId));
+        }
+
+        @Override
+        public void asignarPlan(Long organizacionId, PlanOrganizacion plan) {
+            planes.put(organizacionId, new PlanOrganizacion(organizacionId, plan.plan(), plan.desde(), plan.vence(),
+                    plan.limiteDispositivos(), plan.limiteUsuarios()));
         }
 
         @Override
@@ -228,12 +254,13 @@ public final class EnMemoriaGestion {
         }
     }
 
-    /** Los cuatro perfiles fijos, activos. */
+    /** Los cinco perfiles fijos, activos. */
     public static class Roles implements RolRepository {
         public final Map<Long, Rol> items = new LinkedHashMap<>();
 
         public Roles() {
-            List.of("ADMINISTRADOR_SISTEMA", "ANALISTA_RED", "AUDITOR_TECNICO", "RESPONSABLE_GESTION_IT")
+            List.of("ADMINISTRADOR_SISTEMA", "ANALISTA_RED", "AUDITOR_TECNICO", "RESPONSABLE_GESTION_IT",
+                            "ADMINISTRADOR_ORGANIZACION")
                     .forEach(nombre -> items.put((long) items.size() + 1,
                             new Rol((long) items.size() + 1, nombre, "Perfil " + nombre, EstadoRegistro.ACTIVO)));
         }
@@ -262,6 +289,91 @@ public final class EnMemoriaGestion {
         public Rol actualizar(Rol rol) {
             items.put(rol.id(), rol);
             return rol;
+        }
+    }
+
+    /** Catálogo de la carpeta: Piloto 10/5 (90 días), Inicial 50/15, Profesional 150/40 y Empresa a medida. */
+    public static class Planes implements PlanRepository {
+        public static final Plan PILOTO = new Plan(1L, "PILOTO", "Piloto", 10, 5, 90, null, "Prueba", 1);
+        public static final Plan INICIAL = new Plan(2L, "INICIAL", "Inicial", 50, 15, null,
+                new BigDecimal("150.00"), "Anual: 10 %", 2);
+        public static final Plan PROFESIONAL = new Plan(3L, "PROFESIONAL", "Profesional", 150, 40, null,
+                new BigDecimal("300.00"), "Anual: 10 %", 3);
+        public static final Plan EMPRESA = new Plan(4L, "EMPRESA", "Empresa", null, null, null, null, "A medida", 4);
+
+        public final Map<String, Plan> items = new LinkedHashMap<>();
+
+        public Planes() {
+            List.of(PILOTO, INICIAL, PROFESIONAL, EMPRESA).forEach(plan -> items.put(plan.codigo(), plan));
+        }
+
+        @Override
+        public List<Plan> listar() {
+            return new ArrayList<>(items.values());
+        }
+
+        @Override
+        public Optional<Plan> buscarPorCodigo(String codigo) {
+            return Optional.ofNullable(items.get(codigo));
+        }
+
+        @Override
+        public Plan actualizar(Plan plan) {
+            items.put(plan.codigo(), plan);
+            return plan;
+        }
+    }
+
+    public static class Solicitudes implements SolicitudPlanRepository {
+        public final Map<Long, SolicitudCambioPlan> items = new LinkedHashMap<>();
+        private long secuencia = 0;
+
+        @Override
+        public SolicitudCambioPlan guardar(SolicitudCambioPlan s) {
+            SolicitudCambioPlan guardada = new SolicitudCambioPlan(++secuencia, s.organizacionId(), s.planActual(),
+                    s.planSolicitado(), s.modalidad(), s.estado(), s.comentario(), s.solicitadoPor(),
+                    s.fechaSolicitud(), s.resueltoPor(), s.fechaResolucion(), s.respuesta());
+            items.put(guardada.id(), guardada);
+            return guardada;
+        }
+
+        @Override
+        public SolicitudCambioPlan actualizar(SolicitudCambioPlan s) {
+            items.put(s.id(), s);
+            return s;
+        }
+
+        @Override
+        public Optional<SolicitudCambioPlan> buscarPorId(Long id) {
+            return Optional.ofNullable(items.get(id));
+        }
+
+        @Override
+        public List<SolicitudCambioPlan> listarPorOrganizacion(Long organizacionId) {
+            return items.values().stream().filter(s -> s.organizacionId().equals(organizacionId))
+                    .sorted(Comparator.comparing(SolicitudCambioPlan::id).reversed()).toList();
+        }
+
+        @Override
+        public List<SolicitudCambioPlan> listarPorEstado(EstadoSolicitudPlan estado) {
+            return items.values().stream().filter(s -> estado == null || s.estado() == estado).toList();
+        }
+
+        @Override
+        public Optional<SolicitudCambioPlan> buscarPendiente(Long organizacionId) {
+            return items.values().stream()
+                    .filter(s -> s.organizacionId().equals(organizacionId) && s.estado() == EstadoSolicitudPlan.PENDIENTE)
+                    .findFirst();
+        }
+    }
+
+    /** Dispositivos activos por organización, cargados a mano por cada prueba. */
+    public static class Dispositivos implements UsoDispositivosPort {
+        public final Map<Long, Long> activos = new HashMap<>();
+
+        @Override
+        public long dispositivosActivos(Long organizacionId) {
+            return activos.getOrDefault(organizacionId, 0L);
         }
     }
 

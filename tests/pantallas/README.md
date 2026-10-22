@@ -1,8 +1,10 @@
 # Pruebas de pantalla
 
 Abren el sitio compilado en Chromium (Playwright) contra una API simulada (`servidor.py`, datos en `datos.py`) y
-verifican, con cada perfil: que todas las pantallas cargan sin errores, que no muestran textos técnicos, que entran
-en un celular de 390 px, el paginador, el escapado de HTML, la pantalla de acceso y la app instalable.
+verifican, con cada uno de los cinco perfiles: que todas las pantallas cargan sin errores, que el menú es el que le
+corresponde, que no muestran textos técnicos y que entran en un celular de 390 px. También el paginador, el escapado de
+HTML, la pantalla de acceso, la app instalable y los circuitos del administrador de organización y de los planes
+(`test_perfiles.py`).
 
 Corren en GitHub Actions en cada push. En local (PowerShell, desde la raíz del repo):
 

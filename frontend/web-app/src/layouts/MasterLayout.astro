@@ -48,7 +48,7 @@ const {
 
     <script>
       import { getStoredUser, logout, verifySession } from '../lib/auth';
-      import { ROLE_LABEL } from '../lib/api';
+      import { PROFILE_ORDER, ROLE_LABEL } from '../lib/api';
       import { enhanceDateInputs } from '../lib/datepicker';
 
       // Calendario propio en todos los campos de fecha.
@@ -83,7 +83,9 @@ const {
           const connectionNode = document.querySelector('#topbar-connection');
 
           if (nameNode) nameNode.textContent = displayName;
-          if (roleNode) roleNode.textContent = roles[0] ? ROLE_LABEL[roles[0]] ?? roles[0] : 'sin perfil';
+          // Con varios perfiles se muestra el de mayor alcance.
+          const mainRole = [...roles].sort((a, b) => PROFILE_ORDER.indexOf(a) - PROFILE_ORDER.indexOf(b))[0];
+          if (roleNode) roleNode.textContent = mainRole ? ROLE_LABEL[mainRole] ?? mainRole : 'sin perfil';
           if (avatarNode) avatarNode.textContent = `${displayName.slice(0, 1).toUpperCase()}_`;
           if (handleNode) handleNode.textContent = stored?.username ?? current.username;
           if (connectionNode) {
@@ -120,6 +122,7 @@ const {
         inicio: '/dashboard', home: '/dashboard', dashboard: '/dashboard',
         organizaciones: '/organizations', organizacion: '/organizations', org: '/organizations', sedes: '/organizations',
         usuarios: '/users', usuario: '/users', usr: '/users',
+        plan: '/plan', 'mi plan': '/plan', planes: '/plans', solicitudes: '/plans',
         bitacoras: '/logs', bitacora: '/logs', 'bitácoras': '/logs', 'bitácora': '/logs', bit: '/logs', logs: '/logs',
         dispositivos: '/devices', dispositivo: '/devices', dev: '/devices', devices: '/devices',
         baselines: '/baselines', baseline: '/baselines', bl: '/baselines',

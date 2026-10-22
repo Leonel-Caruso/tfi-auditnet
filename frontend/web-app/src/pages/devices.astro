@@ -42,7 +42,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         + tipo
       </button>
 
-      <button id="open-device-dialog" class="button button-primary device-create-action" type="button" data-admin-only="true">
+      <button id="open-device-dialog" class="button button-primary device-create-action" type="button"
+        data-roles="ADMINISTRADOR_SISTEMA,ADMINISTRADOR_ORGANIZACION">
         + registrar activo
       </button>
     </div>
@@ -118,7 +119,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <span id="inspector-scope-text">Disponible para futuras configuraciones, baselines y auditorías.</span>
         </div>
 
-        <div class="inspector-actions" data-admin-only="true">
+        <div class="inspector-actions" data-roles="ADMINISTRADOR_SISTEMA,ADMINISTRADOR_ORGANIZACION">
           <button id="edit-device" class="button button-ghost button-small" type="button">Editar</button>
           <button id="toggle-device-status" class="button button-ghost button-small" type="button">Dar de baja</button>
         </div>
@@ -551,6 +552,11 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         if (siteSelect) {
           siteSelect.replaceChildren(new Option('Sin sede específica', ''));
           siteSelect.disabled = true;
+        }
+        // El administrador de una organización solo ve la suya: se elige sola.
+        if (state.organizations.length === 1 && organizationSelect) {
+          organizationSelect.value = String(state.organizations[0].id);
+          await updateSiteSelect();
         }
       }
       dialog?.showModal();

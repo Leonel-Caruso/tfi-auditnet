@@ -2,6 +2,7 @@ package ar.edu.uai.tfi.management.application.user;
 
 import ar.edu.uai.tfi.management.application.ErrorAplicacion;
 import ar.edu.uai.tfi.management.application.ExcepcionAplicacion;
+import ar.edu.uai.tfi.management.application.plan.ControlPlan;
 import ar.edu.uai.tfi.management.application.port.BitacoraSistemaPort;
 import ar.edu.uai.tfi.management.application.port.PasswordPort;
 import ar.edu.uai.tfi.management.domain.model.EstadoAcceso;
@@ -31,11 +32,16 @@ import java.util.regex.Pattern;
  * Gestión de usuarios. Nadie puede deshabilitarse ni quitarse el perfil de administrador a sí mismo, siempre queda
  * al menos un administrador activo y los usuarios no se borran (baja lógica). Cambiar roles, organización o
  * contraseña cierra las sesiones abiertas de ese usuario.
+ * <p>
+ * El administrador de una organización solo ve y gestiona usuarios de su organización con perfiles de operación
+ * (analista, auditor, responsable de gestión IT). Los administradores los gestiona el administrador del sistema.
+ * Los usuarios activos de cada organización respetan el límite de su plan; los administradores del sistema no
+ * cuentan para ese límite.
  */
 @ApplicationScoped
 public class UsuarioService {
 
-    static final String ADMIN = "ADMINISTRADOR_SISTEMA";
+    static final String ADMIN = MatrizPermisos.ADMIN;
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
     private static final Pattern USERNAME_PATTERN = Pattern.compile("^[a-z0-9._-]{3,60}$");
 
@@ -44,38 +50,43 @@ public class UsuarioService {
     private final RolRepository rolRepository;
     private final PasswordPort passwordPort;
     private final BitacoraSistemaPort bitacora;
+    private final ControlPlan controlPlan;
     Clock reloj = Clock.systemUTC();
 
     public UsuarioService(UsuarioRepository usuarioRepository,
                           OrganizacionClienteRepository organizacionRepository,
                           RolRepository rolRepository,
                           PasswordPort passwordPort,
-                          BitacoraSistemaPort bitacora) {
+                          BitacoraSistemaPort bitacora,
+                          ControlPlan controlPlan) {
         this.usuarioRepository = usuarioRepository;
         this.organizacionRepository = organizacionRepository;
         this.rolRepository = rolRepository;
         this.passwordPort = passwordPort;
         this.bitacora = bitacora;
+        this.controlPlan = controlPlan;
     }
 
     /** Usuario con su estado de acceso (bloqueo, último acceso), para el panel del administrador. */
     public record UsuarioConAcceso(Usuario usuario, EstadoAcceso acceso) {
     }
 
-    public List<Usuario> listar() {
-        return usuarioRepository.listar();
-    }
-
-    public List<UsuarioConAcceso> listarConAcceso() {
+    public List<UsuarioConAcceso> listarConAcceso(Actor actor) {
+        Long alcance = alcance(actor);
         Map<Long, EstadoAcceso> accesos = usuarioRepository.estadosAcceso();
         return usuarioRepository.listar().stream()
+                .filter(usuario -> alcance == null || alcance.equals(usuario.organizacionId()))
                 .map(usuario -> new UsuarioConAcceso(usuario,
                         accesos.getOrDefault(usuario.id(), EstadoAcceso.inicial(usuario.id()))))
                 .toList();
     }
 
-    public UsuarioConAcceso buscar(Long id) {
+    public UsuarioConAcceso buscar(Long id, Actor actor) {
         Usuario usuario = obtener(id);
+        Long alcance = alcance(actor);
+        if (alcance != null && !alcance.equals(usuario.organizacionId())) {
+            throw prohibido("Solo podés consultar usuarios de tu organización.");
+        }
         return new UsuarioConAcceso(usuario, usuarioRepository.estadoAcceso(id));
     }
 
@@ -85,7 +96,9 @@ public class UsuarioService {
                          String email,
                          String nombreUsuario,
                          String password,
-                         Set<String> rolesSolicitados) {
+                         Set<String> rolesSolicitados,
+                         Actor actor) {
+        verificarOrganizacionDelActor(organizacionId, actor);
         validarOrganizacion(organizacionId);
         validarObligatorio(nombre, "nombre");
         validarObligatorio(email, "email");
@@ -103,6 +116,10 @@ public class UsuarioService {
         }
 
         Set<String> roles = validarYNormalizarRoles(rolesSolicitados);
+        verificarPerfilesAsignables(roles, actor);
+        if (ocupaLugarEnElPlan(roles)) {
+            controlPlan.verificarAltaUsuario(organizacionId);
+        }
         Usuario creado = usuarioRepository.guardar(new Usuario(
                 null,
                 organizacionId,
@@ -120,15 +137,12 @@ public class UsuarioService {
         return creado;
     }
 
-    /**
-     * El nombre de usuario no cambia: es la identidad que aparece en las bitácoras.
-     *
-     * @param actorId administrador que hace el cambio (del token)
-     */
+    /** El nombre de usuario no cambia: es la identidad que aparece en las bitácoras. */
     @Transactional
     public Usuario actualizar(Long id, Long organizacionId, String nombre, String email,
-                              Set<String> rolesSolicitados, Long actorId) {
-        Usuario anterior = obtener(id);
+                              Set<String> rolesSolicitados, Actor actor) {
+        Usuario anterior = obtenerGestionable(id, actor);
+        verificarOrganizacionDelActor(organizacionId, actor);
         validarOrganizacion(organizacionId);
         validarObligatorio(nombre, "nombre");
         validarObligatorio(email, "email");
@@ -139,9 +153,10 @@ public class UsuarioService {
                     throw new ExcepcionAplicacion(ErrorAplicacion.CONFLICTO, "Ya existe otro usuario con ese email.");
                 });
         Set<String> roles = validarYNormalizarRoles(rolesSolicitados);
+        verificarPerfilesAsignables(roles, actor);
 
         boolean dejaDeSerAdmin = anterior.roles().contains(ADMIN) && !roles.contains(ADMIN);
-        if (dejaDeSerAdmin && id.equals(actorId)) {
+        if (dejaDeSerAdmin && id.equals(actor.id())) {
             throw new ExcepcionAplicacion(ErrorAplicacion.CONFLICTO,
                     "No podés quitarte a vos mismo el perfil de administrador.");
         }
@@ -149,13 +164,18 @@ public class UsuarioService {
             throw new ExcepcionAplicacion(ErrorAplicacion.CONFLICTO,
                     "Tiene que quedar al menos un administrador activo en la plataforma.");
         }
+        boolean cambioOrganizacion = !Objects.equals(anterior.organizacionId(), organizacionId);
+        boolean empiezaAOcupar = ocupaLugarEnElPlan(roles)
+                && (cambioOrganizacion || !ocupaLugarEnElPlan(anterior.roles()));
+        if (anterior.estado() == EstadoRegistro.ACTIVO && empiezaAOcupar) {
+            controlPlan.verificarAltaUsuario(organizacionId);
+        }
 
         Usuario actualizado = usuarioRepository.actualizar(new Usuario(id, organizacionId,
                 recortar(nombre.trim(), 140), emailNormalizado, anterior.nombreUsuario(), anterior.passwordHash(),
                 anterior.estado(), roles), roles);
 
         boolean cambiaronRoles = !Set.copyOf(anterior.roles()).equals(roles);
-        boolean cambioOrganizacion = !Objects.equals(anterior.organizacionId(), organizacionId);
         if (cambiaronRoles || cambioOrganizacion) {
             // Los tokens llevan roles y organización: los anteriores dejan de valer.
             usuarioRepository.invalidarSesiones(id, ahora());
@@ -171,14 +191,17 @@ public class UsuarioService {
 
     /** Baja lógica: el historial se conserva. */
     @Transactional
-    public Usuario cambiarEstado(Long id, String estado, Long actorId) {
-        Usuario anterior = obtener(id);
+    public Usuario cambiarEstado(Long id, String estado, Actor actor) {
+        Usuario anterior = obtenerGestionable(id, actor);
         EstadoRegistro nuevo = parsearEstado(estado);
         if (anterior.estado() == nuevo) {
             throw new ExcepcionAplicacion(ErrorAplicacion.CONFLICTO, "El usuario ya está " + nuevo + ".");
         }
+        if (nuevo == EstadoRegistro.ACTIVO && ocupaLugarEnElPlan(anterior.roles())) {
+            controlPlan.verificarAltaUsuario(anterior.organizacionId());
+        }
         if (nuevo == EstadoRegistro.DESHABILITADO) {
-            if (id.equals(actorId)) {
+            if (id.equals(actor.id())) {
                 throw new ExcepcionAplicacion(ErrorAplicacion.CONFLICTO, "No podés deshabilitar tu propia cuenta.");
             }
             if (anterior.roles().contains(ADMIN) && administradoresActivosSalvo(id) == 0) {
@@ -199,8 +222,8 @@ public class UsuarioService {
 
     /** Contraseña asignada por el administrador: aplica la política, quita el bloqueo y cierra las sesiones. */
     @Transactional
-    public void restablecerPassword(Long id, String password) {
-        Usuario usuario = obtener(id);
+    public void restablecerPassword(Long id, String password, Actor actor) {
+        Usuario usuario = obtenerGestionable(id, actor);
         PoliticaContrasena.validar(password, usuario.nombreUsuario());
         usuarioRepository.cambiarPassword(id, passwordPort.hashear(password), ahora());
         bitacora.registrar(EventoSistema.exito(TipoEventoSistema.CONTRASENA_RESTABLECIDA, null, id,
@@ -209,8 +232,8 @@ public class UsuarioService {
 
     /** Quita el bloqueo por intentos fallidos antes de que venza. */
     @Transactional
-    public void desbloquear(Long id) {
-        Usuario usuario = obtener(id);
+    public void desbloquear(Long id, Actor actor) {
+        Usuario usuario = obtenerGestionable(id, actor);
         if (!usuarioRepository.estadoAcceso(id).bloqueado(reloj.instant())) {
             throw new ExcepcionAplicacion(ErrorAplicacion.CONFLICTO, "La cuenta no está bloqueada.");
         }
@@ -248,6 +271,51 @@ public class UsuarioService {
                     .append(actualizado.organizacionId());
         }
         return recortar(detalle.toString(), 1000);
+    }
+
+    /** Organización a la que se limita el actor; null para el administrador del sistema. */
+    private static Long alcance(Actor actor) {
+        if (actor == null || (!actor.administradorSistema() && !actor.administradorOrganizacion())) {
+            throw prohibido("Tu perfil no permite gestionar usuarios.");
+        }
+        if (!actor.administradorSistema() && actor.organizacionId() == null) {
+            throw prohibido("Tu usuario no tiene una organización asociada.");
+        }
+        return actor.alcance();
+    }
+
+    /** Usuario que el actor puede modificar: el administrador de organización solo toca perfiles de operación. */
+    private Usuario obtenerGestionable(Long id, Actor actor) {
+        Usuario usuario = obtener(id);
+        Long alcance = alcance(actor);
+        if (alcance == null) {
+            return usuario;
+        }
+        if (!alcance.equals(usuario.organizacionId())) {
+            throw prohibido("Solo podés gestionar usuarios de tu organización.");
+        }
+        if (!MatrizPermisos.PERFILES_OPERACION.containsAll(usuario.roles())) {
+            throw prohibido("Los administradores solo los gestiona el administrador del sistema.");
+        }
+        return usuario;
+    }
+
+    private static void verificarOrganizacionDelActor(Long organizacionId, Actor actor) {
+        Long alcance = alcance(actor);
+        if (alcance != null && !alcance.equals(organizacionId)) {
+            throw prohibido("Solo podés asignar usuarios a tu organización.");
+        }
+    }
+
+    private static void verificarPerfilesAsignables(Set<String> roles, Actor actor) {
+        if (alcance(actor) != null && !MatrizPermisos.PERFILES_OPERACION.containsAll(roles)) {
+            throw prohibido("Solo podés asignar los perfiles Analista de redes, Auditor técnico y Responsable de gestión IT.");
+        }
+    }
+
+    /** Los administradores del sistema son de la plataforma: no ocupan lugar en el plan de la organización. */
+    private static boolean ocupaLugarEnElPlan(Set<String> roles) {
+        return !roles.contains(ADMIN);
     }
 
     private Usuario obtener(Long id) {
@@ -302,6 +370,10 @@ public class UsuarioService {
         if (valor == null || valor.isBlank()) {
             throw invalida("El campo " + campo + " es obligatorio.");
         }
+    }
+
+    private static ExcepcionAplicacion prohibido(String mensaje) {
+        return new ExcepcionAplicacion(ErrorAplicacion.PROHIBIDO, mensaje);
     }
 
     private static ExcepcionAplicacion invalida(String mensaje) {

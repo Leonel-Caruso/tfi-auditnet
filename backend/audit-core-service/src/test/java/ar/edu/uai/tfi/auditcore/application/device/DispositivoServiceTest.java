@@ -1,11 +1,13 @@
 package ar.edu.uai.tfi.auditcore.application.device;
 
+import ar.edu.uai.tfi.auditcore.application.port.TrazabilidadPort;
 import ar.edu.uai.tfi.auditcore.domain.model.CriticidadDispositivo;
 import ar.edu.uai.tfi.auditcore.domain.model.DispositivoRed;
 import ar.edu.uai.tfi.auditcore.domain.model.EstadoDispositivo;
 import ar.edu.uai.tfi.auditcore.domain.model.OperacionTransaccion;
 import ar.edu.uai.tfi.auditcore.domain.model.Transaccion;
 import ar.edu.uai.tfi.auditcore.domain.repository.DispositivoRepository;
+import ar.edu.uai.tfi.auditcore.support.EnMemoria;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -22,7 +24,7 @@ class DispositivoServiceTest {
     @Test
     void crearDispositivoRegistraTransaccionDeAlta() {
         List<Transaccion> transacciones = new ArrayList<>();
-        DispositivoService service = new DispositivoService(new FakeRepository(), transacciones::add);
+        DispositivoService service = servicio(new FakeRepository(), transacciones::add);
 
         DispositivoRed creado = service.crear("Router Central", "rtr-core-01", 1L, "Cisco", 2L, 1L, "ALTA", "admin");
 
@@ -39,7 +41,7 @@ class DispositivoServiceTest {
 
     @Test
     void creaDispositivoNormalizandoIdentificador() {
-        DispositivoService service = new DispositivoService(new FakeRepository(), transaccion -> {});
+        DispositivoService service = servicio(new FakeRepository(), transaccion -> {});
 
         DispositivoRed creado = service.crear("Router Central", " rtr-core-01 ", 1L, "Cisco", 2L, 1L, "alta", "admin");
 
@@ -52,7 +54,7 @@ class DispositivoServiceTest {
     void rechazaIdentificadorDuplicadoEnLaMismaOrganizacion() {
         FakeRepository repository = new FakeRepository();
         repository.dispositivos.add(dispositivo(1L, "RTR-CORE-01", 2L, EstadoDispositivo.ACTIVO));
-        DispositivoService service = new DispositivoService(repository, transaccion -> {});
+        DispositivoService service = servicio(repository, transaccion -> {});
 
         assertThrows(IllegalStateException.class, () ->
                 service.crear("Otro router", "rtr-core-01", 1L, "Cisco", 2L, 1L, "MEDIA", "admin"));
@@ -62,7 +64,7 @@ class DispositivoServiceTest {
     void permiteElMismoIdentificadorEnOtraOrganizacion() {
         FakeRepository repository = new FakeRepository();
         repository.dispositivos.add(dispositivo(1L, "RTR-CORE-01", 2L, EstadoDispositivo.ACTIVO));
-        DispositivoService service = new DispositivoService(repository, transaccion -> {});
+        DispositivoService service = servicio(repository, transaccion -> {});
 
         DispositivoRed creado = service.crear("Router de otro cliente", "rtr-core-01", 1L, "Cisco", 3L, null, "MEDIA", "admin");
 
@@ -76,7 +78,7 @@ class DispositivoServiceTest {
         DispositivoRed original = dispositivo(1L, "RTR-CORE-01", 2L, EstadoDispositivo.ACTIVO);
         repository.dispositivos.add(original);
         List<Transaccion> transacciones = new ArrayList<>();
-        DispositivoService service = new DispositivoService(repository, transacciones::add);
+        DispositivoService service = servicio(repository, transacciones::add);
 
         DispositivoRed modificado = service.modificar(1L, "Router renombrado", "rtr-core-01", 1L, "Cisco", 1L, "CRITICA", "admin");
 
@@ -94,7 +96,7 @@ class DispositivoServiceTest {
         FakeRepository repository = new FakeRepository();
         repository.dispositivos.add(dispositivo(1L, "RTR-CORE-01", 2L, EstadoDispositivo.ACTIVO));
         List<Transaccion> transacciones = new ArrayList<>();
-        DispositivoService service = new DispositivoService(repository, transacciones::add);
+        DispositivoService service = servicio(repository, transacciones::add);
 
         service.modificar(1L, "Router", "RTR-CORE-01", 1L, "Cisco", 1L, "MEDIA", "admin");
 
@@ -106,7 +108,7 @@ class DispositivoServiceTest {
         FakeRepository repository = new FakeRepository();
         repository.dispositivos.add(dispositivo(1L, "RTR-CORE-01", 2L, EstadoDispositivo.ACTIVO));
         repository.dispositivos.add(dispositivo(2L, "SW-ACC-01", 2L, EstadoDispositivo.ACTIVO));
-        DispositivoService service = new DispositivoService(repository, transaccion -> {});
+        DispositivoService service = servicio(repository, transaccion -> {});
 
         assertThrows(IllegalStateException.class, () ->
                 service.modificar(2L, "Switch", "rtr-core-01", 1L, "Cisco", null, "MEDIA", "admin"));
@@ -117,7 +119,7 @@ class DispositivoServiceTest {
         FakeRepository repository = new FakeRepository();
         repository.dispositivos.add(dispositivo(1L, "RTR-CORE-01", 2L, EstadoDispositivo.ACTIVO));
         List<Transaccion> transacciones = new ArrayList<>();
-        DispositivoService service = new DispositivoService(repository, transacciones::add);
+        DispositivoService service = servicio(repository, transacciones::add);
 
         DispositivoRed inactivo = service.cambiarEstado(1L, "inactivo", "admin");
         DispositivoRed activo = service.cambiarEstado(1L, "ACTIVO", "admin");
@@ -133,7 +135,7 @@ class DispositivoServiceTest {
     void rechazaCambiarAlMismoEstadoOAUnEstadoInvalido() {
         FakeRepository repository = new FakeRepository();
         repository.dispositivos.add(dispositivo(1L, "RTR-CORE-01", 2L, EstadoDispositivo.ACTIVO));
-        DispositivoService service = new DispositivoService(repository, transaccion -> {});
+        DispositivoService service = servicio(repository, transaccion -> {});
 
         assertThrows(IllegalStateException.class, () -> service.cambiarEstado(1L, "ACTIVO", "admin"));
         assertThrows(IllegalArgumentException.class, () -> service.cambiarEstado(1L, "BORRADO", "admin"));
@@ -142,6 +144,10 @@ class DispositivoServiceTest {
     private static DispositivoRed dispositivo(Long id, String identificador, Long organizacionId, EstadoDispositivo estado) {
         return new DispositivoRed(id, "Router", identificador, 1L, "Cisco", organizacionId, 1L,
                 CriticidadDispositivo.MEDIA, estado);
+    }
+
+    private static DispositivoService servicio(DispositivoRepository repository, TrazabilidadPort trazabilidad) {
+        return new DispositivoService(repository, trazabilidad, EnMemoria.planSinLimites());
     }
 
     private static class FakeRepository implements DispositivoRepository {

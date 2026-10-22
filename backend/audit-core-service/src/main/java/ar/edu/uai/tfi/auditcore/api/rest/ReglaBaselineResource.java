@@ -26,6 +26,7 @@ import java.util.function.Supplier;
 @Consumes(MediaType.APPLICATION_JSON)
 @RolesAllowed({
         "ADMINISTRADOR_SISTEMA",
+        "ADMINISTRADOR_ORGANIZACION",
         "ANALISTA_RED",
         "AUDITOR_TECNICO",
         "RESPONSABLE_GESTION_IT"

@@ -1,12 +1,12 @@
 package ar.edu.uai.tfi.management.api.rest;
 
 import ar.edu.uai.tfi.management.api.rest.dto.b2b.CrearOrganizacionRequest;
-import ar.edu.uai.tfi.management.api.rest.dto.common.CambiarEstadoRequest;
+import ar.edu.uai.tfi.management.api.rest.dto.b2b.ModificarOrganizacionRequest;
 import ar.edu.uai.tfi.management.api.rest.dto.b2b.OrganizacionResponse;
+import ar.edu.uai.tfi.management.api.rest.dto.common.CambiarEstadoRequest;
 import ar.edu.uai.tfi.management.application.b2b.OrganizacionClienteService;
 import ar.edu.uai.tfi.management.domain.model.OrganizacionCliente;
 import jakarta.annotation.security.RolesAllowed;
-import jakarta.json.JsonNumber;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -20,6 +20,7 @@ import java.util.List;
 @Consumes(MediaType.APPLICATION_JSON)
 public class OrganizacionClienteResource {
     private static final String ADMIN = "ADMINISTRADOR_SISTEMA";
+    private static final String ADMIN_ORGANIZACION = "ADMINISTRADOR_ORGANIZACION";
     private static final String ANALISTA = "ANALISTA_RED";
     private static final String AUDITOR = "AUDITOR_TECNICO";
     private static final String RESPONSABLE = "RESPONSABLE_GESTION_IT";
@@ -33,39 +34,40 @@ public class OrganizacionClienteResource {
     }
 
     @GET
-    @RolesAllowed({ADMIN, ANALISTA, AUDITOR, RESPONSABLE})
+    @RolesAllowed({ADMIN, ADMIN_ORGANIZACION, ANALISTA, AUDITOR, RESPONSABLE})
     public List<OrganizacionResponse> listar() {
-        if (esAdministrador()) {
-            return service.listar().stream().map(this::aResponse).toList();
+        Long alcance = UsuarioAutenticado.alcance(jwt);
+        if (alcance == null) {
+            return service.listar().stream().map(OrganizacionClienteResource::aResponse).toList();
         }
-
-        Long organizationId = organizationIdActual();
-        return List.of(aResponse(service.buscarPorId(organizationId)));
+        return List.of(aResponse(service.buscarPorId(alcance)));
     }
 
+    /** Alta con el plan inicial (Piloto, Inicial, Profesional o Empresa con sus límites). */
     @POST
     @RolesAllowed(ADMIN)
     public Response crear(CrearOrganizacionRequest request) {
         if (request == null) {
             throw new BadRequestException("El cuerpo de la solicitud es obligatorio.");
         }
-        OrganizacionCliente creada = service.crear(request.identificador(), request.razonSocial());
+        OrganizacionCliente creada = service.crear(request.identificador(), request.razonSocial(), request.plan(),
+                request.limiteDispositivos(), request.limiteUsuarios(), request.diasPrueba());
         return Response.created(URI.create("/api/client-organizations/" + creada.id()))
                 .entity(aResponse(creada)).build();
     }
 
     @GET
     @Path("/{id}")
-    @RolesAllowed({ADMIN, ANALISTA, AUDITOR, RESPONSABLE})
+    @RolesAllowed({ADMIN, ADMIN_ORGANIZACION, ANALISTA, AUDITOR, RESPONSABLE})
     public OrganizacionResponse buscar(@PathParam("id") Long id) {
-        validarAccesoOrganizacion(id);
+        UsuarioAutenticado.verificarOrganizacion(jwt, id);
         return aResponse(service.buscarPorId(id));
     }
 
     @PUT
     @Path("/{id}")
     @RolesAllowed(ADMIN)
-    public OrganizacionResponse modificar(@PathParam("id") Long id, CrearOrganizacionRequest request) {
+    public OrganizacionResponse modificar(@PathParam("id") Long id, ModificarOrganizacionRequest request) {
         if (request == null) {
             throw new BadRequestException("El cuerpo de la solicitud es obligatorio.");
         }
@@ -83,25 +85,7 @@ public class OrganizacionClienteResource {
         return aResponse(service.cambiarEstado(id, request.estado()));
     }
 
-    private boolean esAdministrador() {
-        return jwt.getGroups() != null && jwt.getGroups().contains(ADMIN);
-    }
-
-    private Long organizationIdActual() {
-        JsonNumber organizationId = jwt.getClaim("organizationId");
-        if (organizationId == null) {
-            throw new ForbiddenException("El usuario autenticado no tiene una organización asociada.");
-        }
-        return organizationId.longValue();
-    }
-
-    private void validarAccesoOrganizacion(Long idSolicitado) {
-        if (!esAdministrador() && !organizationIdActual().equals(idSolicitado)) {
-            throw new ForbiddenException("No tiene permisos para consultar otra organización.");
-        }
-    }
-
-    private OrganizacionResponse aResponse(OrganizacionCliente organizacion) {
+    private static OrganizacionResponse aResponse(OrganizacionCliente organizacion) {
         return new OrganizacionResponse(
                 organizacion.id(),
                 organizacion.identificador(),

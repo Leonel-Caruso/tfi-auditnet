@@ -28,7 +28,8 @@ class ConfiguracionServiceTest {
                 new FakeDispositivoRepository(),
                 new NormalizacionConfiguracionService(),
                 transacciones::add,
-                sinRepositorio()
+                sinRepositorio(),
+                EnMemoria.planSinLimites()
         );
         String contenido = "hostname RTR-CORE-01\nenable secret 5 $1$abc$xyz\n";
 
@@ -55,7 +56,8 @@ class ConfiguracionServiceTest {
                 dispositivos,
                 new NormalizacionConfiguracionService(),
                 transaccion -> {},
-                sinRepositorio()
+                sinRepositorio(),
+                EnMemoria.planSinLimites()
         );
 
         ConfiguracionDispositivo primera = service.importarParaOrganizacion(
@@ -88,7 +90,8 @@ class ConfiguracionServiceTest {
                 new FakeDispositivoRepository(),
                 new NormalizacionConfiguracionService(),
                 transaccion -> {},
-                sinRepositorio()
+                sinRepositorio(),
+                EnMemoria.planSinLimites()
         );
 
         assertThrows(
@@ -106,7 +109,8 @@ class ConfiguracionServiceTest {
         EnMemoria.Archivos archivos = new EnMemoria.Archivos(new EnMemoria.Configuraciones(), new EnMemoria.Reportes());
         ConfiguracionService service = new ConfiguracionService(new FakeConfiguracionRepository(),
                 new FakeDispositivoRepository(), new NormalizacionConfiguracionService(), transacciones::add,
-                new RepositorioArchivosService(almacen, archivos, archivos.configuraciones, archivos.reportes, new RegistroArchivos(archivos, t -> {})));
+                new RepositorioArchivosService(almacen, archivos, archivos.configuraciones, archivos.reportes, new RegistroArchivos(archivos, t -> {})),
+                EnMemoria.planSinLimites());
         String contenido = "hostname RTR-CORE-01\r\n! ñandú\r\n";
 
         ConfiguracionDispositivo creada = service.importarParaOrganizacion(1L, 2L, contenido, "CFG", "rtr.cfg", "analista");
@@ -129,7 +133,8 @@ class ConfiguracionServiceTest {
         EnMemoria.Archivos archivos = new EnMemoria.Archivos(new EnMemoria.Configuraciones(), new EnMemoria.Reportes());
         ConfiguracionService service = new ConfiguracionService(new FakeConfiguracionRepository(),
                 new FakeDispositivoRepository(), new NormalizacionConfiguracionService(), t -> {},
-                new RepositorioArchivosService(almacen, archivos, archivos.configuraciones, archivos.reportes, new RegistroArchivos(archivos, t -> {})));
+                new RepositorioArchivosService(almacen, archivos, archivos.configuraciones, archivos.reportes, new RegistroArchivos(archivos, t -> {})),
+                EnMemoria.planSinLimites());
 
         assertThrows(AlmacenArchivosPort.AlmacenamientoException.class,
                 () -> service.importarParaOrganizacion(1L, 2L, "hostname x", "TEXTO", null, "analista"));

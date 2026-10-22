@@ -3,6 +3,7 @@ package ar.edu.uai.tfi.auditcore.application.config;
 import ar.edu.uai.tfi.auditcore.application.storage.RepositorioArchivosService;
 import ar.edu.uai.tfi.auditcore.domain.model.OperacionTransaccion;
 import ar.edu.uai.tfi.auditcore.domain.model.Transaccion;
+import ar.edu.uai.tfi.auditcore.application.plan.ControlPlan;
 import ar.edu.uai.tfi.auditcore.application.port.TrazabilidadPort;
 import ar.edu.uai.tfi.auditcore.domain.model.ConfiguracionDispositivo;
 import ar.edu.uai.tfi.auditcore.domain.model.DispositivoRed;
@@ -33,19 +34,22 @@ public class ConfiguracionService {
     private final NormalizacionConfiguracionService normalizacionService;
     private final TrazabilidadPort trazabilidad;
     private final RepositorioArchivosService repositorioArchivos;
+    private final ControlPlan controlPlan;
 
     public ConfiguracionService(
             ConfiguracionRepository configuracionRepository,
             DispositivoRepository dispositivoRepository,
             NormalizacionConfiguracionService normalizacionService,
             TrazabilidadPort trazabilidad,
-            RepositorioArchivosService repositorioArchivos
+            RepositorioArchivosService repositorioArchivos,
+            ControlPlan controlPlan
     ) {
         this.configuracionRepository = configuracionRepository;
         this.dispositivoRepository = dispositivoRepository;
         this.normalizacionService = normalizacionService;
         this.trazabilidad = trazabilidad;
         this.repositorioArchivos = repositorioArchivos;
+        this.controlPlan = controlPlan;
     }
 
     @Transactional
@@ -114,6 +118,7 @@ public class ConfiguracionService {
         if (dispositivo.estado() != EstadoDispositivo.ACTIVO) {
             throw new IllegalStateException("El dispositivo seleccionado está inactivo y no admite nuevas configuraciones.");
         }
+        controlPlan.verificarOperable(dispositivo.organizacionId());
 
         if (contenido == null || contenido.isBlank()) {
             throw new IllegalArgumentException("La configuración no puede estar vacía.");

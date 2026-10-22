@@ -3,6 +3,7 @@ package ar.edu.uai.tfi.auditcore.application.audit;
 import ar.edu.uai.tfi.auditcore.application.alert.AlertaService;
 import ar.edu.uai.tfi.auditcore.domain.model.OperacionTransaccion;
 import ar.edu.uai.tfi.auditcore.domain.model.Transaccion;
+import ar.edu.uai.tfi.auditcore.application.plan.ControlPlan;
 import ar.edu.uai.tfi.auditcore.application.port.TrazabilidadPort;
 import ar.edu.uai.tfi.auditcore.domain.model.*;
 import ar.edu.uai.tfi.auditcore.domain.repository.*;
@@ -29,6 +30,7 @@ public class AuditoriaService {
     private final TrazabilidadPort trazabilidad;
     private final AlertaService alertaService;
     private final HallazgoService hallazgoService;
+    private final ControlPlan controlPlan;
 
     public AuditoriaService(
             ConfiguracionRepository configuracionRepository,
@@ -41,7 +43,8 @@ public class AuditoriaService {
             MotorAuditoriaService motor,
             TrazabilidadPort trazabilidad,
             AlertaService alertaService,
-            HallazgoService hallazgoService
+            HallazgoService hallazgoService,
+            ControlPlan controlPlan
     ) {
         this.configuracionRepository = configuracionRepository;
         this.dispositivoRepository = dispositivoRepository;
@@ -54,6 +57,7 @@ public class AuditoriaService {
         this.trazabilidad = trazabilidad;
         this.alertaService = alertaService;
         this.hallazgoService = hallazgoService;
+        this.controlPlan = controlPlan;
     }
 
     @Transactional
@@ -99,6 +103,7 @@ public class AuditoriaService {
     }
 
     private AuditoriaDetalle ejecutarConfiguracion(ConfiguracionDispositivo configuracion, String actor) {
+        controlPlan.verificarOperable(configuracion.organizacionId());
         // Bloquea el dispositivo: dos auditorías simultáneas del mismo equipo se ejecutan en orden y no generan dos
         // alertas para la misma regla.
         DispositivoRed dispositivo = dispositivoRepository.buscarParaActualizar(configuracion.dispositivoId())

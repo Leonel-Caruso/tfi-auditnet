@@ -36,10 +36,11 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <span class="eyebrow">Sedes asociadas</span>
           <h2 id="site-title">Seleccioná una organización</h2>
         </div>
-        <div class="panel-heading-actions" data-admin-only="true">
-          <button id="edit-organization" class="button button-ghost button-small" type="button" disabled>Editar</button>
-          <button id="toggle-organization" class="button button-ghost button-small" type="button" disabled>Deshabilitar</button>
-          <button id="open-site-dialog" class="button button-primary button-small" type="button" disabled>
+        <div class="panel-heading-actions">
+          <button id="edit-organization" class="button button-ghost button-small" type="button" disabled data-admin-only="true">Editar</button>
+          <button id="toggle-organization" class="button button-ghost button-small" type="button" disabled data-admin-only="true">Deshabilitar</button>
+          <button id="open-site-dialog" class="button button-primary button-small" type="button" disabled
+            data-roles="ADMINISTRADOR_SISTEMA,ADMINISTRADOR_ORGANIZACION">
             + sede
           </button>
         </div>
@@ -51,6 +52,22 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         <p>Elegí una organización para consultar sus sedes.</p>
       </div>
     </article>
+  </section>
+
+  <section class="panel" id="plan-panel">
+    <div class="panel-heading">
+      <div>
+        <span class="eyebrow">Plan</span>
+        <h2>Plan y uso</h2>
+      </div>
+      <div class="panel-heading-actions">
+        <a class="inline-link" href="/plan" data-roles="ADMINISTRADOR_ORGANIZACION">ver Mi plan →</a>
+        <button id="change-plan" class="button button-ghost button-small" type="button" disabled data-admin-only="true">
+          Cambiar plan
+        </button>
+      </div>
+    </div>
+    <div id="plan-summary" class="plan-summary"><div class="skeleton-row"></div></div>
   </section>
 
   <dialog id="organization-dialog" class="technical-dialog">
@@ -73,6 +90,22 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <span>razón social *</span>
           <input id="organization-name" type="text" maxlength="160" placeholder="Cliente Norte SA" required />
         </label>
+        <label class="field" data-plan-choice>
+          <span>plan inicial *</span>
+          <select id="organization-plan" class="form-select" data-plan-select></select>
+        </label>
+        <label class="field" data-plan-trial>
+          <span>días de prueba (60 a 90)</span>
+          <input id="organization-trial-days" type="number" min="60" max="90" value="90" data-plan-days />
+        </label>
+        <label class="field" data-plan-custom>
+          <span>dispositivos acordados *</span>
+          <input id="organization-limit-devices" type="number" min="1" data-plan-devices />
+        </label>
+        <label class="field" data-plan-custom>
+          <span>usuarios acordados *</span>
+          <input id="organization-limit-users" type="number" min="1" data-plan-users />
+        </label>
         <div class="device-form-context field-span-2">
           <code id="organization-dialog-state">estado = ACTIVO</code>
           <span>El identificador se guarda en mayúsculas y debe ser único, igual que la razón social.</span>
@@ -83,6 +116,42 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       <div class="dialog-actions">
         <button class="button button-ghost" type="button" data-close-dialog>Cancelar</button>
         <button id="organization-submit" class="button button-primary" type="submit">Registrar organización</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="plan-dialog" class="technical-dialog" style="width: min(620px, calc(100vw - 32px));">
+    <form id="plan-form" class="device-form" novalidate>
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">Plan</span>
+          <h2 id="plan-dialog-title">Cambiar plan</h2>
+          <p>Se aplica en el acto. Si la organización usa más dispositivos o usuarios que el plan nuevo, el cambio se rechaza.</p>
+        </div>
+        <button class="dialog-close" type="button" data-close-dialog aria-label="Cerrar">×</button>
+      </div>
+      <div class="device-form-grid">
+        <label class="field field-span-2">
+          <span>plan *</span>
+          <select id="plan-code" class="form-select" data-plan-select></select>
+        </label>
+        <label class="field" data-plan-trial>
+          <span>días de prueba (60 a 90)</span>
+          <input id="plan-trial-days" type="number" min="60" max="90" value="90" data-plan-days />
+        </label>
+        <label class="field" data-plan-custom>
+          <span>dispositivos acordados *</span>
+          <input id="plan-limit-devices" type="number" min="1" data-plan-devices />
+        </label>
+        <label class="field" data-plan-custom>
+          <span>usuarios acordados *</span>
+          <input id="plan-limit-users" type="number" min="1" data-plan-users />
+        </label>
+      </div>
+      <div id="plan-form-error" class="alert alert-error is-hidden"></div>
+      <div class="dialog-actions">
+        <button class="button button-ghost" type="button" data-close-dialog>Cancelar</button>
+        <button class="button button-primary" type="submit">Aplicar plan</button>
       </div>
     </form>
   </dialog>
@@ -135,7 +204,9 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
   <script>
     import { authFetch, hasRole } from '../lib/auth';
-    import { jsonRequest, readApiError, type Organization, type Site } from '../lib/api';
+    import { jsonRequest, readApiError, type Organization, type OrganizationPlan, type Plan, type Site } from '../lib/api';
+    import { escapeHtml } from '../lib/format';
+    import { formatDay, formatPrice, isCustomPlan, limitsText, isTrialPlan, requestStatusBadge, usageRow, validityText } from '../lib/plans';
 
     const orgList = document.querySelector<HTMLDivElement>('#organization-list');
     const orgCount = document.querySelector<HTMLSpanElement>('#organization-count');
@@ -152,6 +223,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     let editingSite: Site | null = null;
     let currentSites: Site[] = [];
     const isAdmin = hasRole('ADMINISTRADOR_SISTEMA');
+    const canManageSites = isAdmin || hasRole('ADMINISTRADOR_ORGANIZACION');
+    let catalog: Plan[] = [];
     const confirmDialog = document.querySelector<HTMLDialogElement>('#org-confirm-dialog');
 
     const confirmAction = (title: string, text: string, accept: string) => new Promise<boolean>((resolve) => {
@@ -209,7 +282,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const side = document.createElement('div');
       side.className = 'inline-actions';
       side.append(status);
-      if (isAdmin) {
+      if (canManageSites) {
         const edit = document.createElement('button');
         edit.type = 'button';
         edit.className = 'button button-ghost button-small';
@@ -240,9 +313,70 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       document.querySelector('#organization-disabled-note')?.classList.toggle('is-hidden', active);
     }
 
+    // Plan de la organización seleccionada
+    function fillPlanSelect(select: HTMLSelectElement | null, current?: string): void {
+      if (!select) return;
+      select.replaceChildren(...catalog.map((plan) => new Option(
+        `${plan.nombre} · ${limitsText(plan)} · ${formatPrice(plan)}`,
+        plan.codigo)));
+      if (current) select.value = current;
+    }
+
+    /** Muestra días de prueba o límites acordados según el plan elegido en el diálogo. */
+    function syncPlanFields(form: HTMLElement): void {
+      const code = form.querySelector<HTMLSelectElement>('[data-plan-select]')?.value;
+      const plan = catalog.find((item) => item.codigo === code);
+      const editingExisting = form.id === 'organization-form' && editingOrganization !== null;
+      form.querySelectorAll<HTMLElement>('[data-plan-choice]').forEach((node) => node.classList.toggle('is-hidden', editingExisting));
+      form.querySelectorAll<HTMLElement>('[data-plan-trial]').forEach((node) =>
+        node.classList.toggle('is-hidden', editingExisting || !plan || !isTrialPlan(plan)));
+      form.querySelectorAll<HTMLElement>('[data-plan-custom]').forEach((node) =>
+        node.classList.toggle('is-hidden', editingExisting || !plan || !isCustomPlan(plan)));
+    }
+
+    function planPayload(form: HTMLElement) {
+      const number = (selector: string) => {
+        const input = form.querySelector<HTMLInputElement>(selector);
+        return input && !input.closest('.is-hidden') && input.value !== '' ? Number(input.value) : null;
+      };
+      return {
+        plan: form.querySelector<HTMLSelectElement>('[data-plan-select]')?.value ?? '',
+        diasPrueba: number('[data-plan-days]'),
+        limiteDispositivos: number('[data-plan-devices]'),
+        limiteUsuarios: number('[data-plan-users]'),
+      };
+    }
+
+    let currentPlan: OrganizationPlan | null = null;
+
+    async function loadPlan(organization: Organization): Promise<void> {
+      const summary = document.querySelector<HTMLElement>('#plan-summary');
+      const changeButton = document.querySelector<HTMLButtonElement>('#change-plan');
+      if (changeButton) changeButton.disabled = true;
+      const response = await authFetch(`/api/client-organizations/${organization.id}/plan`);
+      if (!summary) return;
+      if (!response.ok) {
+        summary.innerHTML = `<div class="alert alert-error">${escapeHtml(await readApiError(response))}</div>`;
+        return;
+      }
+      currentPlan = await response.json() as OrganizationPlan;
+      const pending = currentPlan.solicitudPendiente;
+      summary.innerHTML = `
+        <div class="plan-summary-head">
+          <h3>${escapeHtml(currentPlan.plan.nombre)}</h3>
+          <code>${escapeHtml(formatPrice(currentPlan.plan))} · desde ${escapeHtml(formatDay(currentPlan.desde))}</code>
+        </div>
+        <p class="plan-validity ${currentPlan.vencido ? 'is-expired' : ''}">${escapeHtml(validityText(currentPlan))}</p>
+        ${usageRow('Dispositivos activos', currentPlan.dispositivosActivos, currentPlan.maxDispositivos)}
+        ${usageRow('Usuarios activos', currentPlan.usuariosActivos, currentPlan.maxUsuarios)}
+        ${pending ? `<p class="log-muted">Solicitud ${requestStatusBadge(pending.estado)} de cambio a <strong>${escapeHtml(catalog.find((plan) => plan.codigo === pending.planSolicitado)?.nombre ?? pending.planSolicitado)}</strong> (${escapeHtml(pending.solicitadoPor)}).${isAdmin ? ' <a class="inline-link" href="/plans">resolver →</a>' : ''}</p>` : ''}`;
+      if (changeButton) changeButton.disabled = false;
+    }
+
     async function loadSites(organization: Organization): Promise<void> {
       selectedOrganization = organization;
       syncOrganizationActions(organization);
+      void loadPlan(organization);
       if (siteTitle) siteTitle.textContent = organization.razonSocial;
       if (siteList) {
         siteList.className = 'data-list';
@@ -349,6 +483,9 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         document.querySelector<HTMLInputElement>('#organization-identifier')!.value = organization.identificador;
         document.querySelector<HTMLInputElement>('#organization-name')!.value = organization.razonSocial;
       }
+      const form = document.querySelector<HTMLFormElement>('#organization-form');
+      fillPlanSelect(document.querySelector('#organization-plan'), 'PILOTO');
+      if (form) syncPlanFields(form);
       organizationDialog?.showModal();
     }
 
@@ -421,9 +558,10 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         identificador: inputValue('#organization-identifier'),
         razonSocial: inputValue('#organization-name'),
       };
+      const form = document.querySelector<HTMLFormElement>('#organization-form')!;
       const response = editingOrganization
         ? await authFetch(`/api/client-organizations/${editingOrganization.id}`, jsonRequest('PUT', payload))
-        : await authFetch('/api/client-organizations', jsonRequest('POST', payload));
+        : await authFetch('/api/client-organizations', jsonRequest('POST', { ...payload, ...planPayload(form) }));
       if (!response.ok) {
         showFormError('#organization-form-error', await readApiError(response));
         return;
@@ -460,6 +598,48 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       await loadSites(organization);
     });
 
-    loadOrganizations().catch(() => showError('No se pudo cargar la información de organizaciones y sedes.'));
+    // Cambio de plan (administrador del sistema)
+    const planDialog = document.querySelector<HTMLDialogElement>('#plan-dialog');
+    document.querySelectorAll<HTMLSelectElement>('[data-plan-select]').forEach((select) => {
+      select.addEventListener('change', () => syncPlanFields(select.closest('form')!));
+    });
+
+    document.querySelector('#change-plan')?.addEventListener('click', () => {
+      if (!selectedOrganization || !currentPlan) return;
+      const form = document.querySelector<HTMLFormElement>('#plan-form')!;
+      form.reset();
+      showFormError('#plan-form-error', null);
+      document.querySelector('#plan-dialog-title')!.textContent = `Plan de ${selectedOrganization.razonSocial}`;
+      fillPlanSelect(document.querySelector('#plan-code'), currentPlan.plan.codigo);
+      if (isCustomPlan(currentPlan.plan)) {
+        document.querySelector<HTMLInputElement>('#plan-limit-devices')!.value = String(currentPlan.maxDispositivos ?? '');
+        document.querySelector<HTMLInputElement>('#plan-limit-users')!.value = String(currentPlan.maxUsuarios ?? '');
+      }
+      syncPlanFields(form);
+      planDialog?.showModal();
+    });
+
+    document.querySelector<HTMLFormElement>('#plan-form')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const organization = selectedOrganization;
+      if (!organization) return;
+      showFormError('#plan-form-error', null);
+      const response = await authFetch(`/api/client-organizations/${organization.id}/plan`,
+        jsonRequest('PUT', planPayload(event.currentTarget as HTMLFormElement)));
+      if (!response.ok) return showFormError('#plan-form-error', await readApiError(response));
+      planDialog?.close();
+      const updated = await response.json() as OrganizationPlan;
+      showMessage(`${organization.razonSocial} pasó al plan ${updated.plan.nombre}.`);
+      await loadPlan(organization);
+    });
+
+    async function loadCatalog(): Promise<void> {
+      const response = await authFetch('/api/plans');
+      if (response.ok) catalog = await response.json() as Plan[];
+    }
+
+    loadCatalog()
+      .then(() => loadOrganizations())
+      .catch(() => showError('No se pudo cargar la información de organizaciones y sedes.'));
   </script>
 </MasterLayout>

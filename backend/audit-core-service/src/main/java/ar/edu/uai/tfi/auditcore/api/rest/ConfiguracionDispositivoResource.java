@@ -3,6 +3,7 @@ package ar.edu.uai.tfi.auditcore.api.rest;
 import ar.edu.uai.tfi.auditcore.api.rest.dto.config.ConfiguracionResponse;
 import ar.edu.uai.tfi.auditcore.api.rest.dto.config.ImportarConfiguracionRequest;
 import ar.edu.uai.tfi.auditcore.application.config.ConfiguracionService;
+import ar.edu.uai.tfi.auditcore.application.plan.RestriccionPlanException;
 import ar.edu.uai.tfi.auditcore.domain.model.ConfiguracionDispositivo;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.json.JsonNumber;
@@ -65,6 +66,8 @@ public class ConfiguracionDispositivoResource {
             return Response.created(URI.create("/api/configurations/" + creada.id()))
                     .entity(aResponse(creada))
                     .build();
+        } catch (RestriccionPlanException exception) {
+            throw error(Response.Status.CONFLICT, exception.getMessage());
         } catch (IllegalStateException | IllegalArgumentException exception) {
             throw error(Response.Status.BAD_REQUEST, exception.getMessage());
         } catch (NoSuchElementException exception) {

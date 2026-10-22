@@ -2,14 +2,20 @@
 // En el build estático la ruta termina en '/' (ej. /logs/): se normaliza para comparar.
 const currentPath = Astro.url.pathname.replace(/\/+$/, '') || '/';
 
+const ADMIN = 'ADMINISTRADOR_SISTEMA';
+const ADMIN_ORGANIZACION = 'ADMINISTRADOR_ORGANIZACION';
+
+// roles: perfiles que ven el ítem (sin roles lo ven todos).
 const railItems = [
   { href: '/dashboard', label: 'Tablero de control', code: '~/' },
   { href: '/client-status', label: 'Estado del cliente', code: 'CLI' },
   { separator: true },
-  { href: '/organizations', label: 'Organizaciones y sedes', code: 'ORG', adminOnly: true },
-  { href: '/users', label: 'Usuarios', code: 'USR', adminOnly: true },
-  { href: '/logs', label: 'Bitácoras', code: 'BIT', adminOnly: true },
-  { href: '/admin', label: 'Panel de administración', code: 'ADM', adminOnly: true },
+  { href: '/organizations', label: 'Organizaciones y sedes', code: 'ORG', roles: [ADMIN, ADMIN_ORGANIZACION] },
+  { href: '/users', label: 'Usuarios', code: 'USR', roles: [ADMIN, ADMIN_ORGANIZACION] },
+  { href: '/plan', label: 'Mi plan', code: 'PLN', roles: [ADMIN_ORGANIZACION, 'RESPONSABLE_GESTION_IT'] },
+  { href: '/plans', label: 'Planes y solicitudes', code: 'PLN', roles: [ADMIN] },
+  { href: '/logs', label: 'Bitácoras', code: 'BIT', roles: [ADMIN] },
+  { href: '/admin', label: 'Panel de administración', code: 'ADM', roles: [ADMIN] },
   { separator: true },
   { href: '/devices', label: 'Dispositivos', code: 'DEV' },
   { href: '/baselines', label: 'Baselines', code: 'BL' },
@@ -35,7 +41,7 @@ const railItems = [
         href={item.href}
         class:list={["rail-link", currentPath === item.href && "is-active"]}
         data-label={item.label}
-        data-admin-only={item.adminOnly ? "true" : undefined}
+        data-roles={item.roles?.join(',')}
         aria-label={item.label}
         title={item.label}
       >
@@ -71,7 +77,7 @@ const railItems = [
     };
     nav.addEventListener('scroll', sync, { passive: true });
     new ResizeObserver(sync).observe(nav);
-    // Al validar la sesión se ocultan los ítems de administrador y cambia el alto.
+    // Al validar la sesión se ocultan los ítems que el perfil no usa y cambia el alto.
     new MutationObserver(sync).observe(nav, { attributes: true, subtree: true, attributeFilter: ['hidden'] });
   }
 </script>

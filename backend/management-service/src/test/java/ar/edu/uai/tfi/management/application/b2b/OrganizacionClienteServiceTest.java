@@ -2,6 +2,7 @@ package ar.edu.uai.tfi.management.application.b2b;
 
 import ar.edu.uai.tfi.management.application.ErrorAplicacion;
 import ar.edu.uai.tfi.management.application.ExcepcionAplicacion;
+import ar.edu.uai.tfi.management.application.plan.PlanService;
 import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
 import ar.edu.uai.tfi.management.domain.model.OperacionTransaccion;
 import ar.edu.uai.tfi.management.domain.model.OrganizacionCliente;
@@ -30,13 +31,15 @@ class OrganizacionClienteServiceTest {
     private final EnMemoriaGestion.Organizaciones organizaciones = new EnMemoriaGestion.Organizaciones();
     private final EnMemoriaGestion.Sedes sedes = new EnMemoriaGestion.Sedes();
     private final EnMemoriaGestion.Usuarios usuarios = new EnMemoriaGestion.Usuarios();
+    private final PlanService planes = new PlanService(new EnMemoriaGestion.Planes(), organizaciones,
+            new EnMemoriaGestion.Solicitudes(), usuarios, new EnMemoriaGestion.Dispositivos(), transaccion -> { });
     private final OrganizacionClienteService service = new OrganizacionClienteService(organizaciones, transacciones::add,
-            usuarios);
+            usuarios, planes);
     private final SedeService sedeService = new SedeService(sedes, organizaciones, transacciones::add);
 
     @Test
     void altaDeOrganizacionRegistraTransaccion() {
-        OrganizacionCliente creada = service.crear("cli-01", "Cliente Uno S.A.");
+        OrganizacionCliente creada = service.crear("cli-01", "Cliente Uno S.A.", "INICIAL", null, null, null);
 
         assertEquals(1, transacciones.size());
         Transaccion alta = transacciones.get(0);
@@ -50,7 +53,7 @@ class OrganizacionClienteServiceTest {
 
     @Test
     void modificarOrganizacionGuardaValorAnteriorYNuevo() {
-        OrganizacionCliente creada = service.crear("cli-01", "Cliente Uno S.A.");
+        OrganizacionCliente creada = service.crear("cli-01", "Cliente Uno S.A.", "INICIAL", null, null, null);
 
         OrganizacionCliente modificada = service.actualizar(creada.id(), "cli-01b", "Cliente Uno SRL");
 
@@ -63,8 +66,8 @@ class OrganizacionClienteServiceTest {
 
     @Test
     void modificarRechazaIdentificadorDeOtraOrganizacion() {
-        service.crear("cli-01", "Cliente Uno");
-        OrganizacionCliente otra = service.crear("cli-02", "Cliente Dos");
+        service.crear("cli-01", "Cliente Uno", "INICIAL", null, null, null);
+        OrganizacionCliente otra = service.crear("cli-02", "Cliente Dos", "INICIAL", null, null, null);
 
         ExcepcionAplicacion error = assertThrows(ExcepcionAplicacion.class,
                 () -> service.actualizar(otra.id(), "CLI-01", "Cliente Dos"));
@@ -74,7 +77,7 @@ class OrganizacionClienteServiceTest {
 
     @Test
     void deshabilitarOrganizacionEsBajaLogicaEImpideNuevasSedes() {
-        OrganizacionCliente creada = service.crear("cli-01", "Cliente Uno");
+        OrganizacionCliente creada = service.crear("cli-01", "Cliente Uno", "INICIAL", null, null, null);
         usuarios.agregar(new Usuario(10L, creada.id(), "Ana", "ana@x.com", "ana", "h", EstadoRegistro.ACTIVO,
                 Set.of("ANALISTA_RED")));
         service.reloj = new EnMemoriaGestion.RelojAjustable(Instant.parse("2026-10-11T12:00:00.750Z"));
@@ -83,7 +86,7 @@ class OrganizacionClienteServiceTest {
         ExcepcionAplicacion repetido = assertThrows(ExcepcionAplicacion.class,
                 () -> service.cambiarEstado(creada.id(), "DESHABILITADO"));
         ExcepcionAplicacion sede = assertThrows(ExcepcionAplicacion.class,
-                () -> sedeService.crear(creada.id(), "Casa central", "CABA"));
+                () -> sedeService.crear(creada.id(), "Casa central", "CABA", null));
 
         assertEquals(EstadoRegistro.DESHABILITADO, deshabilitada.estado());
         assertEquals(OperacionTransaccion.CAMBIO_ESTADO, transacciones.get(1).operacion());
@@ -96,14 +99,14 @@ class OrganizacionClienteServiceTest {
 
     @Test
     void sedeSeModificaYSeDeshabilitaConTrazabilidad() {
-        OrganizacionCliente org = service.crear("cli-01", "Cliente Uno");
-        Sede central = sedeService.crear(org.id(), "Casa central", "CABA");
-        sedeService.crear(org.id(), "Planta", "Pilar");
+        OrganizacionCliente org = service.crear("cli-01", "Cliente Uno", "INICIAL", null, null, null);
+        Sede central = sedeService.crear(org.id(), "Casa central", "CABA", null);
+        sedeService.crear(org.id(), "Planta", "Pilar", null);
 
         ExcepcionAplicacion duplicada = assertThrows(ExcepcionAplicacion.class,
-                () -> sedeService.actualizar(central.id(), "planta", "CABA"));
-        Sede modificada = sedeService.actualizar(central.id(), "Sede central", "CABA, piso 3");
-        Sede deshabilitada = sedeService.cambiarEstado(central.id(), "DESHABILITADO");
+                () -> sedeService.actualizar(central.id(), "planta", "CABA", null));
+        Sede modificada = sedeService.actualizar(central.id(), "Sede central", "CABA, piso 3", null);
+        Sede deshabilitada = sedeService.cambiarEstado(central.id(), "DESHABILITADO", null);
 
         assertEquals(ErrorAplicacion.CONFLICTO, duplicada.tipo());
         assertEquals("Sede central", modificada.nombre());

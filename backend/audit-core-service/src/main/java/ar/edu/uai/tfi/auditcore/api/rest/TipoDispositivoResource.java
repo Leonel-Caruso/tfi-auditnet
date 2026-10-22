@@ -23,7 +23,8 @@ import java.util.NoSuchElementException;
 @Path("/api/device-types")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@RolesAllowed({"ADMINISTRADOR_SISTEMA", "ANALISTA_RED", "AUDITOR_TECNICO", "RESPONSABLE_GESTION_IT"})
+@RolesAllowed({"ADMINISTRADOR_SISTEMA", "ADMINISTRADOR_ORGANIZACION", "ANALISTA_RED", "AUDITOR_TECNICO",
+        "RESPONSABLE_GESTION_IT"})
 public class TipoDispositivoResource {
 
     private final TipoDispositivoService service;

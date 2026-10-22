@@ -14,6 +14,10 @@ import jakarta.transaction.Transactional;
 
 import java.util.List;
 
+/**
+ * Sedes de las organizaciones cliente. Las operaciones reciben el alcance del usuario: null para el administrador del
+ * sistema (cualquier organización) o la organización del administrador de organización (solo la propia).
+ */
 @ApplicationScoped
 public class SedeService {
     private final SedeRepository sedeRepository;
@@ -33,16 +37,19 @@ public class SedeService {
         return sedeRepository.listarPorOrganizacion(organizacionId);
     }
 
-    public Sede buscarPorId(Long id) {
+    public Sede buscarPorId(Long id, Long alcance) {
         if (id == null) {
             throw new ExcepcionAplicacion(ErrorAplicacion.SOLICITUD_INVALIDA, "El id de sede es obligatorio.");
         }
-        return sedeRepository.buscarPorId(id)
+        Sede sede = sedeRepository.buscarPorId(id)
                 .orElseThrow(() -> new ExcepcionAplicacion(ErrorAplicacion.NO_ENCONTRADO, "La sede no fue encontrada."));
+        verificarAlcance(sede.organizacionId(), alcance);
+        return sede;
     }
 
     @Transactional
-    public Sede crear(Long organizacionId, String nombre, String ubicacion) {
+    public Sede crear(Long organizacionId, String nombre, String ubicacion, Long alcance) {
+        verificarAlcance(organizacionId, alcance);
         validarOrganizacion(organizacionId);
         if (organizacionRepository.buscarPorId(organizacionId).map(o -> o.estado() != EstadoRegistro.ACTIVO).orElse(false)) {
             throw new ExcepcionAplicacion(ErrorAplicacion.CONFLICTO,
@@ -70,8 +77,8 @@ public class SedeService {
 
     /** El nombre sigue siendo único dentro de la organización. */
     @Transactional
-    public Sede actualizar(Long id, String nombre, String ubicacion) {
-        Sede anterior = buscarPorId(id);
+    public Sede actualizar(Long id, String nombre, String ubicacion, Long alcance) {
+        Sede anterior = buscarPorId(id, alcance);
         validarObligatorio(nombre, "nombre");
         validarObligatorio(ubicacion, "ubicacion");
         String nombreNormalizado = nombre.trim();
@@ -89,8 +96,8 @@ public class SedeService {
 
     /** Baja lógica: una sede deshabilitada no admite dispositivos nuevos; los que tenía conservan su historial. */
     @Transactional
-    public Sede cambiarEstado(Long id, String estado) {
-        Sede anterior = buscarPorId(id);
+    public Sede cambiarEstado(Long id, String estado, Long alcance) {
+        Sede anterior = buscarPorId(id, alcance);
         EstadoRegistro nuevo = OrganizacionClienteService.parsearEstado(estado);
         if (anterior.estado() == nuevo) {
             throw new ExcepcionAplicacion(ErrorAplicacion.CONFLICTO, "La sede ya está " + nuevo + ".");
@@ -100,6 +107,12 @@ public class SedeService {
         trazabilidad.registrar(new Transaccion("SEDE", id, OperacionTransaccion.CAMBIO_ESTADO,
                 anterior.organizacionId(), anterior, actualizada, null, anterior.estado() + " -> " + nuevo));
         return actualizada;
+    }
+
+    private static void verificarAlcance(Long organizacionId, Long alcance) {
+        if (alcance != null && !alcance.equals(organizacionId)) {
+            throw new ExcepcionAplicacion(ErrorAplicacion.PROHIBIDO, "Solo podés gestionar las sedes de tu organización.");
+        }
     }
 
     private void validarOrganizacion(Long organizacionId) {

@@ -33,7 +33,7 @@ class ReauditoriaTest {
             new HallazgoService(hallazgos, seguimientos, dispositivos, bitacora::add, alertaService);
     private final AuditoriaService service = new AuditoriaService(configuraciones, dispositivos, baselines, reglas,
             auditorias, evaluaciones, hallazgos, new MotorAuditoriaService(), bitacora::add, alertaService,
-            hallazgoService);
+            hallazgoService, EnMemoria.planSinLimites());
 
     ReauditoriaTest() {
         dispositivos.items.add(EnMemoria.dispositivo(10L, 2L, null, CriticidadDispositivo.ALTA));

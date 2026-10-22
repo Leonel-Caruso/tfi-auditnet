@@ -45,6 +45,10 @@ las tablas del primero, **sin saltear su V1**.
 | V6 | audit-core-service | Cierra las alertas duplicadas que dejó V4 (una vigente por dispositivo y regla, D-26) | 5 |
 | V4 | management-service | Seguridad de cuentas: intentos fallidos, bloqueo temporal, último acceso y `sesiones_validas_desde` en `usuarios`; descripciones de los cuatro perfiles (D-29 a D-31) | 6 |
 | V7 | audit-core-service | Repositorio de archivos: catálogo `archivos_repositorio` (configuraciones, reportes y respaldos con SHA-256, solo inserción) (D-35) | 7 |
+| V5 | management-service | Planes: catálogo `planes`, plan asignado y límites acordados en `organizaciones_cliente` (las existentes quedan en Inicial) y `solicitudes_cambio_plan` (una pendiente por organización) (D-46) | 11 |
+
+Desde la V5 de management, audit-core lee el plan de `planes` y `organizaciones_cliente` con una consulta nativa:
+al desplegar, management-service va primero (D-47).
 
 La V1 reproduce exactamente la estructura generada por Hibernate en la Entrega 1 (mismas columnas, tipos, nulabilidad,
 claves primarias, únicas y CHECK). Única diferencia deliberada: las claves foráneas tienen nombres legibles

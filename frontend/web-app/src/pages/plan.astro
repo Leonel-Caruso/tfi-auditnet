@@ -1,0 +1,242 @@
+---
+import MasterLayout from '../layouts/MasterLayout.astro';
+---
+
+<MasterLayout
+  title="Mi plan"
+  section="Organización"
+  description="Plan contratado, cuánto se usa y pedidos de cambio. El administrador del sistema aprueba los cambios."
+>
+  <div id="plan-error" class="alert alert-error is-hidden" role="alert"></div>
+  <div id="plan-message" class="alert alert-success is-hidden" role="status"></div>
+  <div id="plan-expiry" class="alert is-hidden" role="status"></div>
+
+  <section class="two-column dashboard-row">
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Plan actual</span>
+          <h2 id="plan-name">—</h2>
+        </div>
+        <code id="plan-price" class="counter-chip">—</code>
+      </div>
+      <div id="plan-current" class="plan-summary"><div class="skeleton-row"></div></div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Cambio de plan</span>
+          <h2>Solicitud</h2>
+        </div>
+        <button id="request-open" class="button button-primary button-small" type="button" disabled
+          data-roles="ADMINISTRADOR_ORGANIZACION">Solicitar cambio</button>
+      </div>
+      <div id="plan-pending"><div class="skeleton-row"></div></div>
+    </article>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <span class="eyebrow">Catálogo</span>
+        <h2>Planes disponibles</h2>
+      </div>
+    </div>
+    <div id="plan-catalog" class="plan-catalog"><div class="skeleton-row"></div></div>
+    <p class="log-muted" style="margin-top: 12px;">
+      Precios de referencia por mes. La plataforma no cobra: el equipo comercial confirma las condiciones al aprobar.
+    </p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-heading">
+      <div>
+        <span class="eyebrow">Historial</span>
+        <h2>Solicitudes anteriores</h2>
+      </div>
+    </div>
+    <ul id="plan-history" class="request-list"></ul>
+    <div id="plan-history-empty" class="empty-state compact-empty is-hidden">
+      <div><code>0 solicitudes</code><p>Todavía no se pidió ningún cambio de plan.</p></div>
+    </div>
+  </section>
+
+  <dialog id="request-dialog" class="technical-dialog" style="width: min(560px, calc(100vw - 32px));">
+    <form id="request-form" class="device-form" novalidate>
+      <div class="dialog-header">
+        <div>
+          <span class="eyebrow">Cambio de plan</span>
+          <h2>Solicitar otro plan</h2>
+          <p>El administrador del sistema la revisa y te responde. Hasta entonces sigue vigente el plan actual.</p>
+        </div>
+        <button class="dialog-close" type="button" data-close-dialog aria-label="Cerrar">×</button>
+      </div>
+      <label class="field">
+        <span>plan *</span>
+        <select id="request-plan" class="form-select"></select>
+      </label>
+      <p id="request-conditions" class="log-muted" style="margin: -6px 0 14px;"></p>
+      <fieldset class="radio-row">
+        <legend class="log-muted">modalidad</legend>
+        <label><input type="radio" name="modalidad" value="MENSUAL" checked /> mensual</label>
+        <label><input type="radio" name="modalidad" value="ANUAL" /> anual</label>
+      </fieldset>
+      <label class="field">
+        <span>comentario</span>
+        <textarea id="request-comment" rows="3" maxlength="500" placeholder="Ej.: sumamos dos sedes el mes próximo"></textarea>
+      </label>
+      <div id="request-form-error" class="alert alert-error is-hidden"></div>
+      <div class="dialog-actions">
+        <button class="button button-ghost" type="button" data-close-dialog>Cancelar</button>
+        <button class="button button-primary" type="submit">Enviar solicitud</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    import { authFetch, getStoredUser, hasRole } from '../lib/auth';
+    import { jsonRequest, readApiError, type OrganizationPlan, type Plan, type PlanRequest } from '../lib/api';
+    import { escapeHtml, formatDate } from '../lib/format';
+    import {
+      formatDay, formatPrice, isCustomPlan, isTrialPlan, limitsText, MODALITY_LABEL, planCard, requestStatusBadge,
+      usageRow, validityText,
+    } from '../lib/plans';
+
+    // El administrador del sistema gestiona los planes de todas las organizaciones desde otra pantalla.
+    if (hasRole('ADMINISTRADOR_SISTEMA')) window.location.replace('/plans');
+
+    const organizationId = getStoredUser()?.organizationId;
+    const canRequest = hasRole('ADMINISTRADOR_ORGANIZACION');
+    const $ = <T extends HTMLElement>(selector: string) => document.querySelector<T>(selector);
+    const requestDialog = $<HTMLDialogElement>('#request-dialog');
+
+    let catalog: Plan[] = [];
+    let current: OrganizationPlan | null = null;
+
+    const planName = (code: string) => catalog.find((plan) => plan.codigo === code)?.nombre ?? code;
+
+    const show = (selector: string, message: string | null) => {
+      const node = $(selector);
+      if (!node) return;
+      node.textContent = message ?? '';
+      node.classList.toggle('is-hidden', !message);
+    };
+
+    /** Planes que se pueden pedir: no los de prueba ni el actual (salvo uno a medida, para renegociar límites). */
+    const requestable = () => catalog.filter((plan) => !isTrialPlan(plan)
+      && (plan.codigo !== current?.plan.codigo || isCustomPlan(plan)));
+
+    const renderCurrent = () => {
+      if (!current) return;
+      $('#plan-name')!.textContent = current.plan.nombre;
+      $('#plan-price')!.textContent = formatPrice(current.plan);
+      $('#plan-current')!.innerHTML = `
+        <p class="plan-validity ${current.vencido ? 'is-expired' : ''}">${escapeHtml(validityText(current))}</p>
+        ${usageRow('Dispositivos activos', current.dispositivosActivos, current.maxDispositivos)}
+        ${usageRow('Usuarios activos', current.usuariosActivos, current.maxUsuarios)}
+        <p class="log-muted">Desde el ${escapeHtml(formatDay(current.desde))}.
+          ${current.plan.condiciones ? escapeHtml(current.plan.condiciones) : ''}</p>`;
+
+      const expiry = $('#plan-expiry');
+      if (expiry) {
+        const soon = current.vence && !current.vencido && (current.diasRestantes ?? 0) <= 15;
+        expiry.className = `alert ${current.vencido ? 'alert-error' : 'alert-warning'}`;
+        expiry.textContent = current.vencido
+          ? 'El período de prueba venció: se pueden consultar los datos, pero no sumar dispositivos ni usuarios, importar configuraciones ni ejecutar auditorías hasta que se apruebe un plan.'
+          : `El período de prueba termina en ${current.diasRestantes} días. Pedí un plan para seguir operando sin interrupciones.`;
+        expiry.classList.toggle('is-hidden', !current.vencido && !soon);
+      }
+
+      const pending = current.solicitudPendiente;
+      $('#plan-pending')!.innerHTML = pending
+        ? `<ul class="request-list"><li>
+            <div><strong>${escapeHtml(planName(pending.planActual))} → ${escapeHtml(planName(pending.planSolicitado))}</strong>${requestStatusBadge(pending.estado)}</div>
+            <small>${escapeHtml(MODALITY_LABEL[pending.modalidad])} · pedida por ${escapeHtml(pending.solicitadoPor)} el ${escapeHtml(formatDate(pending.fechaSolicitud))}</small>
+            ${pending.comentario ? `<p>${escapeHtml(pending.comentario)}</p>` : ''}
+            ${canRequest ? `<div><button class="button button-ghost button-small" type="button" data-cancel="${pending.id}">Cancelar solicitud</button></div>` : ''}
+          </li></ul>`
+        : `<p class="log-muted">No hay solicitudes pendientes.${canRequest ? ' Si necesitás más dispositivos o usuarios, pedí otro plan.' : ''}</p>`;
+      const open = $<HTMLButtonElement>('#request-open');
+      if (open) open.disabled = Boolean(pending) || requestable().length === 0;
+    };
+
+    const renderCatalog = () => {
+      $('#plan-catalog')!.innerHTML = catalog.map((plan) => planCard(plan, plan.codigo === current?.plan.codigo)).join('');
+    };
+
+    const renderHistory = (requests: PlanRequest[]) => {
+      const done = requests.filter((request) => request.estado !== 'PENDIENTE');
+      $('#plan-history')!.innerHTML = done.map((request) => `
+        <li>
+          <div><strong>${escapeHtml(planName(request.planActual))} → ${escapeHtml(planName(request.planSolicitado))}</strong>${requestStatusBadge(request.estado)}</div>
+          <small>${escapeHtml(MODALITY_LABEL[request.modalidad])} · pedida por ${escapeHtml(request.solicitadoPor)} el ${escapeHtml(formatDate(request.fechaSolicitud))}${request.resueltoPor ? ` · resuelta por ${escapeHtml(request.resueltoPor)} el ${escapeHtml(formatDate(request.fechaResolucion))}` : ''}</small>
+          ${request.respuesta ? `<p>${escapeHtml(request.respuesta)}</p>` : ''}
+        </li>`).join('');
+      $('#plan-history-empty')?.classList.toggle('is-hidden', done.length > 0);
+    };
+
+    const load = async () => {
+      if (!organizationId) return show('#plan-error', 'Tu usuario no tiene una organización asociada.');
+      const [catalogResponse, planResponse] = await Promise.all([
+        authFetch('/api/plans'),
+        authFetch(`/api/client-organizations/${organizationId}/plan`),
+      ]);
+      if (!planResponse.ok) return show('#plan-error', await readApiError(planResponse));
+      if (catalogResponse.ok) catalog = await catalogResponse.json() as Plan[];
+      current = await planResponse.json() as OrganizationPlan;
+      renderCurrent();
+      renderCatalog();
+      const historyResponse = await authFetch(`/api/client-organizations/${organizationId}/plan-requests`);
+      renderHistory(historyResponse.ok ? await historyResponse.json() as PlanRequest[] : []);
+    };
+
+    const syncConditions = () => {
+      const plan = catalog.find((item) => item.codigo === $<HTMLSelectElement>('#request-plan')?.value);
+      $('#request-conditions')!.textContent = plan
+        ? `${formatPrice(plan)} · ${limitsText(plan)}. ${plan.condiciones ?? ''}`
+        : '';
+    };
+
+    $('#request-open')?.addEventListener('click', () => {
+      $<HTMLFormElement>('#request-form')?.reset();
+      show('#request-form-error', null);
+      const select = $<HTMLSelectElement>('#request-plan');
+      select?.replaceChildren(...requestable().map((plan) => new Option(plan.nombre, plan.codigo)));
+      syncConditions();
+      requestDialog?.showModal();
+    });
+    $('#request-plan')?.addEventListener('change', syncConditions);
+
+    $<HTMLFormElement>('#request-form')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      show('#request-form-error', null);
+      const payload = {
+        plan: $<HTMLSelectElement>('#request-plan')?.value ?? '',
+        modalidad: document.querySelector<HTMLInputElement>('input[name=modalidad]:checked')?.value ?? 'MENSUAL',
+        comentario: ($<HTMLTextAreaElement>('#request-comment')?.value ?? '').trim(),
+      };
+      const response = await authFetch(`/api/client-organizations/${organizationId}/plan-requests`, jsonRequest('POST', payload));
+      if (!response.ok) return show('#request-form-error', await readApiError(response));
+      requestDialog?.close();
+      show('#plan-message', 'Solicitud enviada: el administrador del sistema la va a revisar.');
+      await load();
+    });
+
+    $('#plan-pending')?.addEventListener('click', async (event) => {
+      const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-cancel]');
+      if (!button) return;
+      const response = await authFetch(`/api/client-organizations/${organizationId}/plan-requests/${button.dataset.cancel}/cancel`,
+        { method: 'POST' });
+      if (!response.ok) return show('#plan-error', await readApiError(response));
+      show('#plan-message', 'Solicitud cancelada.');
+      await load();
+    });
+
+    document.querySelectorAll<HTMLButtonElement>('[data-close-dialog]').forEach((button) => {
+      button.addEventListener('click', () => button.closest('dialog')?.close());
+    });
+
+    load().catch((error) => show('#plan-error', error instanceof Error ? error.message : 'No se pudo cargar el plan.'));
+  </script>
+</MasterLayout>

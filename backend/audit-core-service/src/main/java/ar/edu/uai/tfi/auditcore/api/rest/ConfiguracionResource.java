@@ -21,6 +21,7 @@ import java.util.NoSuchElementException;
 @Consumes(MediaType.APPLICATION_JSON)
 @RolesAllowed({
         "ADMINISTRADOR_SISTEMA",
+        "ADMINISTRADOR_ORGANIZACION",
         "ANALISTA_RED",
         "AUDITOR_TECNICO",
         "RESPONSABLE_GESTION_IT"

@@ -6,9 +6,12 @@ import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
 import ar.edu.uai.tfi.management.domain.model.EventoSistema;
 import ar.edu.uai.tfi.management.domain.model.TipoEventoSistema;
 import ar.edu.uai.tfi.management.domain.model.OrganizacionCliente;
+import ar.edu.uai.tfi.management.domain.model.Plan;
+import ar.edu.uai.tfi.management.domain.model.PlanOrganizacion;
 import ar.edu.uai.tfi.management.domain.model.Rol;
 import ar.edu.uai.tfi.management.domain.model.Usuario;
 import ar.edu.uai.tfi.management.domain.repository.OrganizacionClienteRepository;
+import ar.edu.uai.tfi.management.domain.repository.PlanRepository;
 import ar.edu.uai.tfi.management.domain.repository.RolRepository;
 import ar.edu.uai.tfi.management.domain.repository.UsuarioRepository;
 import io.quarkus.arc.profile.UnlessBuildProfile;
@@ -19,6 +22,7 @@ import jakarta.transaction.Transactional;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 
@@ -28,6 +32,7 @@ public class DevDataInitializer {
     private static final Logger LOG = Logger.getLogger(DevDataInitializer.class);
 
     private final OrganizacionClienteRepository organizacionRepository;
+    private final PlanRepository planRepository;
     private final RolRepository rolRepository;
     private final UsuarioRepository usuarioRepository;
     private final PasswordPort passwordPort;
@@ -45,11 +50,13 @@ public class DevDataInitializer {
     String organizationName;
 
     public DevDataInitializer(OrganizacionClienteRepository organizacionRepository,
+                              PlanRepository planRepository,
                               RolRepository rolRepository,
                               UsuarioRepository usuarioRepository,
                               PasswordPort passwordPort,
                               BitacoraSistemaPort bitacora) {
         this.organizacionRepository = organizacionRepository;
+        this.planRepository = planRepository;
         this.rolRepository = rolRepository;
         this.usuarioRepository = usuarioRepository;
         this.passwordPort = passwordPort;
@@ -66,6 +73,7 @@ public class DevDataInitializer {
     private void crearRolesBase() {
         List<RolBase> roles = List.of(
                 new RolBase("ADMINISTRADOR_SISTEMA", "Administra usuarios, organizaciones, sedes, bitácoras y la salud de la plataforma."),
+                new RolBase("ADMINISTRADOR_ORGANIZACION", "Administra los usuarios, las sedes y los dispositivos de su organización y consulta su plan."),
                 new RolBase("ANALISTA_RED", "Importa configuraciones, ejecuta auditorías, atiende hallazgos y deriva alertas."),
                 new RolBase("AUDITOR_TECNICO", "Define baselines y reglas, revisa hallazgos y genera reportes de auditoría."),
                 new RolBase("RESPONSABLE_GESTION_IT", "Consulta el tablero, las alertas y los reportes de su organización y deriva alertas.")
@@ -81,13 +89,18 @@ public class DevDataInitializer {
         }
     }
 
+    /** La organización de la plataforma empieza con el plan Inicial, como las existentes al migrar a V5. */
     private OrganizacionCliente obtenerOCrearOrganizacion() {
         return organizacionRepository.buscarPorIdentificador(organizationIdentifier)
-                .orElseGet(() -> organizacionRepository.guardar(new OrganizacionCliente(
-                        null,
-                        organizationIdentifier.trim().toUpperCase(),
-                        organizationName.trim(),
-                        EstadoRegistro.ACTIVO)));
+                .orElseGet(() -> {
+                    Plan inicial = planRepository.buscarPorCodigo("INICIAL")
+                            .orElseThrow(() -> new IllegalStateException("Falta el plan INICIAL (migración V5)."));
+                    return organizacionRepository.guardar(new OrganizacionCliente(
+                            null,
+                            organizationIdentifier.trim().toUpperCase(),
+                            organizationName.trim(),
+                            EstadoRegistro.ACTIVO), new PlanOrganizacion(null, inicial, Instant.now(), null, null, null));
+                });
     }
 
     private void crearAdministradorSiNoExiste(Long organizacionId) {
