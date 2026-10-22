@@ -15,5 +15,8 @@ public enum TipoEventoSistema {
     CONTRASENA_RESTABLECIDA,
     CUENTA_BLOQUEADA,
     CUENTA_DESBLOQUEADA,
-    ROL_MODIFICADO
+    ROL_MODIFICADO,
+    // Recuperación de contraseña por correo
+    RECUPERACION_SOLICITADA,
+    CONTRASENA_RECUPERADA
 }

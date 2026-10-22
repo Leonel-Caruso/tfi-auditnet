@@ -1,5 +1,5 @@
 // Piezas de presentación compartidas por el tablero (/dashboard) y el estado del cliente (/client-status).
-import type { AuditSummary, DashboardSummary, DeviceRisk, Severity, Site, WeeklyEvolution } from './api';
+import type { AuditSummary, DashboardSummary, DeviceRisk, ReviewStatus, Severity, Site, WeeklyEvolution } from './api';
 import { RISK_HELP, code, escapeHtml, formatDate, riskBadge, severityClass } from './format';
 
 const SEVERITIES: Severity[] = ['CRITICA', 'ALTA', 'MEDIA', 'BAJA'];
@@ -22,8 +22,8 @@ export const riskBannerHtml = (summary: DashboardSummary, scope: string) => `
     <small>calculado ${escapeHtml(formatDate(summary.generado))}</small>
   </div>`;
 
-/** Indicadores principales; cada uno lleva al módulo de detalle. */
-export const kpiHtml = (summary: DashboardSummary) => {
+/** Indicadores principales; cada uno lleva al módulo de detalle. Sin estado de revisión, esos dos van con "—". */
+export const kpiHtml = (summary: DashboardSummary, review: ReviewStatus | null = null) => {
   const { dispositivos, hallazgos, alertas, auditorias } = summary;
   const criticalHigh = (hallazgos.pendientesPorSeveridad.CRITICA ?? 0) + (hallazgos.pendientesPorSeveridad.ALTA ?? 0);
   const tiles = [
@@ -53,6 +53,17 @@ export const kpiHtml = (summary: DashboardSummary) => {
     {
       href: '/history', label: 'auditorías (30 días)', value: String(auditorias.ultimos30Dias),
       note: `${auditorias.total} en total`,
+    },
+    {
+      href: '/results?estado=VENCIDOS', label: 'hallazgos vencidos', value: review ? String(review.hallazgosVencidos) : '—',
+      note: 'Pendientes que superaron el plazo de su severidad', alert: (review?.hallazgosVencidos ?? 0) > 0,
+    },
+    {
+      href: '/devices', label: 'configuraciones desactualizadas',
+      value: review ? String(review.dispositivosDesactualizados) : '—',
+      note: review?.politica
+        ? `Equipos activos sin configuración nueva hace más de ${review.politica.diasConfiguracion} días`
+        : 'Equipos activos sin configuración nueva reciente',
     },
   ];
   return tiles.map((tile) => `

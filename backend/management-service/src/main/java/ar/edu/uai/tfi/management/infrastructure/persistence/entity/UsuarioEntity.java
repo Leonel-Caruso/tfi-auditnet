@@ -53,6 +53,16 @@ public class UsuarioEntity {
     @Column(name = "sesiones_validas_desde")
     public Instant sesionesValidasDesde;
 
+    /** Avisos por correo que acepta: por defecto todos. */
+    @Column(name = "aviso_alertas", nullable = false)
+    public boolean avisoAlertas = true;
+
+    @Column(name = "aviso_vencimientos", nullable = false)
+    public boolean avisoVencimientos = true;
+
+    @Column(name = "aviso_resumen", nullable = false)
+    public boolean avisoResumen = true;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "usuarios_roles",
             joinColumns = @JoinColumn(name = "id_usuario"),

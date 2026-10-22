@@ -15,6 +15,7 @@ public record AuditoriaConfiguracion(
         Integer totalHallazgos,
         String severidadMaxima,
         String resultado,
-        EstadoAuditoria estado
+        EstadoAuditoria estado,
+        OrigenAuditoria origen
 ) {
 }

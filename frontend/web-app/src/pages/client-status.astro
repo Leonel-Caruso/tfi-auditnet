@@ -94,7 +94,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
   <script>
     import { auditFetch, authFetch, getStoredUser, hasRole } from '../lib/auth';
-    import { readApiError, type ClientAuditStatus, type NetworkDevice, type Organization, type Site, type SiteRisk } from '../lib/api';
+    import { readApiError, type ClientAuditStatus, type NetworkDevice, type Organization, type ReviewStatus, type Site, type SiteRisk } from '../lib/api';
     import { code, escapeHtml, formatDate, riskBadge } from '../lib/format';
     import { deviceRiskRowsHtml, kpiHtml, recentAuditsHtml, riskBannerHtml, severityChartHtml, wireTooltips } from '../lib/dashboard-view';
 
@@ -135,10 +135,11 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     const load = async (organizationId: number) => {
       showError(null);
       const seq = ++loadSeq;
-      const [statusResponse, siteResponse, deviceResponse] = await Promise.all([
+      const [statusResponse, siteResponse, deviceResponse, reviewResponse] = await Promise.all([
         auditFetch(`/api/client-organizations/${organizationId}/audit-status`),
         authFetch(`/api/client-organizations/${organizationId}/sites`),
         auditFetch('/api/devices'),
+        auditFetch(`/api/review/status?organizationId=${organizationId}`),
       ]);
       if (seq !== loadSeq) return;
       if (!statusResponse.ok) {
@@ -148,6 +149,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const status = await statusResponse.json() as ClientAuditStatus;
       sites = siteResponse.ok ? await siteResponse.json() as Site[] : [];
       devices = deviceResponse.ok ? await deviceResponse.json() as NetworkDevice[] : [];
+      const review = reviewResponse.ok ? await reviewResponse.json() as ReviewStatus : null;
       if (seq !== loadSeq) return;
 
       const organization = organizations.find((item) => item.id === organizationId);
@@ -156,7 +158,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
       const summary = status.resumen;
       set('#client-risk', riskBannerHtml(summary, organization?.razonSocial ?? 'organización'));
-      set('#client-kpis', kpiHtml(summary));
+      set('#client-kpis', kpiHtml(summary, review));
       set('#client-sites', siteRowsHtml(status.sedes));
       document.querySelector('#client-sites-empty')?.classList.toggle('is-hidden', status.sedes.length > 0);
       set('#client-severity', severityChartHtml(summary));

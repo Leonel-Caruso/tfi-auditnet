@@ -17,6 +17,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         <select name="estado" class="technical-select">
           <option value="">todos</option>
           <option value="PENDIENTES">pendientes (abierto / en revisión)</option>
+          <option value="VENCIDOS">vencidos (superaron su plazo)</option>
           <option value="ABIERTO">abierto</option>
           <option value="EN_REVISION">en revisión</option>
           <option value="RESUELTO">resuelto</option>
@@ -64,7 +65,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <article class="metric-card">
       <span class="metric-label">pendientes</span>
       <strong id="metric-pending">0</strong>
-      <small>Abiertos y en revisión</small>
+      <small id="metric-pending-note">Abiertos y en revisión</small>
     </article>
     <article class="metric-card">
       <span class="metric-label">críticos / altos pendientes</span>
@@ -222,6 +223,9 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       };
       const pending = findings.filter((f) => f.estado === 'ABIERTO' || f.estado === 'EN_REVISION');
       set('#metric-pending', pending.length);
+      const overdue = pending.filter(isOverdue).length;
+      const note = document.querySelector('#metric-pending-note');
+      if (note) note.textContent = overdue ? `Abiertos y en revisión · ${overdue} vencidos` : 'Abiertos y en revisión';
       set('#metric-critical', pending.filter((f) => f.severidad === 'CRITICA' || f.severidad === 'ALTA').length);
       set('#metric-review', findings.filter((f) => f.estado === 'EN_REVISION').length);
       set('#metric-closed', findings.filter((f) => f.estado === 'RESUELTO' || f.estado === 'ACEPTADO').length);
@@ -237,6 +241,16 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         return [finding.codigoRegla, finding.nombreRegla, finding.evidencia, device?.identificador, device?.nombre, baseline?.nombre]
           .join(' ').toLowerCase().includes(term);
       });
+    };
+
+    // Plazo de corrección: lo calcula el servidor con la política de la organización.
+    const isOverdue = (finding: AuditFinding) => Boolean(finding.venceEn) && Date.parse(finding.venceEn!) < Date.now();
+    const overdueBadge = (finding: AuditFinding) =>
+      isOverdue(finding) ? '<span class="status-badge status-locked">vencido</span>' : '';
+    const dueText = (venceEn: string) => {
+      const days = Math.round((Date.parse(venceEn) - Date.now()) / 86_400_000);
+      if (days < 0) return `${formatDate(venceEn)} · vencido hace ${-days} ${-days === 1 ? 'día' : 'días'}`;
+      return `${formatDate(venceEn)} · ${days === 0 ? 'vence hoy' : `faltan ${days} ${days === 1 ? 'día' : 'días'}`}`;
     };
 
     const render = () => {
@@ -262,7 +276,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
               <small>criticidad ${escapeHtml(finding.criticidadDispositivo ?? '—')}</small>
             </td>
             <td><span class="severity-badge ${severityClass(finding.severidad)}">${escapeHtml(finding.severidad)}</span></td>
-            <td>${findingStatusBadge(finding.estado)}</td>
+            <td><span class="badge-row">${findingStatusBadge(finding.estado)}${overdueBadge(finding)}</span></td>
             <td><span class="log-nowrap">${escapeHtml(formatDate(finding.fechaDeteccion))}</span></td>
           </tr>`;
       }).join('');
@@ -349,6 +363,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <div class="badge-row">
             <span class="severity-badge ${severityClass(finding.severidad)}">${escapeHtml(finding.severidad)}</span>
             ${findingStatusBadge(finding.estado)}
+            ${overdueBadge(finding)}
           </div>
         </div>
 
@@ -359,6 +374,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <div><dt>baseline</dt><dd>${escapeHtml(baseline ? `${baseline.nombre} v${baseline.version}` : `#${finding.baselineId}`)}</dd></div>
           <div><dt>auditoría</dt><dd><a class="inline-link" href="/history?auditoria=${finding.auditoriaId}">${code('AUD', finding.auditoriaId)} →</a></dd></div>
           <div><dt>detectado</dt><dd>${escapeHtml(formatDate(finding.fechaDeteccion))}</dd></div>
+          ${finding.venceEn ? `<div><dt>plazo</dt><dd>${escapeHtml(dueText(finding.venceEn))}</dd></div>` : ''}
           <div><dt>último cambio</dt><dd>${finding.fechaEstado
             ? `${escapeHtml(formatDate(finding.fechaEstado))} · ${escapeHtml(finding.usuarioEstado)}`
             : 'sin cambios'}</dd></div>

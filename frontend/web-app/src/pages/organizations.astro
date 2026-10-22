@@ -70,6 +70,42 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <div id="plan-summary" class="plan-summary"><div class="skeleton-row"></div></div>
   </section>
 
+  <section class="panel" id="review-panel">
+    <div class="panel-heading">
+      <div>
+        <span class="eyebrow">Revisión periódica</span>
+        <h2>Plazos de revisión</h2>
+      </div>
+      <span id="review-updated" class="counter-chip">—</span>
+    </div>
+    <form id="review-form" novalidate>
+      <fieldset id="review-fields" class="plain-fieldset">
+        <div class="review-grid">
+          <label class="field"><span>crítica · días</span><input id="review-critica" type="number" min="1" max="365" required /></label>
+          <label class="field"><span>alta · días</span><input id="review-alta" type="number" min="1" max="365" required /></label>
+          <label class="field"><span>media · días</span><input id="review-media" type="number" min="1" max="365" required /></label>
+          <label class="field"><span>baja · días</span><input id="review-baja" type="number" min="1" max="365" required /></label>
+          <label class="field"><span>re-auditar cada · días</span><input id="review-reaudit" type="number" min="1" max="365" required /></label>
+          <label class="field"><span>configuración vieja a los · días</span><input id="review-config" type="number" min="1" max="365" required /></label>
+        </div>
+        <p class="technical-hint">
+          Un hallazgo pendiente vence cuando pasan los días de su severidad desde que se detectó. La revisión diaria
+          avisa por correo los vencidos y los equipos sin configuración nueva, una sola vez cada uno.
+        </p>
+        <label class="role-check review-auto">
+          <input id="review-auto" type="checkbox" />
+          <strong>Re-auditar automáticamente</strong>
+          <small>Vuelve a auditar la última configuración de los equipos cuya última auditoría superó el plazo.</small>
+        </label>
+      </fieldset>
+      <div id="review-error" class="alert alert-error is-hidden"></div>
+      <div class="review-actions">
+        <button id="review-submit" class="button button-primary button-small" type="submit" disabled
+          data-roles="ADMINISTRADOR_SISTEMA,ADMINISTRADOR_ORGANIZACION">Guardar plazos</button>
+      </div>
+    </form>
+  </section>
+
   <dialog id="organization-dialog" class="technical-dialog">
     <form id="organization-form" class="device-form">
       <div class="dialog-header">
@@ -203,9 +239,9 @@ import MasterLayout from '../layouts/MasterLayout.astro';
   </dialog>
 
   <script>
-    import { authFetch, hasRole } from '../lib/auth';
-    import { jsonRequest, readApiError, type Organization, type OrganizationPlan, type Plan, type Site } from '../lib/api';
-    import { escapeHtml } from '../lib/format';
+    import { auditFetch, authFetch, hasRole } from '../lib/auth';
+    import { jsonRequest, readApiError, type Organization, type OrganizationPlan, type Plan, type ReviewPolicy, type Site } from '../lib/api';
+    import { escapeHtml, formatDate } from '../lib/format';
     import { formatDay, formatPrice, isCustomPlan, limitsText, isTrialPlan, requestStatusBadge, usageRow, validityText } from '../lib/plans';
 
     const orgList = document.querySelector<HTMLDivElement>('#organization-list');
@@ -373,10 +409,71 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       if (changeButton) changeButton.disabled = false;
     }
 
+    // Plazos de revisión (audit-core-service)
+    const canEditReview = canManageSites;
+    const reviewInputs: Record<keyof Omit<ReviewPolicy, 'reauditoriaAutomatica' | 'modificadaEn' | 'modificadaPor'>, string> = {
+      diasCritica: '#review-critica',
+      diasAlta: '#review-alta',
+      diasMedia: '#review-media',
+      diasBaja: '#review-baja',
+      diasReauditoria: '#review-reaudit',
+      diasConfiguracion: '#review-config',
+    };
+    const reviewFields = document.querySelector<HTMLFieldSetElement>('#review-fields');
+    const reviewSubmit = document.querySelector<HTMLButtonElement>('#review-submit');
+
+    function renderReview(policy: ReviewPolicy): void {
+      (Object.entries(reviewInputs) as [keyof typeof reviewInputs, string][]).forEach(([key, selector]) => {
+        document.querySelector<HTMLInputElement>(selector)!.value = String(policy[key]);
+      });
+      document.querySelector<HTMLInputElement>('#review-auto')!.checked = policy.reauditoriaAutomatica;
+      const updated = document.querySelector('#review-updated');
+      if (updated) {
+        updated.textContent = policy.modificadaEn
+          ? `${formatDate(policy.modificadaEn)} · ${policy.modificadaPor ?? ''}`
+          : 'valores por defecto';
+      }
+    }
+
+    async function loadReview(organization: Organization): Promise<void> {
+      showFormError('#review-error', null);
+      if (reviewFields) reviewFields.disabled = true;
+      if (reviewSubmit) reviewSubmit.disabled = true;
+      const response = await auditFetch(`/api/client-organizations/${organization.id}/review-policy`);
+      if (!response.ok) return showFormError('#review-error', await readApiError(response));
+      renderReview(await response.json() as ReviewPolicy);
+      const editable = canEditReview && organization.estado === 'ACTIVO';
+      if (reviewFields) reviewFields.disabled = !editable;
+      if (reviewSubmit) reviewSubmit.disabled = !editable;
+    }
+
+    document.querySelector<HTMLFormElement>('#review-form')?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const organization = selectedOrganization;
+      if (!organization) return;
+      showFormError('#review-error', null);
+      const payload: Record<string, number | boolean> = {
+        reauditoriaAutomatica: document.querySelector<HTMLInputElement>('#review-auto')!.checked,
+      };
+      for (const [key, selector] of Object.entries(reviewInputs)) {
+        const value = Number(document.querySelector<HTMLInputElement>(selector)!.value);
+        if (!Number.isInteger(value) || value < 1 || value > 365) {
+          return showFormError('#review-error', 'Cada plazo debe ser un número de días entre 1 y 365.');
+        }
+        payload[key] = value;
+      }
+      const response = await auditFetch(`/api/client-organizations/${organization.id}/review-policy`,
+        jsonRequest('PUT', payload));
+      if (!response.ok) return showFormError('#review-error', await readApiError(response));
+      renderReview(await response.json() as ReviewPolicy);
+      showMessage(`Plazos de revisión de ${organization.razonSocial} guardados.`);
+    });
+
     async function loadSites(organization: Organization): Promise<void> {
       selectedOrganization = organization;
       syncOrganizationActions(organization);
       void loadPlan(organization);
+      void loadReview(organization);
       if (siteTitle) siteTitle.textContent = organization.razonSocial;
       if (siteList) {
         siteList.className = 'data-list';

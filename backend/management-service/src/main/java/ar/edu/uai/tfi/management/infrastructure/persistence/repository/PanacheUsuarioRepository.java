@@ -2,6 +2,7 @@ package ar.edu.uai.tfi.management.infrastructure.persistence.repository;
 
 import ar.edu.uai.tfi.management.domain.model.EstadoAcceso;
 import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
+import ar.edu.uai.tfi.management.domain.model.PreferenciasAviso;
 import ar.edu.uai.tfi.management.domain.model.Usuario;
 import ar.edu.uai.tfi.management.domain.repository.UsuarioRepository;
 import ar.edu.uai.tfi.management.infrastructure.persistence.entity.OrganizacionClienteEntity;
@@ -153,6 +154,21 @@ public class PanacheUsuarioRepository implements PanacheRepository<UsuarioEntity
         UsuarioEntity entity = obtener(id);
         entity.intentosFallidos = 0;
         entity.bloqueadoHasta = null;
+        flush();
+    }
+
+    @Override
+    public PreferenciasAviso preferencias(Long id) {
+        UsuarioEntity entity = obtener(id);
+        return new PreferenciasAviso(entity.avisoAlertas, entity.avisoVencimientos, entity.avisoResumen);
+    }
+
+    @Override
+    public void guardarPreferencias(Long id, PreferenciasAviso preferencias) {
+        UsuarioEntity entity = obtener(id);
+        entity.avisoAlertas = preferencias.alertas();
+        entity.avisoVencimientos = preferencias.vencimientos();
+        entity.avisoResumen = preferencias.resumen();
         flush();
     }
 

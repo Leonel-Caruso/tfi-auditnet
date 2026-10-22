@@ -1,0 +1,78 @@
+---
+import PublicLayout from '../layouts/PublicLayout.astro';
+import AccessBrand from '../components/AccessBrand.astro';
+---
+
+<PublicLayout title="Recuperar contraseña" description="Pedí un enlace para crear una contraseña nueva." path="/recover">
+  <main class="login-screen">
+    <AccessBrand
+      title="Recuperá el acceso"
+      text="Te enviamos un enlace de un solo uso a tu correo. Vale 30 minutos y al usarlo se cierran las sesiones que tengas abiertas."
+    />
+
+    <section class="login-form-panel">
+      <form id="recover-form" class="login-card" novalidate>
+        <div class="login-card-heading">
+          <span class="eyebrow">Contraseña</span>
+          <h2>¿Olvidaste tu contraseña?</h2>
+          <p>Ingresá tu usuario o el correo de tu cuenta.</p>
+        </div>
+
+        <label class="field">
+          <span>usuario o correo</span>
+          <input id="recover-identity" type="text" autocomplete="username" placeholder="tu.usuario o nombre@empresa.com" maxlength="160" required autofocus />
+        </label>
+
+        <div id="recover-error" class="alert alert-error is-hidden" role="alert"></div>
+        <div id="recover-done" class="alert alert-success is-hidden" role="status"></div>
+
+        <button id="recover-submit" class="button button-primary button-full" type="submit">Enviar enlace</button>
+        <a class="login-link login-link-center" href="/login">Volver a iniciar sesión</a>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    import { MANAGEMENT_API_URL, readApiError } from '../lib/api';
+
+    const form = document.querySelector<HTMLFormElement>('#recover-form');
+    const errorBox = document.querySelector<HTMLElement>('#recover-error');
+    const done = document.querySelector<HTMLElement>('#recover-done');
+    const submit = document.querySelector<HTMLButtonElement>('#recover-submit');
+
+    form?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      errorBox?.classList.add('is-hidden');
+      const identidad = document.querySelector<HTMLInputElement>('#recover-identity')?.value.trim();
+      if (!identidad) {
+        if (errorBox) {
+          errorBox.textContent = 'Ingresá tu usuario o correo.';
+          errorBox.classList.remove('is-hidden');
+        }
+        return;
+      }
+      if (submit) submit.disabled = true;
+      try {
+        const response = await fetch(`${MANAGEMENT_API_URL}/api/auth/password-recovery`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ identidad }),
+        });
+        if (!response.ok) throw new Error(await readApiError(response));
+        const { mensaje } = await response.json() as { mensaje: string };
+        if (done) {
+          done.textContent = mensaje;
+          done.classList.remove('is-hidden');
+        }
+        if (submit) submit.textContent = 'Enviar de nuevo';
+      } catch (error) {
+        if (errorBox) {
+          errorBox.textContent = error instanceof Error ? error.message : 'No se pudo enviar el pedido.';
+          errorBox.classList.remove('is-hidden');
+        }
+      } finally {
+        if (submit) submit.disabled = false;
+      }
+    });
+  </script>
+</PublicLayout>

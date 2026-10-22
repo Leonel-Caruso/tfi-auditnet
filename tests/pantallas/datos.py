@@ -49,7 +49,8 @@ def _auditoria(numero, fecha, baseline, hallazgos, severidad):
     return {"id": numero, "configuracionId": 1, "dispositivoId": 1, "baselineId": baseline, "organizacionId": 2,
             "fechaEjecucion": fecha, "ejecutadoPor": "admin", "totalReglas": 3, "reglasCumplidas": 3 - hallazgos,
             "totalHallazgos": hallazgos, "severidadMaxima": severidad,
-            "resultado": "CUMPLE" if hallazgos == 0 else "CON_HALLAZGOS", "estado": "FINALIZADA"}
+            "resultado": "CUMPLE" if hallazgos == 0 else "CON_HALLAZGOS", "estado": "FINALIZADA",
+            "origen": "AUTOMATICA" if numero == 41 else "MANUAL"}
 
 
 # 42 auditorías: alcanzan para dos páginas de historial.
@@ -63,7 +64,9 @@ def _hallazgo(numero):
             "tipoRegla": "DEBE_CONTENER", "patron": "p <b>x</b>", "severidad": SEVERIDADES[numero % 4],
             "evidencia": "No se encontró <script>alert(1)</script>", "recomendacion": "r", "impacto": "i",
             "estado": ["ABIERTO", "EN_REVISION", "RESUELTO"][numero % 3], "fechaDeteccion": "2026-10-02T15:00:00Z",
-            "fechaEstado": None, "usuarioEstado": None, "criticidadDispositivo": "ALTA"}
+            "fechaEstado": None, "usuarioEstado": None, "criticidadDispositivo": "ALTA",
+            # Los críticos pendientes ya vencieron (7 días); el resto vence a fin de 2099.
+            "venceEn": None if numero % 3 == 2 else ("2026-10-09T15:00:00Z" if numero % 4 == 0 else "2099-12-31T15:00:00Z")}
 
 
 # 63 hallazgos: tres páginas de 25.
@@ -178,3 +181,34 @@ def plan_organizacion(organizacion):
             "dispositivosActivos": 7, "usuariosActivos": 5, "desde": "2026-08-03T12:00:00Z",
             "vence": "2026-11-01T12:00:00Z", "diasRestantes": 12, "vencido": False,
             "solicitudPendiente": SOLICITUDES[1]}
+
+
+POLITICA_REVISION = {"diasCritica": 7, "diasAlta": 15, "diasMedia": 30, "diasBaja": 60, "diasReauditoria": 30,
+                     "diasConfiguracion": 30, "reauditoriaAutomatica": True, "modificadaEn": None,
+                     "modificadaPor": None}
+
+
+def estado_revision():
+    return {"politica": POLITICA_REVISION, "hallazgosVencidos": len(vencidos()), "dispositivosDesactualizados": 1}
+
+
+def vencidos():
+    return [h for h in HALLAZGOS if h["venceEn"] and h["venceEn"] < "2026-10-22"]
+
+
+RESULTADO_REVISION = {"ejecutada": "2026-10-22T09:00:00Z", "organizaciones": 2, "reauditorias": 1,
+                      "hallazgosVencidos": 3, "dispositivosDesactualizados": 1, "correos": 4, "resumenes": 1,
+                      "omitidas": ["EDGE-02: No existe una baseline activa aplicable al tipo de dispositivo."]}
+
+BANDEJA_CORREO = {
+    "proveedor": "Mailpit", "pendientes": 1, "enviados24h": 5, "fallidos24h": 1,
+    "ultimos": [
+        {"id": 3, "origen": "audit-core-service", "tipo": "VENCIMIENTOS", "destinatario": "ana@acme.test",
+         "estado": "PENDIENTE", "intentos": 1, "creadoEn": "2026-10-22T09:00:00Z",
+         "proximoIntento": "2026-10-22T09:05:00Z", "enviadoEn": None,
+         "ultimoError": "Mailpit respondió HTTP 503"},
+        {"id": 2, "origen": "management-service", "tipo": "RECUPERACION_CONTRASENA", "destinatario": "beto@acme.test",
+         "estado": "ENVIADO", "intentos": 1, "creadoEn": "2026-10-21T18:00:00Z",
+         "proximoIntento": "2026-10-21T18:00:00Z", "enviadoEn": "2026-10-21T18:00:02Z", "ultimoError": None},
+    ],
+}

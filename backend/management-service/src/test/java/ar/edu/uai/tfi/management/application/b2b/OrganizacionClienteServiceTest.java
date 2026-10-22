@@ -32,7 +32,7 @@ class OrganizacionClienteServiceTest {
     private final EnMemoriaGestion.Sedes sedes = new EnMemoriaGestion.Sedes();
     private final EnMemoriaGestion.Usuarios usuarios = new EnMemoriaGestion.Usuarios();
     private final PlanService planes = new PlanService(new EnMemoriaGestion.Planes(), organizaciones,
-            new EnMemoriaGestion.Solicitudes(), usuarios, new EnMemoriaGestion.Dispositivos(), transaccion -> { });
+            new EnMemoriaGestion.Solicitudes(), usuarios, new EnMemoriaGestion.Dispositivos(), transaccion -> { }, new EnMemoriaGestion.Avisos());
     private final OrganizacionClienteService service = new OrganizacionClienteService(organizaciones, transacciones::add,
             usuarios, planes);
     private final SedeService sedeService = new SedeService(sedes, organizaciones, transacciones::add);

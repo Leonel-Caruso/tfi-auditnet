@@ -6,6 +6,8 @@ import ar.edu.uai.tfi.auditcore.api.rest.dto.finding.HallazgoResponse;
 import ar.edu.uai.tfi.auditcore.api.rest.dto.finding.SeguimientoHallazgoResponse;
 import ar.edu.uai.tfi.auditcore.application.audit.HallazgoService;
 import ar.edu.uai.tfi.auditcore.application.audit.HallazgoService.HallazgoPriorizado;
+import ar.edu.uai.tfi.auditcore.application.review.PlazosRevision;
+import ar.edu.uai.tfi.auditcore.domain.model.HallazgoAuditoria;
 import ar.edu.uai.tfi.auditcore.domain.model.EstadoHallazgo;
 import ar.edu.uai.tfi.auditcore.domain.model.FiltroHallazgos;
 import ar.edu.uai.tfi.auditcore.domain.model.SeveridadRegla;
@@ -16,15 +18,18 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
  * Hallazgos. Todos los perfiles consultan; el seguimiento lo actualizan el administrador, el analista de redes y
  * el auditor técnico. Quien no es administrador solo ve su organización.
  * Ejemplo: GET /api/findings?estado=ABIERTO&severidad=CRITICA&dispositivoId=4&pagina=1&porPagina=25
+ * Cada hallazgo pendiente informa su plazo de corrección ({@code venceEn}) según la política de su organización.
  */
 @Path("/api/findings")
 @Produces(MediaType.APPLICATION_JSON)
@@ -41,16 +46,19 @@ public class HallazgoResource {
     private static final String ADMIN = "ADMINISTRADOR_SISTEMA";
 
     private final HallazgoService service;
+    private final PlazosRevision plazos;
     private final JsonWebToken jwt;
 
-    public HallazgoResource(HallazgoService service, JsonWebToken jwt) {
+    public HallazgoResource(HallazgoService service, PlazosRevision plazos, JsonWebToken jwt) {
         this.service = service;
+        this.plazos = plazos;
         this.jwt = jwt;
     }
 
     /**
      * Lista priorizada; los filtros se aplican en el servidor y no modifican la información guardada.
-     * {@code estado=PENDIENTES} devuelve ABIERTO y EN_REVISION (lo usan los enlaces del tablero).
+     * {@code estado=PENDIENTES} devuelve ABIERTO y EN_REVISION (lo usan los enlaces del tablero);
+     * {@code estado=VENCIDOS}, los pendientes que superaron su plazo de corrección.
      * La prioridad se calcula sobre todos los que cumplen los filtros y recién después se corta la página, así el
      * orden es el mismo con o sin paginar.
      */
@@ -66,7 +74,8 @@ public class HallazgoResource {
                                          @QueryParam("porPagina") String porPagina) {
         try {
             Paginacion paginacion = Paginacion.de(pagina, porPagina);
-            boolean soloPendientes = estado != null && estado.trim().equalsIgnoreCase("PENDIENTES");
+            boolean soloVencidos = estado != null && estado.trim().equalsIgnoreCase("VENCIDOS");
+            boolean soloPendientes = soloVencidos || (estado != null && estado.trim().equalsIgnoreCase("PENDIENTES"));
             FiltroHallazgos filtro = new FiltroHallazgos(
                     organizacionDelUsuario(),
                     soloPendientes ? null : FiltrosConsulta.enumerado(EstadoHallazgo.class, estado, "estado"),
@@ -77,9 +86,13 @@ public class HallazgoResource {
                     FiltrosConsulta.fecha(desde, "desde"),
                     FiltrosConsulta.fecha(hasta, "hasta")
             );
+            Function<HallazgoAuditoria, Instant> vencimiento = plazos.calculadora();
+            Instant ahora = Instant.now();
             List<HallazgoResponse> hallazgos = service.buscarPriorizados(filtro).stream()
                     .filter(priorizado -> !soloPendientes || priorizado.hallazgo().estado().pendiente())
-                    .map(HallazgoResource::aResponse)
+                    .map(priorizado -> aResponse(priorizado, vencimiento))
+                    .filter(respuesta -> !soloVencidos
+                            || (respuesta.venceEn() != null && respuesta.venceEn().isBefore(ahora)))
                     .toList();
             return Paginacion.responder(hallazgos, paginacion);
         } catch (IllegalArgumentException exception) {
@@ -90,7 +103,7 @@ public class HallazgoResource {
     @GET
     @Path("/{id}")
     public HallazgoResponse buscar(@PathParam("id") Long id) {
-        return ejecutar(() -> aResponse(service.buscar(id, organizacionDelUsuario())));
+        return ejecutar(() -> aResponse(service.buscar(id, organizacionDelUsuario()), plazos.calculadora()));
     }
 
     /** Historial de cambios de estado del hallazgo (quién, cuándo y por qué). */
@@ -111,7 +124,8 @@ public class HallazgoResource {
             throw error(Response.Status.BAD_REQUEST, "El cuerpo de la solicitud es obligatorio.");
         }
         return ejecutar(() -> aResponse(service.cambiarEstado(
-                id, organizacionDelUsuario(), request.estado(), request.comentario(), jwt.getName())));
+                id, organizacionDelUsuario(), request.estado(), request.comentario(), jwt.getName()),
+                plazos.calculadora()));
     }
 
     private <T> T ejecutar(Supplier<T> operacion) {
@@ -128,8 +142,10 @@ public class HallazgoResource {
         }
     }
 
-    private static HallazgoResponse aResponse(HallazgoPriorizado priorizado) {
-        return HallazgoMapper.aResponse(priorizado.hallazgo(), priorizado.criticidadDispositivo());
+    private static HallazgoResponse aResponse(HallazgoPriorizado priorizado,
+                                              Function<HallazgoAuditoria, Instant> vencimiento) {
+        return HallazgoMapper.aResponse(priorizado.hallazgo(), priorizado.criticidadDispositivo(),
+                vencimiento.apply(priorizado.hallazgo()));
     }
 
     /** null para el administrador (ve todas las organizaciones). */

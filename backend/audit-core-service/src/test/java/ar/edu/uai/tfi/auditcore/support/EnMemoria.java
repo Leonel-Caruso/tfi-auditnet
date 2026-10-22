@@ -40,7 +40,7 @@ public final class EnMemoria {
                                                    int total, int cumplidas) {
         return new AuditoriaConfiguracion(id, id, dispositivoId, 1L, organizacionId, Instant.parse(fecha), "admin",
                 total, cumplidas, total - cumplidas, "ALTA", cumplidas == total ? "CUMPLE" : "CON_HALLAZGOS",
-                EstadoAuditoria.FINALIZADA);
+                EstadoAuditoria.FINALIZADA, OrigenAuditoria.MANUAL);
     }
 
     public static final class Alertas implements AlertaRepository {
@@ -136,7 +136,7 @@ public final class EnMemoria {
         @Override public AuditoriaConfiguracion guardar(AuditoriaConfiguracion a) {
             AuditoriaConfiguracion guardada = a.id() != null ? a : new AuditoriaConfiguracion(++secuencia, a.configuracionId(),
                     a.dispositivoId(), a.baselineId(), a.organizacionId(), a.fechaEjecucion(), a.ejecutadoPor(), a.totalReglas(),
-                    a.reglasCumplidas(), a.totalHallazgos(), a.severidadMaxima(), a.resultado(), a.estado());
+                    a.reglasCumplidas(), a.totalHallazgos(), a.severidadMaxima(), a.resultado(), a.estado(), a.origen());
             items.add(guardada);
             return guardada;
         }
@@ -302,5 +302,44 @@ public final class EnMemoria {
             return contenido.clone();
         }
         @Override public void verificar() { if (caido) throw new AlmacenamientoException("caído", 503, null); }
+    }
+
+    /** Avisos por correo guardados; cada uno llega a {@code destinatarios} usuarios. */
+    public static final class Avisos implements ar.edu.uai.tfi.auditcore.application.port.AvisoCorreoPort {
+        public record Aviso(Tipo tipo, Long organizacionId, Map<String, Object> datos) {
+        }
+        public final List<Aviso> items = new ArrayList<>();
+        public int destinatarios = 2;
+
+        @Override public int avisar(Tipo tipo, Long organizacionId, Map<String, Object> datos) {
+            items.add(new Aviso(tipo, organizacionId, datos));
+            return destinatarios;
+        }
+        public List<Aviso> deTipo(Tipo tipo) { return items.stream().filter(a -> a.tipo() == tipo).toList(); }
+    }
+
+    public static final class Politicas implements PoliticaRevisionRepository {
+        public final Map<Long, PoliticaRevision> items = new java.util.HashMap<>();
+
+        @Override public Optional<PoliticaRevision> buscar(Long org) { return Optional.ofNullable(items.get(org)); }
+        @Override public PoliticaRevision guardar(PoliticaRevision p) { items.put(p.organizacionId(), p); return p; }
+    }
+
+    /** Marcas de aviso de la revisión periódica (una sola organización por prueba). */
+    public static final class SeguimientoRevision implements ar.edu.uai.tfi.auditcore.application.port.SeguimientoRevisionPort {
+        public final List<Long> activas = new ArrayList<>();
+        public final Map<Long, Instant> hallazgos = new java.util.HashMap<>();
+        public final Map<Long, Instant> dispositivos = new java.util.HashMap<>();
+        public final Map<String, Integer> resumenes = new java.util.HashMap<>();
+        public int bloqueos;
+
+        @Override public List<Long> organizacionesActivas() { return List.copyOf(activas); }
+        @Override public void bloquearOrganizacion(Long org) { bloqueos++; }
+        @Override public Set<Long> hallazgosAvisados(Long org) { return new HashSet<>(hallazgos.keySet()); }
+        @Override public void marcarHallazgosAvisados(java.util.Collection<Long> ids, Instant f) { ids.forEach(id -> hallazgos.put(id, f)); }
+        @Override public Map<Long, Instant> avisosConfiguracion(Long org) { return Map.copyOf(dispositivos); }
+        @Override public void marcarDispositivosAvisados(java.util.Collection<Long> ids, Instant f) { ids.forEach(id -> dispositivos.put(id, f)); }
+        @Override public boolean resumenEnviado(Long org, String periodo) { return resumenes.containsKey(org + "|" + periodo); }
+        @Override public void registrarResumen(Long org, String periodo, Instant f, int d) { resumenes.putIfAbsent(org + "|" + periodo, d); }
     }
 }

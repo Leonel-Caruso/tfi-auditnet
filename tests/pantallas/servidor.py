@@ -75,6 +75,10 @@ class ManejadorAuditNet(SimpleHTTPRequestHandler):
         self._api("PATCH")
 
     def _json(self, codigo, cuerpo, total=None):
+        if codigo == 204:
+            self.send_response(204)
+            self.end_headers()
+            return
         datos_json = json.dumps(cuerpo).encode()
         self.send_response(codigo)
         self.send_header("Content-Type", "application/json")
@@ -111,9 +115,12 @@ def _lista(contenido):
 
 def _hallazgos(manejador, _m, consulta, _b):
     estado = consulta.get("estado")
-    lista = [h for h in datos.HALLAZGOS
-             if not estado or h["estado"] == estado
-             or (estado == "PENDIENTES" and h["estado"] in ("ABIERTO", "EN_REVISION"))]
+    if estado == "VENCIDOS":
+        lista = datos.vencidos()
+    else:
+        lista = [h for h in datos.HALLAZGOS
+                 if not estado or h["estado"] == estado
+                 or (estado == "PENDIENTES" and h["estado"] in ("ABIERTO", "EN_REVISION"))]
     pagina, total = _pagina(lista, consulta)
     manejador._json(200, pagina, total)
 
@@ -146,7 +153,28 @@ def _por_id(coleccion, armar=lambda elemento: elemento):
     return responder
 
 
+def _restablecer(manejador, _m, _c, cuerpo):
+    if cuerpo.get("token") != "enlace-valido":
+        return manejador._json(400, {"message": "El enlace no es válido o ya venció."})
+    manejador._json(204, None)
+
+
 RUTAS = [
+    (r"/api/auth/password-recovery", {"POST"},
+     lambda h, m, c, b: h._json(202, {"mensaje": "Si los datos corresponden a una cuenta activa, en unos minutos vas "
+                                                  "a recibir un correo con el enlace."})),
+    (r"/api/auth/password-reset", {"POST"}, _restablecer),
+    (r"/api/auth/me/notifications", {"GET"},
+     _lista({"alertas": True, "vencimientos": False, "resumen": True})),
+    (r"/api/auth/me/notifications", {"PUT"}, lambda h, m, c, b: h._json(200, b)),
+    (r"/api/client-organizations/(\d+)/review-policy", {"GET"}, _lista(datos.POLITICA_REVISION)),
+    (r"/api/client-organizations/(\d+)/review-policy", {"PUT"},
+     lambda h, m, c, b: h._json(200, b | {"modificadaEn": "2026-10-22T12:00:00Z", "modificadaPor": "operador"})),
+    (r"/api/review/status", {"GET"}, _lista(datos.estado_revision)),
+    (r"/api/review/run", {"POST"}, _lista(datos.RESULTADO_REVISION)),
+    (r"/api/admin/mail", {"GET"}, _lista(datos.BANDEJA_CORREO)),
+    (r"/api/admin/mail/dispatch", {"POST"},
+     _lista({"proveedor": "Mailpit", "enviados": 1, "reintentos": 0, "fallidos": 0, "pendientes": 0})),
     (r"/api/dashboard/summary", {"GET"}, _lista(datos.resumen_tablero)),
     (r"/api/client-organizations", {"GET"}, _propias(datos.ORGANIZACIONES, "id")),
     (r"/api/client-organizations/(\d+)", {"GET"}, _por_id(datos.ORGANIZACIONES)),

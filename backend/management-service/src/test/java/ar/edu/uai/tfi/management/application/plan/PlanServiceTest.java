@@ -9,6 +9,7 @@ import ar.edu.uai.tfi.management.domain.model.OperacionTransaccion;
 import ar.edu.uai.tfi.management.domain.model.Plan;
 import ar.edu.uai.tfi.management.domain.model.PlanOrganizacion;
 import ar.edu.uai.tfi.management.domain.model.SolicitudCambioPlan;
+import ar.edu.uai.tfi.management.domain.model.TipoCorreo;
 import ar.edu.uai.tfi.management.domain.model.Transaccion;
 import ar.edu.uai.tfi.management.domain.model.Usuario;
 import ar.edu.uai.tfi.management.support.EnMemoriaGestion;
@@ -40,8 +41,9 @@ class PlanServiceTest {
     private final EnMemoriaGestion.Dispositivos dispositivos = new EnMemoriaGestion.Dispositivos();
     private final EnMemoriaGestion.Solicitudes solicitudes = new EnMemoriaGestion.Solicitudes();
     private final EnMemoriaGestion.Planes catalogo = new EnMemoriaGestion.Planes();
+    private final EnMemoriaGestion.Avisos avisos = new EnMemoriaGestion.Avisos();
     private final PlanService service = new PlanService(catalogo, organizaciones, solicitudes, usuarios, dispositivos,
-            transacciones::add);
+            transacciones::add, avisos);
 
     private final EnMemoriaGestion.RelojAjustable reloj = new EnMemoriaGestion.RelojAjustable(AHORA);
 
@@ -199,6 +201,30 @@ class PlanServiceTest {
         assertInvalido(() -> service.actualizarCatalogo("INICIAL", new BigDecimal("-1"), null));
         assertInvalido(() -> service.actualizarCatalogo("INICIAL", new BigDecimal("10.123"), null));
         assertInvalido(() -> service.actualizarCatalogo("OTRO", null, null));
+    }
+
+    @Test
+    void laSolicitudAvisaALosAdministradoresYLaRespuestaAlSolicitante() {
+        usuarios.agregar(new Usuario(1L, 1L, "Admin", "admin@plataforma.test", "admin", "h", EstadoRegistro.ACTIVO,
+                Set.of("ADMINISTRADOR_SISTEMA")));
+        usuarios.agregar(new Usuario(3L, 1L, "Otro admin", "otro@plataforma.test", "otro", "h",
+                EstadoRegistro.DESHABILITADO, Set.of("ADMINISTRADOR_SISTEMA")));
+        usuarios.agregar(new Usuario(20L, 2L, "Jefa", "jefa@acme.test", "jefa", "h", EstadoRegistro.ACTIVO,
+                Set.of("ADMINISTRADOR_ORGANIZACION")));
+
+        SolicitudCambioPlan pedida = service.solicitar(2L, "PROFESIONAL", "ANUAL", "Sumamos sedes", "jefa");
+        service.rechazar(pedida.id(), "Falta el contrato firmado", "admin");
+
+        assertEquals(2, avisos.items.size());
+        EnMemoriaGestion.Avisos.Aviso aviso = avisos.items.get(0);
+        assertEquals(TipoCorreo.SOLICITUD_PLAN, aviso.tipo());
+        assertEquals("admin@plataforma.test", aviso.destinatario(), "Solo a los administradores activos");
+        assertEquals("Profesional", aviso.datos().get("planSolicitado"));
+        EnMemoriaGestion.Avisos.Aviso respuesta = avisos.items.get(1);
+        assertEquals(TipoCorreo.SOLICITUD_PLAN_RESUELTA, respuesta.tipo());
+        assertEquals("jefa@acme.test", respuesta.destinatario());
+        assertEquals("RECHAZADA", respuesta.datos().get("estado"));
+        assertEquals("Falta el contrato firmado", respuesta.datos().get("respuesta"));
     }
 
     private static void assertInvalido(Executable accion) {

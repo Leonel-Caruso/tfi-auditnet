@@ -2,6 +2,7 @@ package ar.edu.uai.tfi.auditcore.infrastructure.persistence.repository;
 
 import ar.edu.uai.tfi.auditcore.domain.model.AuditoriaConfiguracion;
 import ar.edu.uai.tfi.auditcore.domain.model.FiltroAuditorias;
+import ar.edu.uai.tfi.auditcore.domain.model.OrigenAuditoria;
 import ar.edu.uai.tfi.auditcore.domain.repository.AuditoriaRepository;
 import ar.edu.uai.tfi.auditcore.infrastructure.persistence.entity.*;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
@@ -45,6 +46,7 @@ public class PanacheAuditoriaRepository implements PanacheRepository<AuditoriaEn
         entity.severidadMaxima = auditoria.severidadMaxima();
         entity.resultado = auditoria.resultado();
         entity.estado = auditoria.estado();
+        entity.origen = auditoria.origen() == null ? OrigenAuditoria.MANUAL : auditoria.origen();
 
         persist(entity);
         flush();
@@ -131,7 +133,8 @@ public class PanacheAuditoriaRepository implements PanacheRepository<AuditoriaEn
                 entity.totalHallazgos,
                 entity.severidadMaxima,
                 entity.resultado,
-                entity.estado
+                entity.estado,
+                entity.origen
         );
     }
 }

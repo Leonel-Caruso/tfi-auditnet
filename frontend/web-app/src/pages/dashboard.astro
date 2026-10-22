@@ -116,7 +116,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
   <script>
     import { auditFetch, authFetch, getStoredUser, hasRole } from '../lib/auth';
-    import { readApiError, type CriticalAlert, type DashboardSummary, type NetworkDevice, type Organization, type Site, type User } from '../lib/api';
+    import { readApiError, type CriticalAlert, type DashboardSummary, type NetworkDevice, type Organization, type ReviewStatus, type Site, type User } from '../lib/api';
     import { alertStatusBadge, code, escapeHtml, severityClass } from '../lib/format';
     import {
       deviceRiskRowsHtml,
@@ -161,9 +161,10 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       showError(null);
       const org = selectedOrg();
       const seq = ++loadSeq;
-      const [summaryResponse, alertResponse] = await Promise.all([
+      const [summaryResponse, alertResponse, reviewResponse] = await Promise.all([
         auditFetch(`/api/dashboard/summary${org ? `?organizacionId=${org}` : ''}`),
         auditFetch('/api/alerts/critical'),
+        auditFetch(`/api/review/status${org ? `?organizationId=${org}` : ''}`),
       ]);
       if (seq !== loadSeq) return;
       if (!summaryResponse.ok) {
@@ -172,6 +173,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         return;
       }
       const summary = await summaryResponse.json() as DashboardSummary;
+      const review = reviewResponse.ok ? await reviewResponse.json() as ReviewStatus : null;
       if (seq !== loadSeq) return;
 
       const orgName = org ? organizations.find((item) => item.id === org)?.razonSocial ?? `organización #${org}` : null;
@@ -184,7 +186,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       }
 
       set('#dash-risk', riskBannerHtml(summary, scope));
-      set('#dash-kpis', kpiHtml(summary));
+      set('#dash-kpis', kpiHtml(summary, review));
       set('#dash-severity', severityChartHtml(summary));
       set('#dash-evolution', evolutionChartHtml(summary.evolucion));
       set('#dash-recent', recentAuditsHtml(summary.auditoriasRecientes, deviceName));

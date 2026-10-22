@@ -1,0 +1,17 @@
+---
+interface Props {
+  title: string;
+  text: string;
+}
+
+const { title, text } = Astro.props;
+---
+
+<section class="login-brand-panel">
+  <div class="login-brand-content">
+    <div class="hero-mark" role="img" aria-label="AuditNet"><span aria-hidden="true">A_</span></div>
+    <span class="eyebrow eyebrow-light">AuditNet · acceso a la consola</span>
+    <h1>{title}</h1>
+    <p>{text}</p>
+  </div>
+</section>

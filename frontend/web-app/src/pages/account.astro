@@ -5,7 +5,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 <MasterLayout
   title="Mi cuenta"
   section="Cuenta"
-  description="Consultá tus datos de acceso y cambiá tu contraseña."
+  description="Consultá tus datos de acceso, cambiá tu contraseña y elegí qué avisos recibir por correo."
 >
   <div id="account-message" class="alert alert-success is-hidden" role="status"></div>
 
@@ -56,6 +56,40 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           Al cambiarla se cierran tus otras sesiones abiertas. Después de 5 intentos de ingreso fallidos la cuenta se
           bloquea 15 minutos.
         </p>
+      </form>
+    </article>
+
+    <article class="panel account-wide" id="notifications-panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Correo</span>
+          <h2>Avisos por correo</h2>
+        </div>
+      </div>
+      <form id="notifications-form" class="notice-form" novalidate>
+        <fieldset class="notice-checks" id="notification-options">
+          <label class="role-check" data-notice="alertas">
+            <input type="checkbox" name="alertas" />
+            <strong>Alertas críticas nuevas</strong>
+            <small>Un correo por auditoría cuando aparecen alertas de severidad crítica o alta.</small>
+          </label>
+          <label class="role-check" data-notice="vencimientos">
+            <input type="checkbox" name="vencimientos" />
+            <strong>Vencimientos y configuraciones desactualizadas</strong>
+            <small>Revisión diaria: hallazgos que superaron su plazo y equipos sin configuración nueva.</small>
+          </label>
+          <label class="role-check" data-notice="resumen">
+            <input type="checkbox" name="resumen" />
+            <strong>Resumen mensual</strong>
+            <small>Los primeros días de cada mes, la actividad del mes anterior de tu organización.</small>
+          </label>
+        </fieldset>
+        <p id="notifications-none" class="log-muted is-hidden">
+          Tu perfil no recibe avisos de auditoría. Los correos de tu cuenta (alta y recuperación de contraseña) llegan
+          siempre.
+        </p>
+        <div id="notifications-error" class="alert alert-error is-hidden" role="alert" style="margin-bottom: 14px;"></div>
+        <button id="notifications-submit" class="button button-primary" type="submit">Guardar avisos</button>
       </form>
     </article>
   </section>
@@ -115,6 +149,60 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         syncRules();
         renderIdentity();
         show('#account-message', 'Contraseña actualizada. Tus otras sesiones abiertas se cerraron.');
+      } finally {
+        if (submit) submit.disabled = false;
+      }
+    });
+
+    // Qué avisos corresponden a cada perfil (el servidor aplica la misma regla al elegir destinatarios).
+    const NOTICE_ROLES: Record<string, string[]> = {
+      alertas: ['ANALISTA_RED', 'RESPONSABLE_GESTION_IT', 'ADMINISTRADOR_ORGANIZACION'],
+      vencimientos: ['ANALISTA_RED', 'RESPONSABLE_GESTION_IT', 'ADMINISTRADOR_ORGANIZACION'],
+      resumen: ['RESPONSABLE_GESTION_IT', 'ADMINISTRADOR_ORGANIZACION'],
+    };
+    type Notices = { alertas: boolean; vencimientos: boolean; resumen: boolean };
+    const noticeForm = document.querySelector<HTMLFormElement>('#notifications-form');
+    const noticeInput = (name: keyof Notices) =>
+      noticeForm?.querySelector<HTMLInputElement>(`input[name=${name}]`) ?? null;
+    const applicable = (Object.keys(NOTICE_ROLES) as (keyof Notices)[])
+      .filter((notice) => user?.roles.some((role) => NOTICE_ROLES[notice].includes(role)));
+
+    document.querySelectorAll<HTMLElement>('[data-notice]').forEach((option) => {
+      option.classList.toggle('is-hidden', !applicable.includes(option.dataset.notice as keyof Notices));
+    });
+    document.querySelector('#notifications-none')?.classList.toggle('is-hidden', applicable.length > 0);
+    document.querySelector('#notifications-submit')?.classList.toggle('is-hidden', applicable.length === 0);
+
+    const renderNotices = (notices: Notices) => {
+      (Object.keys(NOTICE_ROLES) as (keyof Notices)[]).forEach((name) => {
+        const input = noticeInput(name);
+        if (input) input.checked = notices[name];
+      });
+    };
+
+    if (applicable.length) {
+      authFetch('/api/auth/me/notifications')
+        .then(async (response) => {
+          if (response.ok) renderNotices(await response.json() as Notices);
+        })
+        .catch(() => {});
+    }
+
+    noticeForm?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      show('#notifications-error', null);
+      const payload: Notices = {
+        alertas: noticeInput('alertas')?.checked ?? true,
+        vencimientos: noticeInput('vencimientos')?.checked ?? true,
+        resumen: noticeInput('resumen')?.checked ?? true,
+      };
+      const submit = document.querySelector<HTMLButtonElement>('#notifications-submit');
+      if (submit) submit.disabled = true;
+      try {
+        const response = await authFetch('/api/auth/me/notifications', jsonRequest('PUT', payload));
+        if (!response.ok) return show('#notifications-error', await readApiError(response));
+        renderNotices(await response.json() as Notices);
+        show('#account-message', 'Preferencias de aviso guardadas.');
       } finally {
         if (submit) submit.disabled = false;
       }

@@ -4,6 +4,8 @@ import ar.edu.uai.tfi.auditcore.domain.model.CriticidadDispositivo;
 import ar.edu.uai.tfi.auditcore.domain.model.HallazgoAuditoria;
 import ar.edu.uai.tfi.auditcore.domain.model.SeguimientoHallazgo;
 
+import java.time.Instant;
+
 /** Conversión de hallazgos a respuestas REST, compartida por /api/findings y /api/audits. */
 public final class HallazgoMapper {
 
@@ -11,6 +13,11 @@ public final class HallazgoMapper {
     }
 
     public static HallazgoResponse aResponse(HallazgoAuditoria hallazgo, CriticidadDispositivo criticidad) {
+        return aResponse(hallazgo, criticidad, null);
+    }
+
+    public static HallazgoResponse aResponse(HallazgoAuditoria hallazgo, CriticidadDispositivo criticidad,
+                                             Instant venceEn) {
         return new HallazgoResponse(
                 hallazgo.id(),
                 hallazgo.auditoriaId(),
@@ -30,7 +37,8 @@ public final class HallazgoMapper {
                 hallazgo.fechaDeteccion(),
                 hallazgo.fechaEstado(),
                 hallazgo.usuarioEstado(),
-                criticidad == null ? null : criticidad.name()
+                criticidad == null ? null : criticidad.name(),
+                venceEn
         );
     }
 

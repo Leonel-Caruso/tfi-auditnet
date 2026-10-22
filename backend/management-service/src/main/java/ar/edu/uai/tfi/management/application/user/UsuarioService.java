@@ -2,6 +2,7 @@ package ar.edu.uai.tfi.management.application.user;
 
 import ar.edu.uai.tfi.management.application.ErrorAplicacion;
 import ar.edu.uai.tfi.management.application.ExcepcionAplicacion;
+import ar.edu.uai.tfi.management.application.correo.BandejaCorreo;
 import ar.edu.uai.tfi.management.application.plan.ControlPlan;
 import ar.edu.uai.tfi.management.application.port.BitacoraSistemaPort;
 import ar.edu.uai.tfi.management.application.port.PasswordPort;
@@ -9,6 +10,7 @@ import ar.edu.uai.tfi.management.domain.model.EstadoAcceso;
 import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
 import ar.edu.uai.tfi.management.domain.model.EventoSistema;
 import ar.edu.uai.tfi.management.domain.model.Rol;
+import ar.edu.uai.tfi.management.domain.model.TipoCorreo;
 import ar.edu.uai.tfi.management.domain.model.TipoEventoSistema;
 import ar.edu.uai.tfi.management.domain.model.Usuario;
 import ar.edu.uai.tfi.management.domain.repository.OrganizacionClienteRepository;
@@ -51,6 +53,7 @@ public class UsuarioService {
     private final PasswordPort passwordPort;
     private final BitacoraSistemaPort bitacora;
     private final ControlPlan controlPlan;
+    private final BandejaCorreo correos;
     Clock reloj = Clock.systemUTC();
 
     public UsuarioService(UsuarioRepository usuarioRepository,
@@ -58,13 +61,15 @@ public class UsuarioService {
                           RolRepository rolRepository,
                           PasswordPort passwordPort,
                           BitacoraSistemaPort bitacora,
-                          ControlPlan controlPlan) {
+                          ControlPlan controlPlan,
+                          BandejaCorreo correos) {
         this.usuarioRepository = usuarioRepository;
         this.organizacionRepository = organizacionRepository;
         this.rolRepository = rolRepository;
         this.passwordPort = passwordPort;
         this.bitacora = bitacora;
         this.controlPlan = controlPlan;
+        this.correos = correos;
     }
 
     /** Usuario con su estado de acceso (bloqueo, último acceso), para el panel del administrador. */
@@ -106,7 +111,8 @@ public class UsuarioService {
         String emailNormalizado = normalizarEmail(email);
         String usernameNormalizado = nombreUsuario.trim().toLowerCase(Locale.ROOT);
         if (!USERNAME_PATTERN.matcher(usernameNormalizado).matches()) {
-            throw invalida("El nombre de usuario debe tener entre 3 y 60 caracteres: letras, números, punto, guion o guion bajo.");
+            throw invalida("El nombre de usuario debe tener entre 3 y 60 caracteres: letras sin tildes ni ñ, números, "
+                    + "punto, guion o guion bajo.");
         }
         PoliticaContrasena.validar(password, usernameNormalizado);
         if (usuarioRepository.buscarPorEmail(emailNormalizado).isPresent()
@@ -134,6 +140,9 @@ public class UsuarioService {
                 creado.organizacionId(), "username=" + creado.nombreUsuario() + ", email=" + creado.email()));
         bitacora.registrar(EventoSistema.exito(TipoEventoSistema.ROLES_ASIGNADOS, null, creado.id(),
                 creado.organizacionId(), "roles=" + String.join(",", roles)));
+        // El correo avisa el usuario y el enlace; la contraseña inicial nunca viaja por correo.
+        correos.encolar(TipoCorreo.ALTA_USUARIO, creado.organizacionId(), creado.email(), creado.nombre(),
+                Map.of("usuario", creado.nombreUsuario(), "perfiles", List.copyOf(roles)));
         return creado;
     }
 

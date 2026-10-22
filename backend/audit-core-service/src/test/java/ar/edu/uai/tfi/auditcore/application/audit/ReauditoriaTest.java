@@ -1,6 +1,7 @@
 package ar.edu.uai.tfi.auditcore.application.audit;
 
 import ar.edu.uai.tfi.auditcore.application.alert.AlertaService;
+import ar.edu.uai.tfi.auditcore.application.port.AvisoCorreoPort;
 import ar.edu.uai.tfi.auditcore.domain.model.*;
 import ar.edu.uai.tfi.auditcore.support.EnMemoria;
 import org.junit.jupiter.api.Test;
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -26,6 +28,7 @@ class ReauditoriaTest {
     private final EnMemoria.Hallazgos hallazgos = new EnMemoria.Hallazgos();
     private final EnMemoria.Seguimientos seguimientos = new EnMemoria.Seguimientos();
     private final EnMemoria.Alertas alertas = new EnMemoria.Alertas();
+    private final EnMemoria.Avisos avisos = new EnMemoria.Avisos();
     private final List<Transaccion> bitacora = new ArrayList<>();
 
     private final AlertaService alertaService = new AlertaService(alertas, hallazgos, dispositivos, bitacora::add);
@@ -33,7 +36,7 @@ class ReauditoriaTest {
             new HallazgoService(hallazgos, seguimientos, dispositivos, bitacora::add, alertaService);
     private final AuditoriaService service = new AuditoriaService(configuraciones, dispositivos, baselines, reglas,
             auditorias, evaluaciones, hallazgos, new MotorAuditoriaService(), bitacora::add, alertaService,
-            hallazgoService, EnMemoria.planSinLimites());
+            hallazgoService, EnMemoria.planSinLimites(), avisos);
 
     ReauditoriaTest() {
         dispositivos.items.add(EnMemoria.dispositivo(10L, 2L, null, CriticidadDispositivo.ALTA));
@@ -52,10 +55,19 @@ class ReauditoriaTest {
         service.ejecutar(1L, "analista");
         assertEquals(2, hallazgos.items.size());
         assertEquals(2, vigentes(), "una alerta por cada hallazgo CRITICA o ALTA");
+        assertEquals(1, avisos.items.size(), "un solo correo por auditoría");
+        EnMemoria.Avisos.Aviso aviso = avisos.items.get(0);
+        assertEquals(AvisoCorreoPort.Tipo.ALERTAS_CRITICAS, aviso.tipo());
+        assertEquals(2, aviso.datos().get("alertas"));
+        assertEquals(1L, aviso.datos().get("criticas"));
+        assertEquals("EQ-10", aviso.datos().get("dispositivo"));
+        assertEquals("SEC-TELNET-01", ((Map<?, ?>) ((List<?>) aviso.datos().get("reglas")).get(0)).get("codigo"),
+                "las críticas primero");
 
         service.ejecutar(2L, "analista");
         assertEquals(4, hallazgos.items.size(), "cada auditoría conserva su evidencia");
         assertEquals(2, vigentes(), "el mismo problema no genera una segunda alerta");
+        assertEquals(1, avisos.items.size(), "sin alertas nuevas no hay correo");
 
         AuditoriaDetalle corregida = service.ejecutar(3L, "auditor");
         assertTrue(corregida.hallazgos().isEmpty());

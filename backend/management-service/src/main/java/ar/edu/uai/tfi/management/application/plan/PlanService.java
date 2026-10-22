@@ -2,6 +2,7 @@ package ar.edu.uai.tfi.management.application.plan;
 
 import ar.edu.uai.tfi.management.application.ErrorAplicacion;
 import ar.edu.uai.tfi.management.application.ExcepcionAplicacion;
+import ar.edu.uai.tfi.management.application.correo.BandejaCorreo;
 import ar.edu.uai.tfi.management.application.port.TrazabilidadPort;
 import ar.edu.uai.tfi.management.application.port.UsoDispositivosPort;
 import ar.edu.uai.tfi.management.application.user.MatrizPermisos;
@@ -13,6 +14,7 @@ import ar.edu.uai.tfi.management.domain.model.OrganizacionCliente;
 import ar.edu.uai.tfi.management.domain.model.Plan;
 import ar.edu.uai.tfi.management.domain.model.PlanOrganizacion;
 import ar.edu.uai.tfi.management.domain.model.SolicitudCambioPlan;
+import ar.edu.uai.tfi.management.domain.model.TipoCorreo;
 import ar.edu.uai.tfi.management.domain.model.Transaccion;
 import ar.edu.uai.tfi.management.domain.repository.OrganizacionClienteRepository;
 import ar.edu.uai.tfi.management.domain.repository.PlanRepository;
@@ -56,6 +58,7 @@ public class PlanService implements ControlPlan {
     private final UsuarioRepository usuarios;
     private final UsoDispositivosPort dispositivos;
     private final TrazabilidadPort trazabilidad;
+    private final BandejaCorreo correos;
     Clock reloj = Clock.systemUTC();
 
     public PlanService(PlanRepository planes,
@@ -63,13 +66,15 @@ public class PlanService implements ControlPlan {
                        SolicitudPlanRepository solicitudes,
                        UsuarioRepository usuarios,
                        UsoDispositivosPort dispositivos,
-                       TrazabilidadPort trazabilidad) {
+                       TrazabilidadPort trazabilidad,
+                       BandejaCorreo correos) {
         this.planes = planes;
         this.organizaciones = organizaciones;
         this.solicitudes = solicitudes;
         this.usuarios = usuarios;
         this.dispositivos = dispositivos;
         this.trazabilidad = trazabilidad;
+        this.correos = correos;
     }
 
     /**
@@ -156,6 +161,7 @@ public class PlanService implements ControlPlan {
                 actual.plan().codigo(), pedido.codigo(), parsearModalidad(modalidad), EstadoSolicitudPlan.PENDIENTE,
                 textoOpcional(comentario, 500, "El comentario"), usuario, reloj.instant(), null, null, null));
         trazabilidad.registrar(Transaccion.alta(ENTIDAD_SOLICITUD, guardada.id(), organizacionId, guardada));
+        avisarAdministradores(guardada, actual.plan(), pedido);
         return guardada;
     }
 
@@ -175,8 +181,10 @@ public class PlanService implements ControlPlan {
         SolicitudCambioPlan solicitud = solicitudPendiente(solicitudId);
         aplicar(solicitud.organizacionId(), buscarPlan(solicitud.planSolicitado()), limiteDispositivos,
                 limiteUsuarios, null);
-        return resolver(solicitud, EstadoSolicitudPlan.APROBADA, usuario,
+        SolicitudCambioPlan aprobada = resolver(solicitud, EstadoSolicitudPlan.APROBADA, usuario,
                 textoOpcional(respuesta, 500, "La respuesta"));
+        avisarSolicitante(aprobada);
+        return aprobada;
     }
 
     @Transactional
@@ -186,7 +194,9 @@ public class PlanService implements ControlPlan {
         if (motivo == null) {
             throw invalida("Indicá el motivo del rechazo: lo ve el cliente.");
         }
-        return resolver(solicitud, EstadoSolicitudPlan.RECHAZADA, usuario, motivo);
+        SolicitudCambioPlan rechazada = resolver(solicitud, EstadoSolicitudPlan.RECHAZADA, usuario, motivo);
+        avisarSolicitante(rechazada);
+        return rechazada;
     }
 
     /** Solicitudes de todas las organizaciones; con estado vacío devuelve todas. */
@@ -300,6 +310,37 @@ public class PlanService implements ControlPlan {
                 .filter(usuario -> usuario.estado() == EstadoRegistro.ACTIVO)
                 .filter(usuario -> !usuario.roles().contains(MatrizPermisos.ADMIN))
                 .count();
+    }
+
+    /** Aviso por correo a los administradores del sistema activos, que son quienes la resuelven. */
+    private void avisarAdministradores(SolicitudCambioPlan solicitud, Plan actual, Plan pedido) {
+        Map<String, Object> datos = new LinkedHashMap<>();
+        datos.put("planActual", actual.nombre());
+        datos.put("planSolicitado", pedido.nombre());
+        datos.put("modalidad", solicitud.modalidad().name());
+        datos.put("solicitadoPor", solicitud.solicitadoPor());
+        if (solicitud.comentario() != null) {
+            datos.put("comentario", solicitud.comentario());
+        }
+        usuarios.listar().stream()
+                .filter(usuario -> usuario.estado() == EstadoRegistro.ACTIVO)
+                .filter(usuario -> usuario.roles().contains(MatrizPermisos.ADMIN))
+                .forEach(admin -> correos.encolar(TipoCorreo.SOLICITUD_PLAN, solicitud.organizacionId(),
+                        admin.email(), admin.nombre(), datos));
+    }
+
+    private void avisarSolicitante(SolicitudCambioPlan solicitud) {
+        Map<String, Object> datos = new LinkedHashMap<>();
+        datos.put("estado", solicitud.estado().name());
+        datos.put("planSolicitado", planes.buscarPorCodigo(solicitud.planSolicitado())
+                .map(Plan::nombre).orElse(solicitud.planSolicitado()));
+        if (solicitud.respuesta() != null) {
+            datos.put("respuesta", solicitud.respuesta());
+        }
+        usuarios.buscarPorNombreUsuario(solicitud.solicitadoPor())
+                .filter(usuario -> usuario.estado() == EstadoRegistro.ACTIVO)
+                .ifPresent(usuario -> correos.encolar(TipoCorreo.SOLICITUD_PLAN_RESUELTA, solicitud.organizacionId(),
+                        usuario.email(), usuario.nombre(), datos));
     }
 
     private SolicitudCambioPlan resolver(SolicitudCambioPlan solicitud, EstadoSolicitudPlan estado, String usuario,

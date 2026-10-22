@@ -48,10 +48,52 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       </div>
       <div class="health-component">
         <span class="health-dot is-na"></span>
-        <div><strong>Colas de mensajería</strong><small>No aplica: los servicios se comunican por REST sincrónico y comparten la base PostgreSQL</small></div>
+        <div><strong>Colas de mensajería</strong><small>No aplica: los servicios se comunican por REST y comparten la base PostgreSQL; el correo sale de una bandeja de salida en esa base</small></div>
         <code>no aplica</code>
       </div>
     </div>
+  </section>
+
+  <section class="two-column dashboard-row">
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Correo</span>
+          <h2>Bandeja de salida</h2>
+        </div>
+        <span id="mail-provider" class="status-badge status-next">—</span>
+      </div>
+      <div id="mail-totals" class="storage-totals"></div>
+      <div class="storage-pending">
+        <p id="mail-note" class="log-muted">Los avisos se envían solos al guardarse; los fallidos se reintentan con esperas crecientes.</p>
+        <button id="mail-dispatch" class="button button-ghost button-small" type="button" disabled>Enviar pendientes</button>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table log-table">
+          <thead><tr><th>FECHA</th><th>AVISO</th><th>DESTINATARIO</th><th>ESTADO</th></tr></thead>
+          <tbody id="mail-list"></tbody>
+        </table>
+        <div id="mail-empty" class="empty-state compact-empty is-hidden">
+          <div><code>0 correos</code><p>Todavía no se generó ningún aviso por correo.</p></div>
+        </div>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow">Revisión periódica</span>
+          <h2>Vencimientos y re-auditorías</h2>
+        </div>
+        <button id="review-run" class="button button-primary button-small" type="button">Ejecutar revisión ahora</button>
+      </div>
+      <p class="log-muted">
+        Un trabajo programado la ejecuta todos los días a las 6:00 (hora de Argentina). Vuelve a auditar los equipos
+        según los plazos de cada organización y avisa por correo los hallazgos vencidos, las configuraciones
+        desactualizadas y el resumen del mes anterior. Ejecutarla de nuevo el mismo día no repite auditorías ni avisos.
+      </p>
+      <div id="review-result" class="review-result is-hidden"></div>
+    </article>
   </section>
 
   <section class="two-column dashboard-row">
@@ -163,7 +205,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
   <script>
     import { auditFetch, authFetch } from '../lib/auth';
-    import { readApiError, type PlanRequest, type SecuritySummary, type ServiceHealth, type StorageStatus, type StorageSyncResult, type StoredFile } from '../lib/api';
+    import { readApiError, type MailDispatchResult, type MailOutbox, type PlanRequest, type ReviewRunResult, type SecuritySummary, type ServiceHealth, type StorageStatus, type StorageSyncResult, type StoredFile } from '../lib/api';
     import { formatBytes, saveResponse } from '../lib/download';
     import { escapeHtml, formatDate } from '../lib/format';
 
@@ -174,7 +216,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     const EVENT_ORDER = [
       'LOGIN_EXITOSO', 'LOGIN_RECHAZADO', 'CUENTA_BLOQUEADA', 'CUENTA_DESBLOQUEADA', 'CONTRASENA_CAMBIADA',
       'CONTRASENA_RESTABLECIDA', 'USUARIO_CREADO', 'USUARIO_MODIFICADO', 'USUARIO_DESHABILITADO', 'USUARIO_HABILITADO',
-      'ROLES_ASIGNADOS', 'ROL_MODIFICADO',
+      'ROLES_ASIGNADOS', 'ROL_MODIFICADO', 'RECUPERACION_SOLICITADA', 'CONTRASENA_RECUPERADA',
     ];
     const ALERT_EVENTS = new Set(['LOGIN_RECHAZADO', 'CUENTA_BLOQUEADA']);
 
@@ -409,6 +451,97 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       });
     });
 
+    // Correo y revisión periódica
+    const MAIL_LABEL: Record<string, string> = {
+      RECUPERACION_CONTRASENA: 'recuperación de contraseña',
+      ALTA_USUARIO: 'alta de usuario',
+      SOLICITUD_PLAN: 'solicitud de plan',
+      SOLICITUD_PLAN_RESUELTA: 'solicitud de plan resuelta',
+      ALERTAS_CRITICAS: 'alertas críticas',
+      VENCIMIENTOS: 'vencimientos',
+      RESUMEN_MENSUAL: 'resumen mensual',
+    };
+    const MAIL_STATUS: Record<string, string> = { PENDIENTE: 'status-next', ENVIADO: 'status-ready', FALLIDO: 'status-locked' };
+
+    const loadMail = async () => {
+      const response = await authFetch('/api/admin/mail');
+      if (!response.ok) throw new Error(await readApiError(response));
+      const outbox = await response.json() as MailOutbox;
+      const provider = document.querySelector<HTMLElement>('#mail-provider');
+      if (provider) {
+        provider.textContent = outbox.proveedor ?? 'sin proveedor';
+        provider.className = `status-badge ${outbox.proveedor ? 'status-ready' : 'status-locked'}`;
+      }
+      const totals = document.querySelector('#mail-totals');
+      if (totals) {
+        totals.innerHTML = `
+          <div><span>Pendientes</span><strong>${outbox.pendientes}</strong><small>esperando envío</small></div>
+          <div><span>Enviados</span><strong>${outbox.enviados24h}</strong><small>últimas 24 h</small></div>
+          <div><span>Fallidos</span><strong>${outbox.fallidos24h}</strong><small>últimas 24 h</small></div>`;
+      }
+      if (!outbox.proveedor) {
+        const note = document.querySelector('#mail-note');
+        if (note) note.textContent = 'El envío no está configurado: los avisos quedan pendientes hasta configurarlo.';
+      }
+      const dispatch = document.querySelector<HTMLButtonElement>('#mail-dispatch');
+      if (dispatch) dispatch.disabled = !outbox.proveedor || outbox.pendientes === 0;
+      const body = document.querySelector('#mail-list');
+      if (body) {
+        body.innerHTML = outbox.ultimos.map((mail) => `
+          <tr>
+            <td><span class="log-nowrap">${escapeHtml(formatDate(mail.creadoEn))}</span></td>
+            <td><strong>${escapeHtml(MAIL_LABEL[mail.tipo] ?? mail.tipo)}</strong><small>${escapeHtml(mail.origen)}</small></td>
+            <td><small>${escapeHtml(mail.destinatario)}</small></td>
+            <td>
+              <span class="status-badge ${MAIL_STATUS[mail.estado] ?? 'status-next'}">${escapeHtml(mail.estado.toLowerCase())}</span>
+              ${mail.ultimoError ? `<small title="${escapeHtml(mail.ultimoError)}">${mail.intentos} ${mail.intentos === 1 ? 'intento' : 'intentos'} · ${escapeHtml(mail.ultimoError)}</small>` : ''}
+            </td>
+          </tr>`).join('');
+      }
+      document.querySelector('#mail-empty')?.classList.toggle('is-hidden', outbox.ultimos.length > 0);
+    };
+
+    document.querySelector('#mail-dispatch')?.addEventListener('click', async (event) => {
+      await busy(event.currentTarget as HTMLButtonElement, 'Enviando…', async () => {
+        showError(null);
+        const response = await authFetch('/api/admin/mail/dispatch', { method: 'POST' });
+        if (!response.ok) throw new Error(await readApiError(response));
+        const result = await response.json() as MailDispatchResult;
+        await loadMail();
+        const note = document.querySelector('#mail-note');
+        if (note) {
+          note.textContent = `Enviados: ${result.enviados} · para reintentar: ${result.reintentos} · fallidos: ${result.fallidos}.`
+            + (result.pendientes > 0 ? ` Quedan ${result.pendientes} pendientes.` : '');
+        }
+      });
+    });
+
+    document.querySelector('#review-run')?.addEventListener('click', async (event) => {
+      await busy(event.currentTarget as HTMLButtonElement, 'Revisando…', async () => {
+        showError(null);
+        const response = await auditFetch('/api/review/run', { method: 'POST' });
+        if (!response.ok) throw new Error(await readApiError(response));
+        const result = await response.json() as ReviewRunResult;
+        const node = document.querySelector<HTMLElement>('#review-result');
+        if (node) {
+          node.innerHTML = `
+            <dl class="health-meta">
+              <div><dt>organizaciones</dt><dd>${result.organizaciones}</dd></div>
+              <div><dt>re-auditorías</dt><dd>${result.reauditorias}</dd></div>
+              <div><dt>hallazgos vencidos</dt><dd>${result.hallazgosVencidos}</dd></div>
+              <div><dt>config. desactualizadas</dt><dd>${result.dispositivosDesactualizados}</dd></div>
+              <div><dt>correos</dt><dd>${result.correos}</dd></div>
+              <div><dt>resúmenes</dt><dd>${result.resumenes}</dd></div>
+            </dl>
+            ${result.omitidas.length ? `<p class="log-muted">No se pudo:</p><ul class="review-skipped">${result.omitidas
+              .map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>` : ''}
+            <p class="technical-hint">ejecutada ${escapeHtml(formatDate(result.ejecutada))}</p>`;
+          node.classList.remove('is-hidden');
+        }
+        await loadMail();
+      });
+    });
+
     const loadPlanRequests = async () => {
       const response = await authFetch('/api/admin/plan-requests?estado=PENDIENTE');
       const title = document.querySelector('#admin-plan-requests');
@@ -428,7 +561,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const button = document.querySelector<HTMLButtonElement>('#admin-refresh');
       if (button) button.disabled = true;
       try {
-        await Promise.all([loadHealth(), loadSecurity(), loadStorage(), loadBackups(), loadPlanRequests()]);
+        await Promise.all([loadHealth(), loadSecurity(), loadStorage(), loadBackups(), loadPlanRequests(), loadMail()]);
       } catch (error) {
         showError(error instanceof Error ? error.message : 'No se pudo obtener el estado de la plataforma.');
       } finally {

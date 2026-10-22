@@ -40,6 +40,14 @@ services:
     volumes:
       - tfi_azurite_data:/data
 
+  # Correo de prueba: management-service le envía los avisos en el perfil dev y se leen en http://localhost:8025.
+  # No entrega nada a casillas reales.
+  mailpit:
+    image: axllent/mailpit:v1.30.0
+    container_name: tfi-mailpit
+    ports:
+      - "${MAILPIT_PORT:-8025}:8025"
+
 volumes:
   tfi_postgres_data:
   tfi_mongo_data:

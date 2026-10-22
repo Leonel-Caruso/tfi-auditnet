@@ -2,6 +2,7 @@ package ar.edu.uai.tfi.management.domain.repository;
 
 import ar.edu.uai.tfi.management.domain.model.EstadoAcceso;
 import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
+import ar.edu.uai.tfi.management.domain.model.PreferenciasAviso;
 import ar.edu.uai.tfi.management.domain.model.Usuario;
 
 import java.time.Duration;
@@ -54,4 +55,8 @@ public interface UsuarioRepository {
     void registrarAccesoExitoso(Long id, Instant ahora);
 
     void desbloquear(Long id);
+
+    PreferenciasAviso preferencias(Long id);
+
+    void guardarPreferencias(Long id, PreferenciasAviso preferencias);
 }

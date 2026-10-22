@@ -23,8 +23,8 @@ avanzar, despliegue con aprobación, bitácoras en cada operación nueva y regis
 | 9 | Cierre de la Entrega 2 y pruebas de pantalla en CI | — | — |
 | 10 | Administrador de organización | — (rol nuevo por bootstrap) | 9 |
 | 11 | Planes y límites | management V5 | 10 |
-| 12 | Notificaciones por correo y recuperación de contraseña | management V6, audit-core V8 | 11 |
-| 13 | Revisión periódica y vencimientos | audit-core V9 | 12 |
+| 12 | Notificaciones por correo y recuperación de contraseña | management V6 | 11 |
+| 13 | Revisión periódica y vencimientos | audit-core V8 | 12 |
 | 14 | Multi idioma (es, en, pt) | management V7 | 10–13 |
 | 15 | Manuales de usuario y de desarrollador | — | 14 |
 | 16 | Carpeta, trazabilidad y cierre | — | todos |

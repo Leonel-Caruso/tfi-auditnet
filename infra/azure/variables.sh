@@ -30,6 +30,16 @@ ENTORNO="cae-auditnet"
 APP_MANAGEMENT="ca-auditnet-management"
 APP_CORE="ca-auditnet-core"
 APP_WEB="ca-auditnet-web"
+# Trabajo programado de la revisión periódica (ver 09-crear-revision.sh). La hora va en UTC: 9:00 = 6:00 en Argentina.
+JOB_REVISION="caj-auditnet-revision"
+CRON_REVISION="0 9 * * *"
+IMAGEN_CURL="docker.io/curlimages/curl:8.11.1"
+
+# Correo (Azure Communication Services). Los nombres son únicos en todo Azure.
+ACS_RECURSO="acs-auditnet-lcaruso"
+EMAIL_SERVICIO="ecs-auditnet-lcaruso"
+# Dónde se guardan los datos del servicio de correo (no es la región de envío).
+ACS_DATOS="United States"
 
 # Imágenes publicadas por GitHub Actions (.github/workflows/imagenes.yml)
 REGISTRO="ghcr.io/leonel-caruso"

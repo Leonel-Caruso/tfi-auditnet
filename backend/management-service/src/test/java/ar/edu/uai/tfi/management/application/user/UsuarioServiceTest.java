@@ -6,6 +6,7 @@ import ar.edu.uai.tfi.management.domain.model.EstadoAcceso;
 import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
 import ar.edu.uai.tfi.management.domain.model.EventoSistema;
 import ar.edu.uai.tfi.management.domain.model.ResultadoEvento;
+import ar.edu.uai.tfi.management.domain.model.TipoCorreo;
 import ar.edu.uai.tfi.management.domain.model.TipoEventoSistema;
 import ar.edu.uai.tfi.management.domain.model.Usuario;
 import ar.edu.uai.tfi.management.support.EnMemoriaGestion;
@@ -34,13 +35,14 @@ class UsuarioServiceTest {
     private final List<EventoSistema> eventos = new ArrayList<>();
     private final EnMemoriaGestion.Usuarios usuarios = new EnMemoriaGestion.Usuarios();
     private final EnMemoriaGestion.Organizaciones organizaciones = new EnMemoriaGestion.Organizaciones();
+    private final EnMemoriaGestion.Avisos avisos = new EnMemoriaGestion.Avisos();
     private final UsuarioService service;
 
     UsuarioServiceTest() {
         organizaciones.agregar(1L, "PLATAFORMA", "Plataforma", EstadoRegistro.ACTIVO);
         organizaciones.agregar(3L, "CLIENTE-1", "Cliente Uno", EstadoRegistro.ACTIVO);
         service = new UsuarioService(usuarios, organizaciones, new EnMemoriaGestion.Roles(),
-                new EnMemoriaGestion.PasswordSimple(), eventos::add, organizacionId -> { });
+                new EnMemoriaGestion.PasswordSimple(), eventos::add, organizacionId -> { }, avisos);
         service.reloj = new EnMemoriaGestion.RelojAjustable(AHORA);
     }
 
@@ -64,6 +66,18 @@ class UsuarioServiceTest {
         EventoSistema roles = eventos.get(1);
         assertEquals(TipoEventoSistema.ROLES_ASIGNADOS, roles.tipo());
         assertTrue(roles.detalle().contains("ANALISTA_RED"));
+    }
+
+    @Test
+    void crearAvisaPorCorreoSinIncluirLaContrasena() {
+        service.crear(3L, "Ana Pérez", "ana@cliente.com", "ana", "Secreta2026", Set.of("ANALISTA_RED"), admin(1L));
+
+        assertEquals(1, avisos.items.size());
+        EnMemoriaGestion.Avisos.Aviso aviso = avisos.items.get(0);
+        assertEquals(TipoCorreo.ALTA_USUARIO, aviso.tipo());
+        assertEquals("ana@cliente.com", aviso.destinatario());
+        assertEquals("ana", aviso.datos().get("usuario"));
+        assertFalse(aviso.datos().toString().contains("Secreta2026"));
     }
 
     @Test

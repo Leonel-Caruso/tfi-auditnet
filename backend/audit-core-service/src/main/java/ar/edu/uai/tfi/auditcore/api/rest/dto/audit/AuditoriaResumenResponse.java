@@ -17,7 +17,8 @@ public record AuditoriaResumenResponse(
         Integer totalHallazgos,
         String severidadMaxima,
         String resultado,
-        String estado
+        String estado,
+        String origen
 ) {
 
     public static AuditoriaResumenResponse de(AuditoriaConfiguracion auditoria) {
@@ -34,7 +35,8 @@ public record AuditoriaResumenResponse(
                 auditoria.totalHallazgos(),
                 auditoria.severidadMaxima(),
                 auditoria.resultado(),
-                auditoria.estado().name()
+                auditoria.estado().name(),
+                auditoria.origen() == null ? "MANUAL" : auditoria.origen().name()
         );
     }
 }

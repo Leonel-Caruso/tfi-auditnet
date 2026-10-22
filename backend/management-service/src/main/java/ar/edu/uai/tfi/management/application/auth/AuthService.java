@@ -9,6 +9,7 @@ import ar.edu.uai.tfi.management.application.user.PoliticaContrasena;
 import ar.edu.uai.tfi.management.domain.model.EstadoAcceso;
 import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
 import ar.edu.uai.tfi.management.domain.model.EventoSistema;
+import ar.edu.uai.tfi.management.domain.model.PreferenciasAviso;
 import ar.edu.uai.tfi.management.domain.model.TipoEventoSistema;
 import ar.edu.uai.tfi.management.domain.model.Usuario;
 import ar.edu.uai.tfi.management.domain.repository.OrganizacionClienteRepository;
@@ -136,6 +137,22 @@ public class AuthService {
         bitacora.registrar(EventoSistema.exito(TipoEventoSistema.CONTRASENA_CAMBIADA, usuario.nombreUsuario(),
                 usuario.id(), usuario.organizacionId(), "origen=propio usuario"));
         return new AuthResult(jwtPort.generar(usuario), jwtPort.duracionSegundos(), usuario);
+    }
+
+    public PreferenciasAviso preferencias(Long usuarioId) {
+        return usuarioRepository.preferencias(usuarioId);
+    }
+
+    /** Avisos por correo que el usuario quiere recibir (alertas, vencimientos, resumen mensual). */
+    @Transactional
+    public PreferenciasAviso guardarPreferencias(Long usuarioId, PreferenciasAviso preferencias) {
+        Usuario usuario = usuarioRepository.buscarPorId(usuarioId)
+                .orElseThrow(() -> new ExcepcionAplicacion(ErrorAplicacion.NO_AUTORIZADO, "La sesión no es válida."));
+        usuarioRepository.guardarPreferencias(usuario.id(), preferencias);
+        bitacora.registrar(EventoSistema.exito(TipoEventoSistema.USUARIO_MODIFICADO, usuario.nombreUsuario(),
+                usuario.id(), usuario.organizacionId(), "avisos: alertas=" + preferencias.alertas()
+                        + ", vencimientos=" + preferencias.vencimientos() + ", resumen=" + preferencias.resumen()));
+        return preferencias;
     }
 
     private boolean organizacionActiva(Long organizacionId) {

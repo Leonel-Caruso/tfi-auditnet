@@ -4,20 +4,28 @@ import ar.edu.uai.tfi.auditcore.application.alert.AlertaService;
 import ar.edu.uai.tfi.auditcore.domain.model.OperacionTransaccion;
 import ar.edu.uai.tfi.auditcore.domain.model.Transaccion;
 import ar.edu.uai.tfi.auditcore.application.plan.ControlPlan;
+import ar.edu.uai.tfi.auditcore.application.port.AvisoCorreoPort;
 import ar.edu.uai.tfi.auditcore.application.port.TrazabilidadPort;
 import ar.edu.uai.tfi.auditcore.domain.model.*;
 import ar.edu.uai.tfi.auditcore.domain.repository.*;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 
+import java.time.Clock;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @ApplicationScoped
 public class AuditoriaService {
+
+    /** Reglas que se detallan en el correo de alertas; el resto se ve en la consola. */
+    static final int REGLAS_EN_AVISO = 10;
 
     private final ConfiguracionRepository configuracionRepository;
     private final DispositivoRepository dispositivoRepository;
@@ -31,6 +39,8 @@ public class AuditoriaService {
     private final AlertaService alertaService;
     private final HallazgoService hallazgoService;
     private final ControlPlan controlPlan;
+    private final AvisoCorreoPort avisos;
+    Clock reloj = Clock.systemUTC();
 
     public AuditoriaService(
             ConfiguracionRepository configuracionRepository,
@@ -44,7 +54,8 @@ public class AuditoriaService {
             TrazabilidadPort trazabilidad,
             AlertaService alertaService,
             HallazgoService hallazgoService,
-            ControlPlan controlPlan
+            ControlPlan controlPlan,
+            AvisoCorreoPort avisos
     ) {
         this.configuracionRepository = configuracionRepository;
         this.dispositivoRepository = dispositivoRepository;
@@ -58,6 +69,7 @@ public class AuditoriaService {
         this.alertaService = alertaService;
         this.hallazgoService = hallazgoService;
         this.controlPlan = controlPlan;
+        this.avisos = avisos;
     }
 
     @Transactional
@@ -65,7 +77,20 @@ public class AuditoriaService {
         validarId(configuracionId, "configuracionId");
         ConfiguracionDispositivo configuracion = configuracionRepository.buscarPorId(configuracionId)
                 .orElseThrow(() -> new NoSuchElementException("No existe la configuración seleccionada."));
-        return ejecutarConfiguracion(configuracion, actor);
+        return ejecutarConfiguracion(configuracion, actor, OrigenAuditoria.MANUAL, null);
+    }
+
+    /**
+     * Auditoría de la revisión periódica. No se ejecuta si el equipo se auditó desde {@code auditadaAntesDe} (otra
+     * revisión o un usuario se adelantó): se verifica con el dispositivo bloqueado.
+     */
+    @Transactional
+    public Optional<AuditoriaDetalle> ejecutarAutomatica(Long configuracionId, Instant auditadaAntesDe, String actor) {
+        validarId(configuracionId, "configuracionId");
+        ConfiguracionDispositivo configuracion = configuracionRepository.buscarPorId(configuracionId)
+                .orElseThrow(() -> new NoSuchElementException("No existe la configuración seleccionada."));
+        return Optional.ofNullable(ejecutarConfiguracion(configuracion, actor, OrigenAuditoria.AUTOMATICA,
+                auditadaAntesDe));
     }
 
     @Transactional
@@ -75,7 +100,7 @@ public class AuditoriaService {
         ConfiguracionDispositivo configuracion = configuracionRepository
                 .buscarPorIdYOrganizacion(configuracionId, organizacionId)
                 .orElseThrow(() -> new NoSuchElementException("No existe la configuración seleccionada."));
-        return ejecutarConfiguracion(configuracion, actor);
+        return ejecutarConfiguracion(configuracion, actor, OrigenAuditoria.MANUAL, null);
     }
 
     public List<AuditoriaConfiguracion> listarHistorial() {
@@ -102,7 +127,9 @@ public class AuditoriaService {
         return armarDetalle(auditoria);
     }
 
-    private AuditoriaDetalle ejecutarConfiguracion(ConfiguracionDispositivo configuracion, String actor) {
+    /** @param auditadaAntesDe solo en la automática: null si se auditó después de esa fecha */
+    private AuditoriaDetalle ejecutarConfiguracion(ConfiguracionDispositivo configuracion, String actor,
+                                                   OrigenAuditoria origen, Instant auditadaAntesDe) {
         controlPlan.verificarOperable(configuracion.organizacionId());
         // Bloquea el dispositivo: dos auditorías simultáneas del mismo equipo se ejecutan en orden y no generan dos
         // alertas para la misma regla.
@@ -111,6 +138,9 @@ public class AuditoriaService {
         if (dispositivo.estado() != EstadoDispositivo.ACTIVO) {
             throw new IllegalStateException("El dispositivo " + dispositivo.identificador()
                     + " está inactivo: no se pueden ejecutar auditorías sobre él.");
+        }
+        if (auditadaAntesDe != null && ultimaAuditoria(dispositivo).filter(auditadaAntesDe::isBefore).isPresent()) {
+            return null;
         }
 
         BaselineConfiguracion baseline = baselineRepository
@@ -139,7 +169,7 @@ public class AuditoriaService {
                 .map(Enum::name)
                 .orElse("NINGUNA");
 
-        Instant ahora = Instant.now();
+        Instant ahora = reloj.instant();
         AuditoriaConfiguracion auditoria = auditoriaRepository.guardar(new AuditoriaConfiguracion(
                 null,
                 configuracion.id(),
@@ -153,9 +183,11 @@ public class AuditoriaService {
                 hallazgos,
                 severidadMaxima,
                 hallazgos == 0 ? "CUMPLE" : "CON_HALLAZGOS",
-                EstadoAuditoria.FINALIZADA
+                EstadoAuditoria.FINALIZADA,
+                origen
         ));
 
+        List<HallazgoAuditoria> conAlertaNueva = new ArrayList<>();
         for (MotorAuditoriaService.EvaluacionCalculada calculada : calculadas) {
             evaluacionRepository.guardar(new ResultadoReglaAuditoria(
                     null,
@@ -191,11 +223,16 @@ public class AuditoriaService {
                         null,
                         null
                 ));
-                alertaService.generar(hallazgo, actorSeguro(actor));
+                if (alertaService.generar(hallazgo, actorSeguro(actor)).isPresent()) {
+                    conAlertaNueva.add(hallazgo);
+                }
             }
         }
 
         int resueltos = resolverHallazgosAnteriores(auditoria, configuracion, calculadas);
+        if (!conAlertaNueva.isEmpty()) {
+            avisarAlertas(auditoria, dispositivo, conAlertaNueva);
+        }
 
         trazabilidad.registrar(new Transaccion(
                 "AUDITORIA",
@@ -211,9 +248,41 @@ public class AuditoriaService {
                         + ", reglas=" + calculadas.size()
                         + ", hallazgos=" + hallazgos
                         + ", resueltosAutomaticamente=" + resueltos
+                        + (origen == OrigenAuditoria.AUTOMATICA ? ", origen=AUTOMATICA" : "")
         ));
 
         return armarDetalle(auditoria);
+    }
+
+    private Optional<Instant> ultimaAuditoria(DispositivoRed dispositivo) {
+        return auditoriaRepository.buscarHistorial(
+                        FiltroAuditorias.delDispositivo(dispositivo.organizacionId(), dispositivo.id())).stream()
+                .map(AuditoriaConfiguracion::fechaEjecucion)
+                .max(Comparator.naturalOrder());
+    }
+
+    /** Un correo por auditoría con las alertas nuevas, para los perfiles que las atienden. */
+    private void avisarAlertas(AuditoriaConfiguracion auditoria, DispositivoRed dispositivo,
+                               List<HallazgoAuditoria> conAlertaNueva) {
+        List<Map<String, Object>> reglas = conAlertaNueva.stream()
+                .sorted(Comparator.comparingInt((HallazgoAuditoria h) -> rangoSeveridad(h.severidad())).reversed())
+                .limit(REGLAS_EN_AVISO)
+                .map(hallazgo -> {
+                    Map<String, Object> regla = new LinkedHashMap<>();
+                    regla.put("codigo", hallazgo.codigoRegla());
+                    regla.put("nombre", hallazgo.nombreRegla());
+                    regla.put("severidad", hallazgo.severidad().name());
+                    return regla;
+                })
+                .toList();
+        Map<String, Object> datos = new LinkedHashMap<>();
+        datos.put("auditoriaId", auditoria.id());
+        datos.put("dispositivo", dispositivo.identificador());
+        datos.put("dispositivoNombre", dispositivo.nombre());
+        datos.put("alertas", conAlertaNueva.size());
+        datos.put("criticas", conAlertaNueva.stream().filter(h -> h.severidad() == SeveridadRegla.CRITICA).count());
+        datos.put("reglas", reglas);
+        avisos.avisar(AvisoCorreoPort.Tipo.ALERTAS_CRITICAS, auditoria.organizacionId(), datos);
     }
 
     /**

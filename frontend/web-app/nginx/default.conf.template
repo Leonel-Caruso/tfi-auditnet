@@ -53,9 +53,9 @@ server {
 
     # X-Request-ID ($request_id) permite seguir una operación en las bitácoras de ambos servicios.
 
-    # audit-core-service. Cuelga de /api/client-organizations: va antes que la regex de
+    # audit-core-service. Cuelgan de /api/client-organizations: van antes que la regex de
     # management-service porque nginx usa la primera que coincide.
-    location ~ ^/api/client-organizations/[0-9]+/audit-status/?$ {
+    location ~ ^/api/client-organizations/[0-9]+/(audit-status|review-policy)/?$ {
         proxy_pass ${CORE_UPSTREAM};
         proxy_ssl_server_name on;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

@@ -34,9 +34,9 @@ class AdministradorOrganizacionTest {
     private final EnMemoriaGestion.Organizaciones organizaciones = new EnMemoriaGestion.Organizaciones();
     private final EnMemoriaGestion.Sedes sedes = new EnMemoriaGestion.Sedes();
     private final PlanService planes = new PlanService(new EnMemoriaGestion.Planes(), organizaciones,
-            new EnMemoriaGestion.Solicitudes(), usuarios, new EnMemoriaGestion.Dispositivos(), transaccion -> { });
+            new EnMemoriaGestion.Solicitudes(), usuarios, new EnMemoriaGestion.Dispositivos(), transaccion -> { }, new EnMemoriaGestion.Avisos());
     private final UsuarioService service = new UsuarioService(usuarios, organizaciones, new EnMemoriaGestion.Roles(),
-            new EnMemoriaGestion.PasswordSimple(), evento -> { }, planes);
+            new EnMemoriaGestion.PasswordSimple(), evento -> { }, planes, new EnMemoriaGestion.Avisos());
     private final SedeService sedeService = new SedeService(sedes, organizaciones, transaccion -> { });
 
     AdministradorOrganizacionTest() {

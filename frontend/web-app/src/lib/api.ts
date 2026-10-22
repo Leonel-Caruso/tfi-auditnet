@@ -183,6 +183,68 @@ export type OrganizationPlan = {
   solicitudPendiente: PlanRequest | null;
 };
 
+/** Plazos de revisión de una organización (audit-core-service). modificadaEn es null con los valores por defecto. */
+export type ReviewPolicy = {
+  diasCritica: number;
+  diasAlta: number;
+  diasMedia: number;
+  diasBaja: number;
+  diasReauditoria: number;
+  diasConfiguracion: number;
+  reauditoriaAutomatica: boolean;
+  modificadaEn: string | null;
+  modificadaPor: string | null;
+};
+
+export type ReviewStatus = {
+  politica: ReviewPolicy | null;
+  hallazgosVencidos: number;
+  dispositivosDesactualizados: number;
+};
+
+export type ReviewRunResult = {
+  ejecutada: string;
+  organizaciones: number;
+  reauditorias: number;
+  hallazgosVencidos: number;
+  dispositivosDesactualizados: number;
+  correos: number;
+  resumenes: number;
+  omitidas: string[];
+};
+
+export type MailStatus = 'PENDIENTE' | 'ENVIADO' | 'FALLIDO';
+
+export type OutgoingMail = {
+  id: number;
+  origen: string;
+  tipo: string;
+  destinatario: string;
+  estado: MailStatus;
+  intentos: number;
+  creadoEn: string;
+  proximoIntento: string;
+  enviadoEn: string | null;
+  ultimoError: string | null;
+};
+
+/** Bandeja de salida de correo (management-service). proveedor es null si el envío no está configurado. */
+export type MailOutbox = {
+  proveedor: string | null;
+  pendientes: number;
+  enviados24h: number;
+  fallidos24h: number;
+  ultimos: OutgoingMail[];
+};
+
+export type MailDispatchResult = {
+  proveedor: string | null;
+  enviados: number;
+  reintentos: number;
+  fallidos: number;
+  pendientes: number;
+};
+
 /** Opciones de fetch para enviar JSON (POST, PUT, PATCH). */
 export function jsonRequest(method: 'POST' | 'PUT' | 'PATCH', payload: unknown): RequestInit {
   return {
@@ -280,6 +342,8 @@ export type AuditSummary = {
   severidadMaxima: 'NINGUNA' | 'BAJA' | 'MEDIA' | 'ALTA' | 'CRITICA';
   resultado: 'CUMPLE' | 'CON_HALLAZGOS';
   estado: 'FINALIZADA';
+  /** AUTOMATICA: la ejecutó la revisión periódica. */
+  origen: 'MANUAL' | 'AUTOMATICA';
 };
 
 export type RuleEvaluation = {
@@ -318,6 +382,8 @@ export type AuditFinding = {
   usuarioEstado: string | null;
   /** Criticidad actual del dispositivo, usada para priorizar (null en el detalle de auditoría). */
   criticidadDispositivo: NetworkDevice['criticidad'] | null;
+  /** Plazo de corrección según la política de la organización; null si está cerrado o no se informa. */
+  venceEn?: string | null;
 };
 
 export type FindingStatus = 'ABIERTO' | 'EN_REVISION' | 'RESUELTO' | 'ACEPTADO';
@@ -382,7 +448,8 @@ export type AuditComparison = {
 export const SYSTEM_EVENTS = [
   'LOGIN_EXITOSO', 'LOGIN_RECHAZADO', 'CUENTA_BLOQUEADA', 'CUENTA_DESBLOQUEADA',
   'USUARIO_CREADO', 'USUARIO_MODIFICADO', 'USUARIO_HABILITADO', 'USUARIO_DESHABILITADO', 'ROLES_ASIGNADOS',
-  'CONTRASENA_CAMBIADA', 'CONTRASENA_RESTABLECIDA', 'ROL_CREADO', 'ROL_MODIFICADO',
+  'CONTRASENA_CAMBIADA', 'CONTRASENA_RESTABLECIDA', 'RECUPERACION_SOLICITADA', 'CONTRASENA_RECUPERADA',
+  'ROL_CREADO', 'ROL_MODIFICADO',
 ] as const;
 export type SystemEvent = typeof SYSTEM_EVENTS[number];
 

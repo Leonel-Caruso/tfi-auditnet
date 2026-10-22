@@ -645,6 +645,97 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
   correo llega en el Bloque 12.
 - **Prueba:** `PlanServiceTest`, `test_perfiles.py`, CP-B11-05 a CP-B11-08.
 
+## D-50 · Bandeja de salida única para el correo (Bloque 12)
+
+- **Decisión:** los avisos se guardan en `correos_salientes` (management V6) en la misma transacción que el evento que
+  los origina, con el tipo y los datos en JSON; management-service arma el mensaje con las plantillas y lo envía
+  después. audit-core inserta sus avisos en esa misma tabla con SQL nativo (comparten la base, como la bitácora de
+  transacciones) y, al confirmar, le pide a management que despache (`POST /internal/mail/dispatch` con el secreto de
+  tareas). Se descartó una tabla por servicio (plan original): duplicaba plantillas, credenciales y reintentos.
+- **Envío:** de a 5 por despacho (`FOR UPDATE SKIP LOCKED`, dos despachos simultáneos no toman el mismo correo); si
+  quedan, sigue al minuto. Fallas transitorias (sin respuesta, 5xx, 401/403) se reintentan a los 5 min, 30 min, 2 h y
+  6 h; al quinto intento, o si el proveedor rechaza el mensaje (4xx), queda FALLIDO. Un 429 (límite del proveedor)
+  espera lo que indique `Retry-After` (mínimo 1 minuto, 1 hora si no lo indica) y corta la tanda.
+- **Sin proveedor configurado** no se envía nada: los avisos quedan pendientes y el panel ADM lo muestra.
+- **Límite:** si audit-core se despliega antes de que management aplique V6, sus avisos se omiten (la auditoría no se
+  ve afectada) hasta que la tabla exista.
+- **Prueba:** `CorreoServiceTest`, `PlantillasCorreoTest`, CP-B12-07 y CP-B12-08.
+
+## D-51 · Azure Communication Services con API REST firmada; Mailpit en local (Bloque 12)
+
+- **Decisión:** envío por la API REST de ACS (`/emails:send`, versión 2023-03-31) firmada con HMAC-SHA256 y la clave de
+  acceso de la cadena de conexión, sin SDK ni registro de aplicaciones en Entra ID (igual criterio que Blob Storage,
+  D-35). Dominio administrado por Azure (`DoNotReply@…azurecomm.net`), creado por `infra/azure/08-crear-email.sh`.
+  En local (perfil dev) los correos van a Mailpit (`axllent/mailpit:v1.30.0`), que no entrega a casillas reales.
+- **Límite del dominio de Azure:** 5 correos por minuto y 10 por hora. Alcanza para la demo; para producción hace falta
+  un dominio propio verificado. Los reintentos por 429 de D-50 cubren el exceso.
+- **Impacto financiero pendiente:** USD 0,00025 por correo más USD 0,00012 por MB transferido según la página de
+  precios consultada; con el volumen de la demo son centavos. Confirmar en Cost Management después del primer mes.
+- **Prueba:** `FirmaAcsTest` (firma comparada con un cálculo independiente), CP-B12-09.
+
+## D-52 · Recuperación de contraseña por correo (Bloque 12)
+
+- **Decisión:** "¿Olvidaste tu contraseña?" envía un enlace de un solo uso que vale 30 minutos. Se guarda solo el
+  SHA-256 del token (`recuperaciones_contrasena`); el token viaja únicamente en el correo y se borra de la bandeja al
+  enviarse. La respuesta es la misma exista o no la cuenta (o esté deshabilitada). Entre dos pedidos del mismo usuario
+  pasan al menos 2 minutos. Al usarlo: se valida la política de contraseñas, se quita el bloqueo por intentos, se
+  cierran las sesiones abiertas y se anulan los demás enlaces. Un correo de recuperación que no salió dentro de su
+  vigencia se marca FALLIDO en lugar de enviar un enlace vencido. Eventos `RECUPERACION_SOLICITADA` y
+  `CONTRASENA_RECUPERADA` en la bitácora de sistema (también los pedidos rechazados, con el motivo).
+- **Prueba:** `RecuperacionContrasenaServiceTest`, `test_revision_correo.py`, CP-B12-01 a CP-B12-04.
+
+## D-53 · Destinatarios de los avisos y preferencias (Bloque 12)
+
+- **Decisión:** los correos de la cuenta (alta de usuario sin contraseña, recuperación) y los de planes (solicitud al
+  administrador del sistema, resultado al solicitante) se envían siempre. Los de auditoría respetan la preferencia de
+  cada usuario (`usuarios.aviso_*`, activadas por defecto, en Mi cuenta): alertas críticas y vencimientos al analista,
+  al responsable de gestión IT y al administrador de organización; el resumen mensual al responsable y al
+  administrador de organización. El auditor técnico no recibe avisos de auditoría. Un correo por auditoría con todas
+  sus alertas nuevas (no uno por alerta).
+- **Prueba:** `ReauditoriaTest`, `UsuarioServiceTest`, `PlanServiceTest`, CP-B12-05 y CP-B12-06.
+
+## D-54 · Plazos de revisión por organización (Bloque 13)
+
+- **Decisión:** `politicas_revision` (audit-core V8) guarda por organización los días para corregir cada severidad
+  (por defecto crítica 7, alta 15, media 30, baja 60; deben ir de menor a mayor), cada cuántos días se re-audita
+  (30) y a partir de cuántos días una configuración está desactualizada (30). Sin fila se usan los valores por
+  defecto. El vencimiento se calcula al consultar (`fechaDeteccion` + plazo de su severidad con la política vigente):
+  cambiar un plazo corrige al instante todos los vencimientos. La API de hallazgos informa `venceEn` y acepta
+  `estado=VENCIDOS`. La modifican el administrador del sistema y el de la organización; queda en la bitácora de
+  transacciones (`POLITICA_REVISION`).
+- **Prueba:** `RevisionPeriodicaServiceTest`, CP-B13-01 y CP-B13-02.
+
+## D-55 · Revisión periódica con un trabajo programado (Bloque 13)
+
+- **Decisión:** un Container Apps Job (`infra/azure/09-crear-revision.sh`, todos los días a las 9:00 UTC = 6:00 en
+  Argentina) llama a `POST /internal/review/run` de audit-core con el secreto de tareas (encabezado
+  `X-AuditNet-Tarea`, comparación en tiempo constante; sin secreto configurado la ruta responde 404). Funciona con las
+  apps en cero réplicas porque el job las despierta; nginx no publica `/internal`. El administrador puede ejecutarla
+  desde ADM.
+- **Qué hace por organización activa:** (1) re-audita la última configuración de los equipos activos cuya última
+  auditoría superó la frecuencia (una transacción por equipo; se vuelve a verificar con el equipo bloqueado, así dos
+  ejecuciones simultáneas no duplican); las auditorías quedan con origen AUTOMATICA y generan alertas y correo como
+  cualquier otra; (2) avisa los hallazgos que vencieron y no se avisaron (`aviso_vencimiento_en`), agrupados por equipo
+  y regla; (3) avisa los equipos sin configuración nueva desde el último aviso (`aviso_configuracion_en`); (4) envía
+  el resumen del mes anterior (D-56). Los avisos de cada organización van en una transacción con la organización
+  bloqueada. Un equipo que no se puede auditar (sin baseline, plan vencido) se informa como omitido y no frena el
+  resto. Cada ejecución queda en la bitácora de transacciones (`REVISION_PERIODICA`).
+- **Límite:** la plataforma no se conecta a los equipos: "re-auditar" es evaluar la última configuración cargada
+  contra la baseline vigente. Si PostgreSQL está detenido (modo ahorro) la ejecución del día falla y la del día
+  siguiente se pone al día.
+- **Impacto financiero pendiente:** una ejecución diaria de segundos con 0,25 vCPU entra en la cuota gratuita mensual
+  de Container Apps; confirmar en Cost Management.
+- **Prueba:** `RevisionPeriodicaServiceTest` (reloj fijo, dos ejecuciones seguidas), CP-B13-03 a CP-B13-07.
+
+## D-56 · Resumen mensual (Bloque 13)
+
+- **Decisión:** la primera revisión de cada mes envía a cada organización el resumen del mes anterior (en hora de
+  Argentina): auditorías, hallazgos detectados y cerrados, pendientes y vencidos al momento del envío, alertas
+  vigentes y nivel de riesgo. Se registra en `resumenes_mensuales` (una fila por organización y mes) aunque no haya
+  destinatarios; sin actividad en el mes no se envía. Si la revisión empieza a correr a mitad de mes, el primer
+  resumen sale ese día.
+- **Prueba:** `RevisionPeriodicaServiceTest`, CP-B13-06.
+
 ## Pendientes detectados (para migraciones futuras)
 
 - `auditorias_configuracion.estado` solo admite `FINALIZADA` (CHECK de Hibernate). Alcanza mientras la auditoría sea

@@ -1,6 +1,7 @@
 package ar.edu.uai.tfi.auditcore.infrastructure.persistence.entity;
 
 import ar.edu.uai.tfi.auditcore.domain.model.EstadoAuditoria;
+import ar.edu.uai.tfi.auditcore.domain.model.OrigenAuditoria;
 import jakarta.persistence.*;
 
 import java.time.Instant;
@@ -54,4 +55,8 @@ public class AuditoriaEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     public EstadoAuditoria estado;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    public OrigenAuditoria origen = OrigenAuditoria.MANUAL;
 }

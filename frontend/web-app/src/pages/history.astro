@@ -145,6 +145,9 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     let total = 0;
     const deviceById = (id: number) => devices.find((item) => item.id === id);
     const baselineById = (id: number) => baselines.find((item) => item.id === id);
+    const automaticBadge = (audit: AuditSummary) => audit.origen === 'AUTOMATICA'
+      ? ' <span class="status-badge status-next" title="La ejecutó la revisión periódica">automática</span>'
+      : '';
 
     const showError = (message: string | null) => {
       const node = document.querySelector<HTMLElement>('#history-error');
@@ -196,7 +199,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
             <td>${audit.severidadMaxima === 'NINGUNA'
               ? '<span class="status-badge status-ready">NINGUNA</span>'
               : `<span class="severity-badge ${severityClass(audit.severidadMaxima)}">${escapeHtml(audit.severidadMaxima)}</span>`}</td>
-            <td><small>${escapeHtml(audit.ejecutadoPor)}</small></td>
+            <td><small>${escapeHtml(audit.ejecutadoPor)}</small>${automaticBadge(audit)}</td>
           </tr>`;
       }).join('');
 
@@ -291,7 +294,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
             ? `${escapeHtml(formatDate(detail.configuracion.fechaImportacion))} · ${escapeHtml(detail.configuracion.usuarioResponsable)}`
             : '—'}</dd></div>
           <div><dt>reglas cumplidas</dt><dd>${audit.reglasCumplidas}/${audit.totalReglas}</dd></div>
-          <div><dt>ejecutó</dt><dd>${escapeHtml(audit.ejecutadoPor)}</dd></div>
+          <div><dt>ejecutó</dt><dd>${escapeHtml(audit.ejecutadoPor)} ${automaticBadge(audit)}</dd></div>
         </dl>
 
         <div class="baseline-versions">

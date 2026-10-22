@@ -6,6 +6,8 @@ import java.time.Instant;
  * @param fechaEstado           último cambio de estado (null si nunca cambió)
  * @param usuarioEstado         quién hizo el último cambio de estado
  * @param criticidadDispositivo criticidad actual del dispositivo, usada para priorizar
+ * @param venceEn               plazo de corrección según la política de la organización (null si está cerrado o
+ *                              no se calculó)
  */
 public record HallazgoResponse(
         Long id,
@@ -26,6 +28,7 @@ public record HallazgoResponse(
         Instant fechaDeteccion,
         Instant fechaEstado,
         String usuarioEstado,
-        String criticidadDispositivo
+        String criticidadDispositivo,
+        Instant venceEn
 ) {
 }

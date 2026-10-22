@@ -3,18 +3,29 @@ package ar.edu.uai.tfi.management.support;
 import ar.edu.uai.tfi.management.application.port.JwtPort;
 import ar.edu.uai.tfi.management.application.port.PasswordPort;
 import ar.edu.uai.tfi.management.domain.model.EstadoAcceso;
+import ar.edu.uai.tfi.management.application.correo.BandejaCorreo;
+import ar.edu.uai.tfi.management.application.correo.FalloEnvioCorreo;
+import ar.edu.uai.tfi.management.application.correo.MensajeCorreo;
+import ar.edu.uai.tfi.management.application.port.EnvioCorreoPort;
 import ar.edu.uai.tfi.management.application.port.UsoDispositivosPort;
+import ar.edu.uai.tfi.management.domain.model.CorreoSaliente;
+import ar.edu.uai.tfi.management.domain.model.EstadoCorreo;
 import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
 import ar.edu.uai.tfi.management.domain.model.EstadoSolicitudPlan;
 import ar.edu.uai.tfi.management.domain.model.OrganizacionCliente;
 import ar.edu.uai.tfi.management.domain.model.Plan;
 import ar.edu.uai.tfi.management.domain.model.PlanOrganizacion;
+import ar.edu.uai.tfi.management.domain.model.PreferenciasAviso;
+import ar.edu.uai.tfi.management.domain.model.RecuperacionContrasena;
 import ar.edu.uai.tfi.management.domain.model.Rol;
 import ar.edu.uai.tfi.management.domain.model.Sede;
 import ar.edu.uai.tfi.management.domain.model.SolicitudCambioPlan;
+import ar.edu.uai.tfi.management.domain.model.TipoCorreo;
 import ar.edu.uai.tfi.management.domain.model.Usuario;
+import ar.edu.uai.tfi.management.domain.repository.CorreoRepository;
 import ar.edu.uai.tfi.management.domain.repository.OrganizacionClienteRepository;
 import ar.edu.uai.tfi.management.domain.repository.PlanRepository;
+import ar.edu.uai.tfi.management.domain.repository.RecuperacionRepository;
 import ar.edu.uai.tfi.management.domain.repository.RolRepository;
 import ar.edu.uai.tfi.management.domain.repository.SedeRepository;
 import ar.edu.uai.tfi.management.domain.repository.SolicitudPlanRepository;
@@ -26,8 +37,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -46,6 +59,7 @@ public final class EnMemoriaGestion {
     public static class Usuarios implements UsuarioRepository {
         public final Map<Long, Usuario> usuarios = new LinkedHashMap<>();
         public final Map<Long, EstadoAcceso> accesos = new LinkedHashMap<>();
+        public final Map<Long, PreferenciasAviso> preferencias = new HashMap<>();
         private long secuencia = 100;
 
         public Usuario agregar(Usuario usuario) {
@@ -157,6 +171,16 @@ public final class EnMemoriaGestion {
         public void desbloquear(Long id) {
             EstadoAcceso a = estadoAcceso(id);
             accesos.put(id, new EstadoAcceso(id, 0, null, a.ultimoAcceso(), a.sesionesValidasDesde()));
+        }
+
+        @Override
+        public PreferenciasAviso preferencias(Long id) {
+            return preferencias.getOrDefault(id, PreferenciasAviso.todas());
+        }
+
+        @Override
+        public void guardarPreferencias(Long id, PreferenciasAviso valores) {
+            preferencias.put(id, valores);
         }
     }
 
@@ -374,6 +398,113 @@ public final class EnMemoriaGestion {
         @Override
         public long dispositivosActivos(Long organizacionId) {
             return activos.getOrDefault(organizacionId, 0L);
+        }
+    }
+
+    /** Avisos encolados por los servicios, para verificarlos en las pruebas. */
+    public static class Avisos implements BandejaCorreo {
+        public record Aviso(TipoCorreo tipo, Long organizacionId, String destinatario, String nombre,
+                            Map<String, Object> datos) {
+        }
+
+        public final List<Aviso> items = new ArrayList<>();
+
+        @Override
+        public void encolar(TipoCorreo tipo, Long organizacionId, String destinatario, String nombre,
+                            Map<String, Object> datos) {
+            items.add(new Aviso(tipo, organizacionId, destinatario, nombre, datos));
+        }
+    }
+
+    public static class Correos implements CorreoRepository {
+        public final Map<Long, CorreoSaliente> items = new LinkedHashMap<>();
+        private long secuencia = 0;
+
+        @Override
+        public CorreoSaliente guardar(CorreoSaliente c) {
+            CorreoSaliente guardado = new CorreoSaliente(++secuencia, c.origen(), c.tipo(), c.organizacionId(),
+                    c.destinatario(), c.nombreDestinatario(), c.datos(), c.estado(), c.intentos(), c.proximoIntento(),
+                    c.creadoEn(), c.enviadoEn(), c.ultimoError(), c.idEnvio());
+            items.put(guardado.id(), guardado);
+            return guardado;
+        }
+
+        @Override
+        public List<CorreoSaliente> tomarPendientes(Instant ahora, int maximo) {
+            return items.values().stream()
+                    .filter(c -> c.estado() == EstadoCorreo.PENDIENTE && !c.proximoIntento().isAfter(ahora))
+                    .limit(maximo).toList();
+        }
+
+        @Override
+        public void actualizar(CorreoSaliente c) {
+            items.put(c.id(), c);
+        }
+
+        @Override
+        public Resumen resumen(Instant desde) {
+            return new Resumen(
+                    items.values().stream().filter(c -> c.estado() == EstadoCorreo.PENDIENTE).count(),
+                    items.values().stream().filter(c -> c.estado() == EstadoCorreo.ENVIADO).count(),
+                    items.values().stream().filter(c -> c.estado() == EstadoCorreo.FALLIDO).count());
+        }
+
+        @Override
+        public List<CorreoSaliente> ultimos(int maximo) {
+            return items.values().stream().sorted(Comparator.comparing(CorreoSaliente::id).reversed())
+                    .limit(maximo).toList();
+        }
+    }
+
+    /** Proveedor de correo simulado: guarda lo enviado y puede fallar con los errores cargados en {@code fallas}. */
+    public static class Envio implements EnvioCorreoPort {
+        public final List<MensajeCorreo> enviados = new ArrayList<>();
+        public final Deque<FalloEnvioCorreo> fallas = new ArrayDeque<>();
+        public String proveedor = "Prueba";
+
+        @Override
+        public String proveedor() {
+            return proveedor;
+        }
+
+        @Override
+        public String enviar(MensajeCorreo mensaje) {
+            if (!fallas.isEmpty()) {
+                throw fallas.poll();
+            }
+            enviados.add(mensaje);
+            return "envio-" + enviados.size();
+        }
+    }
+
+    public static class Recuperaciones implements RecuperacionRepository {
+        public final Map<Long, RecuperacionContrasena> items = new LinkedHashMap<>();
+        private long secuencia = 0;
+
+        @Override
+        public RecuperacionContrasena guardar(RecuperacionContrasena r) {
+            RecuperacionContrasena guardada = new RecuperacionContrasena(++secuencia, r.usuarioId(), r.tokenHash(),
+                    r.creadaEn(), r.venceEn(), r.usadaEn());
+            items.put(guardada.id(), guardada);
+            return guardada;
+        }
+
+        @Override
+        public Optional<RecuperacionContrasena> buscarParaUsar(String tokenHash) {
+            return items.values().stream().filter(r -> r.tokenHash().equals(tokenHash)).findFirst();
+        }
+
+        @Override
+        public Optional<Instant> ultimoPedido(Long usuarioId) {
+            return items.values().stream().filter(r -> r.usuarioId().equals(usuarioId))
+                    .map(RecuperacionContrasena::creadaEn).max(Comparator.naturalOrder());
+        }
+
+        @Override
+        public void anularPendientes(Long usuarioId, Instant ahora) {
+            items.replaceAll((id, r) -> r.usuarioId().equals(usuarioId) && r.usadaEn() == null
+                    ? new RecuperacionContrasena(r.id(), r.usuarioId(), r.tokenHash(), r.creadaEn(), r.venceEn(), ahora)
+                    : r);
         }
     }
 
