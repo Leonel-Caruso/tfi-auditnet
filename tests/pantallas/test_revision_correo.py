@@ -24,6 +24,7 @@ def test_el_login_lleva_a_recuperar_la_contrasena(abrir, entorno):
 def test_el_enlace_crea_la_contrasena_nueva_y_no_queda_en_la_barra(abrir, entorno):
     pagina = abrir("/reset-password?token=enlace-valido")
     assert pagina.url.endswith("/reset-password"), "el token no queda en la dirección ni en el historial"
+    assert pagina.locator("#reset-rules li").count() == 2, "sin la regla del usuario, que esta pantalla no puede verificar"
 
     pagina.fill("#reset-password", "corta")
     pagina.click("#reset-submit")
