@@ -712,8 +712,10 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
   `X-AuditNet-Tarea`, comparación en tiempo constante; sin secreto configurado la ruta responde 404). Funciona con las
   apps en cero réplicas porque el pedido las despierta. El administrador puede ejecutarla desde ADM.
 - **Entorno aparte:** Azure migró `cae-auditnet` al modo *express*, que no admite trabajos
-  (`ExpressEnvironmentResourceNotSupported`). El trabajo corre en un entorno propio, `cae-auditnet-tareas`, sin
-  registros en Log Analytics (sin costo mientras no corre). Desde ahí no se alcanza el ingreso interno de las apps, así
+  (`ExpressEnvironmentResourceNotSupported`), y un entorno nuevo creado con la CLI también quedó en express. El
+  trabajo corre en un entorno propio, `cae-auditnet-tareas`, creado con la API de Azure y el perfil de carga
+  *Consumption* explícito (así queda estándar), sin perfiles dedicados ni registros en Log Analytics: no tiene costo
+  fijo. Desde ahí no se alcanza el ingreso interno de las apps, así
   que llama por nginx: nginx publica solo `POST /internal/review/run` (el resto de `/internal` sigue respondiendo 404)
   y audit-core exige el secreto de 256 bits. Se descartaron un cron de GitHub Actions (corre solo en la rama por
   defecto, `main`) y Logic Apps (otro servicio más que configurar).

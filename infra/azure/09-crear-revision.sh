@@ -27,13 +27,37 @@ az containerapp secret set -n "$APP_CORE" -g "$RG" --secrets "tarea-secreto=$SEC
 az containerapp update -n "$APP_CORE" -g "$RG" --set-env-vars \
   "TAREA_SECRETO=secretref:tarea-secreto" "MANAGEMENT_URL=https://$URL_MANAGEMENT" -o none
 
+SUSCRIPCION=$(az account show --query id -o tsv)
+API_APP="https://management.azure.com/subscriptions/$SUSCRIPCION/resourceGroups/$RG/providers/Microsoft.App"
+
+esperar() {
+  local consulta=("$@") estado=""
+  for _ in $(seq 1 60); do
+    estado=$(az "${consulta[@]}" --query properties.provisioningState -o tsv 2>/dev/null || true)
+    [[ "$estado" == "Succeeded" ]] && break
+    sleep 10
+  done
+  echo "      Estado: $estado"
+}
+
 echo "[3/4] Entorno $ENTORNO_TAREAS para el trabajo programado..."
+# Se crea con la API de Azure y el perfil Consumption explícito: así queda como entorno estándar (con
+# trabajos) y no en modo express. Sin registros en Log Analytics y sin perfiles dedicados: no tiene costo fijo.
 if az containerapp env show -n "$ENTORNO_TAREAS" -g "$RG" -o none 2>/dev/null; then
+  PERFILES=$(az containerapp env show -n "$ENTORNO_TAREAS" -g "$RG" --query "length(properties.workloadProfiles || \`[]\`)" -o tsv)
+  if [[ "$PERFILES" == "0" ]]; then
+    echo "      $ENTORNO_TAREAS existe pero quedó en modo express (no admite trabajos). Borralo y volvé a ejecutar:"
+    echo "      az containerapp env delete -n $ENTORNO_TAREAS -g $RG --yes"
+    exit 1
+  fi
   echo "      Ya existe: no se vuelve a crear."
 else
-  # Sin registros en Log Analytics: no genera costo mientras no corre nada (tarda unos minutos).
-  az containerapp env create -n "$ENTORNO_TAREAS" -g "$RG" -l "$UBICACION" --logs-destination none \
-    --tags proyecto=auditnet -o none
+  ENTORNO_CUERPO=$(jq -n --arg ubicacion "$UBICACION" \
+    '{location: $ubicacion, tags: {proyecto: "auditnet"},
+      properties: {workloadProfiles: [{name: "Consumption", workloadProfileType: "Consumption"}]}}')
+  az rest --method put -o none --body "$ENTORNO_CUERPO" \
+    --url "$API_APP/managedEnvironments/$ENTORNO_TAREAS?api-version=2024-03-01"
+  esperar containerapp env show -n "$ENTORNO_TAREAS" -g "$RG"
 fi
 
 # Las apps arrancan desde cero réplicas: curl reintenta hasta que responden.
@@ -44,7 +68,6 @@ LLAMADA='curl -fsS --retry 6 --retry-all-errors --retry-delay 30 --max-time 600 
 echo "[4/4] Trabajo programado $JOB_REVISION ($CRON_REVISION UTC)..."
 # Se crea con la API de Azure (PUT: crea o reemplaza): la CLI toma el "-c" de sh como una opción propia y
 # rechaza el comando.
-SUSCRIPCION=$(az account show --query id -o tsv)
 ENTORNO_ID=$(az containerapp env show -n "$ENTORNO_TAREAS" -g "$RG" --query id -o tsv)
 CUERPO=$(jq -n \
   --arg ubicacion "$UBICACION" --arg entorno "$ENTORNO_ID" --arg cron "$CRON_REVISION" \
@@ -52,6 +75,7 @@ CUERPO=$(jq -n \
   '{location: $ubicacion, tags: {proyecto: "auditnet"},
     properties: {
       environmentId: $entorno,
+      workloadProfileName: "Consumption",
       configuration: {
         triggerType: "Schedule", replicaTimeout: 900, replicaRetryLimit: 1,
         scheduleTriggerConfig: {cronExpression: $cron, parallelism: 1, replicaCompletionCount: 1},
@@ -61,15 +85,9 @@ CUERPO=$(jq -n \
         env: [{name: "TAREA_SECRETO", secretRef: "tarea-secreto"}, {name: "URL_WEB", value: $url}],
         resources: {cpu: 0.25, memory: "0.5Gi"}}]}}}')
 az rest --method put -o none --body "$CUERPO" \
-  --url "https://management.azure.com/subscriptions/$SUSCRIPCION/resourceGroups/$RG/providers/Microsoft.App/jobs/$JOB_REVISION?api-version=2024-03-01"
+  --url "$API_APP/jobs/$JOB_REVISION?api-version=2024-03-01"
 
-ESTADO=""
-for _ in $(seq 1 30); do
-  ESTADO=$(az containerapp job show -n "$JOB_REVISION" -g "$RG" --query properties.provisioningState -o tsv 2>/dev/null || true)
-  [[ "$ESTADO" == "Succeeded" ]] && break
-  sleep 10
-done
-echo "      Estado del trabajo: $ESTADO"
+esperar containerapp job show -n "$JOB_REVISION" -g "$RG"
 
 echo
 echo "Listo. La revisión corre todos los días a las 6:00 (hora de Argentina)."
