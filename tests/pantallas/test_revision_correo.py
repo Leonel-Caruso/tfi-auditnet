@@ -105,7 +105,9 @@ def test_los_hallazgos_vencidos_se_marcan_y_se_filtran(abrir, entorno):
 
     pagina.wait_for_load_state("networkidle")
     pagina.click("#finding-table-body tr[data-finding-id='4']")
-    assert "vencido hace" in pagina.locator("#finding-inspector-content").inner_text()
+    # El detalle se carga después del clic: se espera a que aparezca.
+    pagina.wait_for_function(
+        "document.querySelector('#finding-inspector-content').textContent.includes('vencido hace')")
 
     filtrado = abrir("/results?estado=VENCIDOS", perfil="ANALISTA_RED")
     filtrado.wait_for_selector("#finding-table-body tr")
@@ -126,8 +128,8 @@ def test_el_tablero_muestra_vencidos_y_configuraciones_viejas(abrir):
 
 def test_el_historial_distingue_las_auditorias_automaticas(abrir):
     pagina = abrir("/history", perfil="AUDITOR_TECNICO")
-    pagina.wait_for_selector("#history-table-body tr, tbody tr")
-    assert pagina.locator("tbody .status-badge:has-text('automática')").count() == 1
+    pagina.wait_for_selector("#history-body tr")
+    assert pagina.locator("#history-body .status-badge:has-text('automática')").count() == 1
 
 
 def test_el_panel_de_administracion_muestra_el_correo_y_ejecuta_la_revision(abrir, entorno):
