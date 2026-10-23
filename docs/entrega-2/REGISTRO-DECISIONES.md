@@ -710,8 +710,13 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
 - **Decisión:** un Container Apps Job (`infra/azure/09-crear-revision.sh`, todos los días a las 9:00 UTC = 6:00 en
   Argentina) llama a `POST /internal/review/run` de audit-core con el secreto de tareas (encabezado
   `X-AuditNet-Tarea`, comparación en tiempo constante; sin secreto configurado la ruta responde 404). Funciona con las
-  apps en cero réplicas porque el job las despierta; nginx no publica `/internal`. El administrador puede ejecutarla
-  desde ADM.
+  apps en cero réplicas porque el pedido las despierta. El administrador puede ejecutarla desde ADM.
+- **Entorno aparte:** Azure migró `cae-auditnet` al modo *express*, que no admite trabajos
+  (`ExpressEnvironmentResourceNotSupported`). El trabajo corre en un entorno propio, `cae-auditnet-tareas`, sin
+  registros en Log Analytics (sin costo mientras no corre). Desde ahí no se alcanza el ingreso interno de las apps, así
+  que llama por nginx: nginx publica solo `POST /internal/review/run` (el resto de `/internal` sigue respondiendo 404)
+  y audit-core exige el secreto de 256 bits. Se descartaron un cron de GitHub Actions (corre solo en la rama por
+  defecto, `main`) y Logic Apps (otro servicio más que configurar).
 - **Qué hace por organización activa:** (1) re-audita la última configuración de los equipos activos cuya última
   auditoría superó la frecuencia (una transacción por equipo; se vuelve a verificar con el equipo bloqueado, así dos
   ejecuciones simultáneas no duplican); las auditorías quedan con origen AUTOMATICA y generan alertas y correo como

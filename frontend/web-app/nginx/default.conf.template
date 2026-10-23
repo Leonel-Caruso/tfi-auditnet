@@ -65,6 +65,19 @@ server {
         gzip off;
     }
 
+    # Revisión periódica: la llama el trabajo programado, que corre fuera de este entorno. audit-core exige el
+    # secreto de tareas (X-AuditNet-Tarea); el resto de /internal no se publica.
+    location = /internal/review/run {
+        limit_except POST { deny all; }
+        proxy_pass ${CORE_UPSTREAM};
+        proxy_ssl_server_name on;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Request-ID $request_id;
+        proxy_read_timeout 300s;
+        gzip off;
+    }
+
     # management-service
     location ~ ^/api/(auth|users|roles|client-organizations|sites|plans|management|admin)(/|$) {
         proxy_pass ${MANAGEMENT_UPSTREAM};

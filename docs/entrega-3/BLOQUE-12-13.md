@@ -46,8 +46,9 @@ quedan pendientes en la bandeja de salida.
 | audit-core | `GET /api/findings` informa `venceEn` y acepta `estado=VENCIDOS` | Igual que antes |
 | audit-core | El historial de auditorías informa `origen` (MANUAL o AUTOMATICA) | Igual que antes |
 
-nginx deriva `/api/client-organizations/{id}/review-policy` a audit-core (como `audit-status`); `/internal/...` no se
-publica (responde 404).
+nginx deriva `/api/client-organizations/{id}/review-policy` a audit-core (como `audit-status`). De `/internal` publica
+solo `POST /internal/review/run`, para el trabajo programado (que corre en otro entorno, ver D-55); el resto responde
+404.
 
 ## Pantallas
 
@@ -104,8 +105,8 @@ Para simular una auditoría vieja en local (PowerShell, con el compose levantado
 
 1. Publicar las imágenes y desplegar como siempre (management aplica V6 y audit-core V8 al arrancar).
 2. `bash infra/azure/08-crear-email.sh`: Communication Services, dominio de Azure y variables de management.
-3. `bash infra/azure/09-crear-revision.sh`: secreto de tareas en los dos servicios, `MANAGEMENT_URL` en audit-core y el
-   trabajo programado diario.
+3. `bash infra/azure/09-crear-revision.sh`: secreto de tareas en los dos servicios, `MANAGEMENT_URL` en audit-core, el
+   entorno `cae-auditnet-tareas` (el de las apps está en modo express y no admite trabajos) y el trabajo diario.
 4. Probar: CP-B12-09 y `az containerapp job start -n caj-auditnet-revision -g rg-auditnet`.
 
 **Impacto financiero pendiente:** correo a USD 0,00025 por mensaje (centavos con el volumen de la demo) y el trabajo
