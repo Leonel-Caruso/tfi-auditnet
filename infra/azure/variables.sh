@@ -30,12 +30,8 @@ ENTORNO="cae-auditnet"
 APP_MANAGEMENT="ca-auditnet-management"
 APP_CORE="ca-auditnet-core"
 APP_WEB="ca-auditnet-web"
-# Trabajo programado de la revisión periódica (ver 09-crear-revision.sh). La hora va en UTC: 9:00 = 6:00 en Argentina.
-# Va en un entorno propio: Azure pasó cae-auditnet al modo express, que no admite trabajos.
-ENTORNO_TAREAS="cae-auditnet-tareas"
-JOB_REVISION="caj-auditnet-revision"
-CRON_REVISION="0 9 * * *"
-IMAGEN_CURL="docker.io/curlimages/curl:8.11.1"
+# Logic App que dispara la revisión periódica todos los días (ver 09-crear-revision.sh).
+LOGIC_REVISION="logic-auditnet-revision"
 
 # Correo (Azure Communication Services). Los nombres son únicos en todo Azure.
 ACS_RECURSO="acs-auditnet-lcaruso"

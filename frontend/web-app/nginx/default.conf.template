@@ -65,7 +65,7 @@ server {
         gzip off;
     }
 
-    # Revisión periódica: la llama el trabajo programado, que corre fuera de este entorno. audit-core exige el
+    # Revisión periódica: la llama la tarea programada de Azure, que está fuera de este entorno. audit-core exige el
     # secreto de tareas (X-AuditNet-Tarea); el resto de /internal no se publica.
     location = /internal/review/run {
         limit_except POST { deny all; }

@@ -705,20 +705,21 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
   transacciones (`POLITICA_REVISION`).
 - **Prueba:** `RevisionPeriodicaServiceTest`, CP-B13-01 y CP-B13-02.
 
-## D-55 · Revisión periódica con un trabajo programado (Bloque 13)
+## D-55 · Revisión periódica programada (Bloque 13)
 
-- **Decisión:** un Container Apps Job (`infra/azure/09-crear-revision.sh`, todos los días a las 9:00 UTC = 6:00 en
+- **Decisión:** una Logic App de consumo (`infra/azure/09-crear-revision.sh`, todos los días a las 6:00, hora de
   Argentina) llama a `POST /internal/review/run` de audit-core con el secreto de tareas (encabezado
-  `X-AuditNet-Tarea`, comparación en tiempo constante; sin secreto configurado la ruta responde 404). Funciona con las
-  apps en cero réplicas porque el pedido las despierta. El administrador puede ejecutarla desde ADM.
-- **Entorno aparte:** Azure migró `cae-auditnet` al modo *express*, que no admite trabajos
-  (`ExpressEnvironmentResourceNotSupported`), y un entorno nuevo creado con la CLI también quedó en express. El
-  trabajo corre en un entorno propio, `cae-auditnet-tareas`, creado con la API de Azure y el perfil de carga
-  *Consumption* explícito (así queda estándar), sin perfiles dedicados ni registros en Log Analytics: no tiene costo
-  fijo. Desde ahí no se alcanza el ingreso interno de las apps, así
-  que llama por nginx: nginx publica solo `POST /internal/review/run` (el resto de `/internal` sigue respondiendo 404)
-  y audit-core exige el secreto de 256 bits. Se descartaron un cron de GitHub Actions (corre solo en la rama por
-  defecto, `main`) y Logic Apps (otro servicio más que configurar).
+  `X-AuditNet-Tarea`, comparación en tiempo constante; sin secreto configurado la ruta responde 404). El secreto es un
+  parámetro seguro de la Logic App y su historial no muestra el pedido. Funciona con las apps en cero réplicas porque
+  el pedido las despierta; si no responden a tiempo, reintenta 4 veces con un minuto de espera. El administrador puede
+  ejecutarla desde ADM.
+- **Por qué no un Container Apps Job (plan original):** Azure migró `cae-auditnet` al modo *express*, que no admite
+  trabajos (`ExpressEnvironmentResourceNotSupported`), y los entornos nuevos de la suscripción también quedan en
+  express, incluso pidiendo el perfil *Consumption* por la API. Se descartó un cron de GitHub Actions porque solo corre
+  en la rama por defecto (`main`).
+- **Ruta pública:** la Logic App está fuera del entorno y no alcanza el ingreso interno de las apps, así que llama por
+  nginx: nginx publica solo `POST /internal/review/run` (el resto de `/internal` sigue respondiendo 404) y audit-core
+  exige el secreto de 256 bits.
 - **Qué hace por organización activa:** (1) re-audita la última configuración de los equipos activos cuya última
   auditoría superó la frecuencia (una transacción por equipo; se vuelve a verificar con el equipo bloqueado, así dos
   ejecuciones simultáneas no duplican); las auditorías quedan con origen AUTOMATICA y generan alertas y correo como
@@ -730,8 +731,8 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
 - **Límite:** la plataforma no se conecta a los equipos: "re-auditar" es evaluar la última configuración cargada
   contra la baseline vigente. Si PostgreSQL está detenido (modo ahorro) la ejecución del día falla y la del día
   siguiente se pone al día.
-- **Impacto financiero pendiente:** una ejecución diaria de segundos con 0,25 vCPU entra en la cuota gratuita mensual
-  de Container Apps; confirmar en Cost Management.
+- **Impacto financiero pendiente:** la Logic App de consumo cobra por acción ejecutada (dos por día); con ese volumen el
+  costo es de centavos o menos. Confirmar en Cost Management.
 - **Prueba:** `RevisionPeriodicaServiceTest` (reloj fijo, dos ejecuciones seguidas), CP-B13-03 a CP-B13-07.
 
 ## D-56 · Resumen mensual (Bloque 13)

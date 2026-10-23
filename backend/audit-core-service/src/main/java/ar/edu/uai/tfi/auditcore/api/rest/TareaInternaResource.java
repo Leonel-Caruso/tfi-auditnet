@@ -16,8 +16,9 @@ import java.security.MessageDigest;
 import java.util.Optional;
 
 /**
- * Tarea que dispara el trabajo programado de Azure. No pasa por el gateway: se autoriza con un secreto compartido en
- * el encabezado {@value #ENCABEZADO}. Sin secreto configurado, la ruta no existe.
+ * Revisión diaria que dispara la tarea programada de Azure (llega por nginx, que publica solo esta ruta de /internal).
+ * Se autoriza con un secreto compartido en el encabezado {@value #ENCABEZADO}. Sin secreto configurado, la ruta no
+ * existe.
  */
 @Path("/internal")
 @Produces(MediaType.APPLICATION_JSON)

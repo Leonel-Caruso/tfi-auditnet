@@ -27,7 +27,7 @@ quedan pendientes en la bandeja de salida.
 | `CORREO_REMITENTE` | management | `DoNotReply@<dominio>.azurecomm.net` |
 | `MAILPIT_URL` | management | Por defecto `http://localhost:8025` en el perfil dev |
 | `APP_URL_PUBLICA` | management | Dirección del sitio, para los enlaces de los correos |
-| `TAREA_SECRETO` (secreto) | ambos y el trabajo programado | Autoriza `/internal/...`; en el perfil dev, `solo-desarrollo-local` |
+| `TAREA_SECRETO` (secreto) | ambos y la Logic App de la revisión | Autoriza `/internal/...`; en el perfil dev, `solo-desarrollo-local` |
 | `MANAGEMENT_URL` | audit-core | Dirección interna de management, para pedirle que envíe los avisos |
 
 ## API nueva o modificada
@@ -47,8 +47,8 @@ quedan pendientes en la bandeja de salida.
 | audit-core | El historial de auditorías informa `origen` (MANUAL o AUTOMATICA) | Igual que antes |
 
 nginx deriva `/api/client-organizations/{id}/review-policy` a audit-core (como `audit-status`). De `/internal` publica
-solo `POST /internal/review/run`, para el trabajo programado (que corre en otro entorno, ver D-55); el resto responde
-404.
+solo `POST /internal/review/run`, para la Logic App que dispara la revisión diaria (está fuera del entorno, ver D-55);
+el resto responde 404.
 
 ## Pantallas
 
@@ -93,7 +93,7 @@ correos inventados: Mailpit los recibe todos.
 | CP-B13-04 | Volver a ejecutarla | Todo en 0: no repite avisos ni auditorías |
 | CP-B13-05 | Llevar la última auditoría de un equipo a hace 40 días (ver abajo) y ejecutar la revisión | Una auditoría nueva con la etiqueta *automática* en el historial |
 | CP-B13-06 | La primera ejecución del mes (o la primera de todas) | Correo *Resumen de <mes anterior>* al responsable y al administrador de organización |
-| CP-B13-07 | En Azure: `az containerapp job start` (ver abajo) y mirar el historial de ejecuciones | Ejecución correcta; bitácora de transacciones `REVISION_PERIODICA` con actor `revision-periodica` |
+| CP-B13-07 | En Azure: `bash infra/azure/09-crear-revision.sh probar` | `Resultado: Succeeded`; bitácora de transacciones `REVISION_PERIODICA` con actor `revision-periodica` |
 
 Para simular una auditoría vieja en local (PowerShell, con el compose levantado; cambiar el id):
 
@@ -105,12 +105,12 @@ Para simular una auditoría vieja en local (PowerShell, con el compose levantado
 
 1. Publicar las imágenes y desplegar como siempre (management aplica V6 y audit-core V8 al arrancar).
 2. `bash infra/azure/08-crear-email.sh`: Communication Services, dominio de Azure y variables de management.
-3. `bash infra/azure/09-crear-revision.sh`: secreto de tareas en los dos servicios, `MANAGEMENT_URL` en audit-core, el
-   entorno `cae-auditnet-tareas` (el de las apps está en modo express y no admite trabajos) y el trabajo diario.
-4. Probar: CP-B12-09 y `az containerapp job start -n caj-auditnet-revision -g rg-auditnet`.
+3. `bash infra/azure/09-crear-revision.sh`: secreto de tareas en los dos servicios, `MANAGEMENT_URL` en audit-core y la
+   Logic App diaria (el entorno de las apps está en modo express y no admite trabajos de Container Apps).
+4. Probar: CP-B12-09 y `bash infra/azure/09-crear-revision.sh probar`.
 
-**Impacto financiero pendiente:** correo a USD 0,00025 por mensaje (centavos con el volumen de la demo) y el trabajo
-diario dentro de la cuota gratuita de Container Apps. Confirmar en Cost Management al mes de uso.
+**Impacto financiero pendiente:** correo a USD 0,00025 por mensaje (centavos con el volumen de la demo) y la Logic App
+de consumo cobra por acción ejecutada (dos por día: centavos o menos). Confirmar en Cost Management al mes de uso.
 
 ## Pendiente de actualizar en la carpeta de tesis (Bloque 16)
 
@@ -118,4 +118,4 @@ diario dentro de la cuota gratuita de Container Apps. Confirmar en Cost Manageme
   consultar bandeja de salida.
 - CU de alertas: el aviso externo ahora existe (correo) y se informa si no está configurado.
 - DER: `correos_salientes`, `recuperaciones_contrasena`, `politicas_revision`, `resumenes_mensuales` y columnas nuevas.
-- Despliegue: Communication Services y el Container Apps Job; Mailpit en el entorno local.
+- Despliegue: Communication Services y la Logic App de la revisión diaria; Mailpit en el entorno local.
