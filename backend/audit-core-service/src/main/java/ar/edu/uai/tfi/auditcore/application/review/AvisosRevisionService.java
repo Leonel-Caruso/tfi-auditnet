@@ -24,12 +24,10 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.YearMonth;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -46,8 +44,6 @@ public class AvisosRevisionService {
     static final ZoneId ZONA = ZoneId.of("America/Argentina/Buenos_Aires");
     /** Elementos que se detallan en el correo; el resto se ve en la consola. */
     static final int ITEMS_EN_AVISO = 15;
-    private static final DateTimeFormatter MES = DateTimeFormatter.ofPattern("MMMM 'de' yyyy",
-            Locale.forLanguageTag("es-AR"));
 
     private final SeguimientoRevisionPort seguimiento;
     private final HallazgoRepository hallazgos;
@@ -200,7 +196,8 @@ public class AvisosRevisionService {
         if (ejecutadas > 0 || detectados > 0 || cerrados > 0) {
             List<AlertaCritica> vigentes = alertas.buscar(FiltroAlertas.vigentes(organizacionId));
             Map<String, Object> datos = new LinkedHashMap<>();
-            datos.put("periodo", MES.format(mes));
+            // Año y mes ("2026-09"): management-service lo escribe en el idioma de cada destinatario.
+            datos.put("periodo", periodo);
             datos.put("auditorias", ejecutadas);
             datos.put("detectados", detectados);
             datos.put("cerrados", cerrados);

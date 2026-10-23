@@ -1,0 +1,391 @@
+# Mensajes de error que ve el usuario, en español tal como los arma el código y su traducción.
+# {0}, {1}... son las partes variables (nombres, cantidades, fechas): se copian tal cual en la traducción.
+# Un mensaje que no está acá se muestra en español.
+
+es: Usuario o contraseña incorrectos.
+en: Incorrect username or password.
+pt: Usuário ou senha incorretos.
+
+es: El usuario/email y la contraseña son obligatorios.
+en: The username/email and password are required.
+pt: O usuário/e-mail e a senha são obrigatórios.
+
+es: La cuenta está bloqueada por {0} intentos fallidos. Probá de nuevo en {1} minuto o pedile al administrador que la desbloquee.
+en: The account is locked after {0} failed attempts. Try again in {1} minute or ask the administrator to unlock it.
+pt: A conta está bloqueada por {0} tentativas falhas. Tente de novo em {1} minuto ou peça ao administrador para desbloqueá-la.
+
+es: La cuenta está bloqueada por {0} intentos fallidos. Probá de nuevo en {1} minutos o pedile al administrador que la desbloquee.
+en: The account is locked after {0} failed attempts. Try again in {1} minutes or ask the administrator to unlock it.
+pt: A conta está bloqueada por {0} tentativas falhas. Tente de novo em {1} minutos ou peça ao administrador para desbloqueá-la.
+
+es: La cuenta no se encuentra activa.
+en: The account is not active.
+pt: A conta não está ativa.
+
+es: La organización a la que pertenece la cuenta no se encuentra activa.
+en: The organization this account belongs to is not active.
+pt: A organização à qual a conta pertence não está ativa.
+
+es: El usuario no posee roles asignados.
+en: The user has no assigned profiles.
+pt: O usuário não tem perfis atribuídos.
+
+es: La sesión no es válida.
+en: The session is not valid.
+pt: A sessão não é válida.
+
+es: La sesión no identifica a un usuario válido.
+en: The session does not identify a valid user.
+pt: A sessão não identifica um usuário válido.
+
+es: El usuario autenticado no tiene una organización asociada.
+en: The signed-in user has no associated organization.
+pt: O usuário autenticado não tem uma organização associada.
+
+es: La contraseña actual no es correcta.
+en: The current password is incorrect.
+pt: A senha atual não está correta.
+
+es: La contraseña nueva tiene que ser distinta de la actual.
+en: The new password must be different from the current one.
+pt: A nova senha precisa ser diferente da atual.
+
+es: La contraseña es obligatoria.
+en: The password is required.
+pt: A senha é obrigatória.
+
+es: La contraseña debe tener al menos {0} caracteres.
+en: The password must be at least {0} characters long.
+pt: A senha deve ter pelo menos {0} caracteres.
+
+es: La contraseña no puede superar los {0} caracteres.
+en: The password cannot be longer than {0} characters.
+pt: A senha não pode ter mais de {0} caracteres.
+
+es: La contraseña debe combinar letras y números.
+en: The password must combine letters and numbers.
+pt: A senha deve combinar letras e números.
+
+es: La contraseña no puede contener el nombre de usuario.
+en: The password cannot contain the username.
+pt: A senha não pode conter o nome de usuário.
+
+es: Ingresá tu usuario o correo.
+en: Enter your username or email.
+pt: Digite seu usuário ou e-mail.
+
+es: El enlace no es válido o ya venció. Pedí uno nuevo desde «¿Olvidaste tu contraseña?».
+en: The link is not valid or has expired. Request a new one from “Forgot your password?”.
+pt: O link não é válido ou já venceu. Peça um novo em “Esqueceu sua senha?”.
+
+es: Indicá si querés recibir cada tipo de aviso.
+en: Indicate whether you want to receive each type of notice.
+pt: Indique se você quer receber cada tipo de aviso.
+
+es: El idioma debe ser es, en o pt.
+en: The language must be es, en or pt.
+pt: O idioma deve ser es, en ou pt.
+
+es: El cuerpo de la solicitud es obligatorio.
+en: The request body is required.
+pt: O corpo da requisição é obrigatório.
+
+es: El campo {0} es obligatorio.
+en: The {0} field is required.
+pt: O campo {0} é obrigatório.
+
+es: {0} no puede superar los {1} caracteres.
+en: {0} cannot be longer than {1} characters.
+pt: {0} não pode ter mais de {1} caracteres.
+
+es: El formato del email no es válido.
+en: The email format is not valid.
+pt: O formato do e-mail não é válido.
+
+es: El nombre de usuario debe tener entre 3 y 60 caracteres: letras sin tildes ni ñ, números, punto, guion o guion bajo.
+en: The username must be 3 to 60 characters long: letters without accents or ñ, numbers, dot, hyphen or underscore.
+pt: O nome de usuário deve ter entre 3 e 60 caracteres: letras sem acentos nem ñ, números, ponto, hífen ou sublinhado.
+
+es: El estado debe ser ACTIVO o DESHABILITADO.
+en: The status must be ACTIVO or DESHABILITADO.
+pt: O status deve ser ACTIVO ou DESHABILITADO.
+
+es: El id de usuario no es válido.
+en: The user id is not valid.
+pt: O id de usuário não é válido.
+
+es: El usuario no fue encontrado.
+en: The user was not found.
+pt: O usuário não foi encontrado.
+
+es: El usuario ya está {0}.
+en: The user is already {0}.
+pt: O usuário já está {0}.
+
+es: La cuenta no está bloqueada.
+en: The account is not locked.
+pt: A conta não está bloqueada.
+
+es: Ya existe un usuario con el mismo email o nombre de usuario.
+en: A user with the same email or username already exists.
+pt: Já existe um usuário com o mesmo e-mail ou nome de usuário.
+
+es: Ya existe otro usuario con ese email.
+en: Another user with that email already exists.
+pt: Já existe outro usuário com esse e-mail.
+
+es: Debe seleccionarse una organización cliente válida.
+en: A valid client organization must be selected.
+pt: É preciso selecionar uma organização cliente válida.
+
+es: El rol {0} no existe.
+en: The profile {0} does not exist.
+pt: O perfil {0} não existe.
+
+es: El rol {0} no se encuentra activo.
+en: The profile {0} is not active.
+pt: O perfil {0} não está ativo.
+
+es: Todo usuario activo debe tener al menos un rol asignado.
+en: Every active user must have at least one assigned profile.
+pt: Todo usuário ativo deve ter pelo menos um perfil atribuído.
+
+es: Tiene que quedar al menos un administrador activo en la plataforma.
+en: At least one active administrator must remain on the platform.
+pt: É preciso que fique pelo menos um administrador ativo na plataforma.
+
+es: No podés deshabilitar tu propia cuenta.
+en: You cannot disable your own account.
+pt: Você não pode desativar sua própria conta.
+
+es: No podés quitarte a vos mismo el perfil de administrador.
+en: You cannot remove the administrator profile from yourself.
+pt: Você não pode remover o perfil de administrador de si mesmo.
+
+es: Tu perfil no permite gestionar usuarios.
+en: Your profile cannot manage users.
+pt: Seu perfil não permite gerenciar usuários.
+
+es: Tu usuario no tiene una organización asociada.
+en: Your user has no associated organization.
+pt: Seu usuário não tem uma organização associada.
+
+es: Los administradores solo los gestiona el administrador del sistema.
+en: Administrators can only be managed by the system administrator.
+pt: Os administradores só podem ser gerenciados pelo administrador do sistema.
+
+es: Solo podés asignar los perfiles Analista de redes, Auditor técnico y Responsable de gestión IT.
+en: You can only assign the Network analyst, Technical auditor and IT management lead profiles.
+pt: Você só pode atribuir os perfis Analista de redes, Auditor técnico e Responsável pela gestão de TI.
+
+es: Solo podés asignar usuarios a tu organización.
+en: You can only assign users to your organization.
+pt: Você só pode atribuir usuários à sua organização.
+
+es: Solo podés consultar usuarios de tu organización.
+en: You can only view users of your organization.
+pt: Você só pode consultar usuários da sua organização.
+
+es: Solo podés gestionar usuarios de tu organización.
+en: You can only manage users of your organization.
+pt: Você só pode gerenciar usuários da sua organização.
+
+es: Solo podés gestionar las sedes de tu organización.
+en: You can only manage the sites of your organization.
+pt: Você só pode gerenciar as sedes da sua organização.
+
+es: Solo podés acceder a la información de tu organización.
+en: You can only access the information of your organization.
+pt: Você só pode acessar as informações da sua organização.
+
+es: El perfil no fue encontrado.
+en: The profile was not found.
+pt: O perfil não foi encontrado.
+
+es: La descripción es obligatoria.
+en: The description is required.
+pt: A descrição é obrigatória.
+
+es: La descripción no puede superar los 240 caracteres.
+en: The description cannot be longer than 240 characters.
+pt: A descrição não pode ter mais de 240 caracteres.
+
+es: El id de organización es obligatorio.
+en: The organization id is required.
+pt: O id da organização é obrigatório.
+
+es: La organización cliente no fue encontrada.
+en: The client organization was not found.
+pt: A organização cliente não foi encontrada.
+
+es: La organización ya está {0}.
+en: The organization is already {0}.
+pt: A organização já está {0}.
+
+es: Ya existe una organización cliente con el mismo identificador o razón social.
+en: A client organization with the same identifier or company name already exists.
+pt: Já existe uma organização cliente com o mesmo identificador ou razão social.
+
+es: Ya existe otra organización cliente con el mismo identificador o razón social.
+en: Another client organization with the same identifier or company name already exists.
+pt: Já existe outra organização cliente com o mesmo identificador ou razão social.
+
+es: La organización está deshabilitada.
+en: The organization is disabled.
+pt: A organização está desativada.
+
+es: El id de sede es obligatorio.
+en: The site id is required.
+pt: O id da sede é obrigatório.
+
+es: La sede no fue encontrada.
+en: The site was not found.
+pt: A sede não foi encontrada.
+
+es: La sede ya está {0}.
+en: The site is already {0}.
+pt: A sede já está {0}.
+
+es: Ya existe una sede con ese nombre para la organización seleccionada.
+en: A site with that name already exists for the selected organization.
+pt: Já existe uma sede com esse nome para a organização selecionada.
+
+es: Ya existe otra sede con ese nombre en la organización.
+en: Another site with that name already exists in the organization.
+pt: Já existe outra sede com esse nome na organização.
+
+es: La organización está deshabilitada: no se le pueden agregar sedes.
+en: The organization is disabled: sites cannot be added to it.
+pt: A organização está desativada: não é possível adicionar sedes.
+
+es: No existe la organización.
+en: The organization does not exist.
+pt: A organização não existe.
+
+es: No existe la sede.
+en: The site does not exist.
+pt: A sede não existe.
+
+es: No existe el rol.
+en: The profile does not exist.
+pt: O perfil não existe.
+
+es: No existe el plan.
+en: The plan does not exist.
+pt: O plano não existe.
+
+es: No existe la solicitud.
+en: The request does not exist.
+pt: O pedido não existe.
+
+es: No existe el usuario {0}.
+en: The user {0} does not exist.
+pt: O usuário {0} não existe.
+
+es: Elegí un plan.
+en: Choose a plan.
+pt: Escolha um plano.
+
+es: El plan {0} no existe.
+en: The plan {0} does not exist.
+pt: O plano {0} não existe.
+
+es: La organización no tiene un plan asignado.
+en: The organization has no assigned plan.
+pt: A organização não tem um plano atribuído.
+
+es: El plan {0} dura entre {1} y {2} días.
+en: The {0} plan lasts between {1} and {2} days.
+pt: O plano {0} dura entre {1} e {2} dias.
+
+es: El plan {0} se acuerda con cada cliente: indicá la cantidad de {1} (entre 1 y {2}).
+en: The {0} plan is agreed with each client: enter the number of {1} (between 1 and {2}).
+pt: O plano {0} é combinado com cada cliente: informe a quantidade de {1} (entre 1 e {2}).
+
+es: El plan {0} lo asigna el administrador del sistema: elegí otro plan.
+en: The {0} plan is assigned by the system administrator: choose another plan.
+pt: O plano {0} é atribuído pelo administrador do sistema: escolha outro plano.
+
+es: El plan {0} permite hasta {1} usuarios activos y la organización ya tiene {2}. Para sumar más, pedí un cambio de plan desde Mi plan.
+en: The {0} plan allows up to {1} active users and the organization already has {2}. To add more, request a plan change from My plan.
+pt: O plano {0} permite até {1} usuários ativos e a organização já tem {2}. Para adicionar mais, peça uma mudança de plano em Meu plano.
+
+es: El período de prueba venció el {0}: la organización quedó en modo consulta hasta que se apruebe un plan. Pedilo desde Mi plan.
+en: The trial period expired on {0}: the organization is in read-only mode until a plan is approved. Request one from My plan.
+pt: O período de teste venceu em {0}: a organização ficou em modo consulta até que um plano seja aprovado. Peça um em Meu plano.
+
+es: La organización tiene {0} dispositivos activos y el plan {1} permite {2}: hay que deshabilitar dispositivos o elegir otro plan.
+en: The organization has {0} active devices and the {1} plan allows {2}: disable devices or choose another plan.
+pt: A organização tem {0} dispositivos ativos e o plano {1} permite {2}: é preciso desativar dispositivos ou escolher outro plano.
+
+es: La organización tiene {0} usuarios activos y el plan {1} permite {2}: hay que deshabilitar usuarios o elegir otro plan.
+en: The organization has {0} active users and the {1} plan allows {2}: disable users or choose another plan.
+pt: A organização tem {0} usuários ativos e o plano {1} permite {2}: é preciso desativar usuários ou escolher outro plano.
+
+es: La organización ya tiene el plan {0}.
+en: The organization already has the {0} plan.
+pt: A organização já está no plano {0}.
+
+es: La organización ya tiene el plan {0} con esos límites.
+en: The organization already has the {0} plan with those limits.
+pt: A organização já está no plano {0} com esses limites.
+
+es: La modalidad debe ser MENSUAL o ANUAL.
+en: The billing period must be MENSUAL or ANUAL.
+pt: A modalidade deve ser MENSUAL ou ANUAL.
+
+es: Ya hay una solicitud pendiente: esperá la respuesta o cancelala para pedir otro plan.
+en: There is already a pending request: wait for the answer or cancel it to request another plan.
+pt: Já há um pedido pendente: aguarde a resposta ou cancele-o para pedir outro plano.
+
+es: El id de la solicitud es obligatorio.
+en: The request id is required.
+pt: O id do pedido é obrigatório.
+
+es: La solicitud no fue encontrada.
+en: The request was not found.
+pt: O pedido não foi encontrado.
+
+es: La solicitud ya fue resuelta ({0}).
+en: The request was already resolved ({0}).
+pt: O pedido já foi resolvido ({0}).
+
+es: Indicá el motivo del rechazo: lo ve el cliente.
+en: Enter the reason for the rejection: the client will see it.
+pt: Informe o motivo da recusa: o cliente vai vê-lo.
+
+es: El estado debe ser PENDIENTE, APROBADA, RECHAZADA o CANCELADA.
+en: The status must be PENDIENTE, APROBADA, RECHAZADA or CANCELADA.
+pt: O status deve ser PENDIENTE, APROBADA, RECHAZADA ou CANCELADA.
+
+es: El precio debe ser un importe positivo con hasta dos decimales.
+en: The price must be a positive amount with up to two decimals.
+pt: O preço deve ser um valor positivo com até duas casas decimais.
+
+es: El límite debe estar entre 1 y {0}.
+en: The limit must be between 1 and {0}.
+pt: O limite deve estar entre 1 e {0}.
+
+es: El campo '{0}' debe tener formato ISO-8601, por ejemplo 2026-09-28T00:00:00Z.
+en: The '{0}' field must use the ISO-8601 format, for example 2026-09-28T00:00:00Z.
+pt: O campo '{0}' deve ter formato ISO-8601, por exemplo 2026-09-28T00:00:00Z.
+
+es: La fecha 'desde' no puede ser posterior a 'hasta'.
+en: The 'from' date cannot be later than the 'to' date.
+pt: A data 'de' não pode ser posterior à data 'até'.
+
+es: El valor '{0}' no es válido para el campo '{1}'.
+en: The value '{0}' is not valid for the '{1}' field.
+pt: O valor '{0}' não é válido para o campo '{1}'.
+
+es: El campo 'entidad' solo admite letras y guiones bajos, por ejemplo DISPOSITIVO.
+en: The 'entidad' field only accepts letters and underscores, for example DISPOSITIVO.
+pt: O campo 'entidad' só aceita letras e sublinhados, por exemplo DISPOSITIVO.
+
+es: El servicio debe ser management-service o audit-core-service.
+en: The service must be management-service or audit-core-service.
+pt: O serviço deve ser management-service ou audit-core-service.
+
+es: Ocurrió un error inesperado. Código de seguimiento: {0}
+en: An unexpected error occurred. Tracking code: {0}
+pt: Ocorreu um erro inesperado. Código de rastreamento: {0}

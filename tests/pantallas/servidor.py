@@ -95,7 +95,8 @@ class ManejadorAuditNet(SimpleHTTPRequestHandler):
         cuerpo = json.loads(self.rfile.read(largo)) if largo else None
         perfil = (self.headers.get("Authorization") or "").removeprefix("Bearer ").strip()
         self.perfil = perfil
-        self.registro.append({"metodo": metodo, "ruta": url.path, "consulta": consulta, "cuerpo": cuerpo})
+        self.registro.append({"metodo": metodo, "ruta": url.path, "consulta": consulta, "cuerpo": cuerpo,
+                              "idioma": self.headers.get("Accept-Language")})
 
         if url.path == "/api/auth/me":
             if perfil not in datos.ROLES:
@@ -153,6 +154,21 @@ def _por_id(coleccion, armar=lambda elemento: elemento):
     return responder
 
 
+def _ingresar(manejador, _m, _c, cuerpo):
+    """Solo existe la cuenta "ana" (analista), que eligió portugués."""
+    if cuerpo.get("identidad") != "ana" or cuerpo.get("password") != "Clave correcta 2026":
+        return manejador._json(401, {"message": "Usuario o contraseña incorrectos."})
+    manejador._json(200, {"accessToken": "ANALISTA_RED", "tokenType": "Bearer", "expiresIn": 3600, "userId": 1,
+                          "organizationId": 2, "nombre": "Ana", "username": "ana", "email": "ana@acme.test",
+                          "roles": ["ANALISTA_RED"], "idioma": "pt"})
+
+
+def _idioma(manejador, _m, _c, cuerpo):
+    if cuerpo.get("idioma") not in ("es", "en", "pt"):
+        return manejador._json(400, {"message": "El idioma debe ser es, en o pt."})
+    manejador._json(200, cuerpo)
+
+
 def _restablecer(manejador, _m, _c, cuerpo):
     if cuerpo.get("token") != "enlace-valido":
         return manejador._json(400, {"message": "El enlace no es válido o ya venció."})
@@ -160,6 +176,8 @@ def _restablecer(manejador, _m, _c, cuerpo):
 
 
 RUTAS = [
+    (r"/api/auth/login", {"POST"}, _ingresar),
+    (r"/api/auth/me/language", {"PUT"}, _idioma),
     (r"/api/auth/password-recovery", {"POST"},
      lambda h, m, c, b: h._json(202, {"mensaje": "Si los datos corresponden a una cuenta activa, en unos minutos vas "
                                                   "a recibir un correo con el enlace."})),

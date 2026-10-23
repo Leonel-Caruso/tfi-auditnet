@@ -1,4 +1,6 @@
 ---
+import es, { type Clave } from '../i18n/es';
+
 // En el build estático la ruta termina en '/' (ej. /logs/): se normaliza para comparar.
 const currentPath = Astro.url.pathname.replace(/\/+$/, '') || '/';
 
@@ -7,29 +9,32 @@ const ADMIN_ORGANIZACION = 'ADMINISTRADOR_ORGANIZACION';
 
 // roles: perfiles que ven el ítem (sin roles lo ven todos).
 const railItems = [
-  { href: '/dashboard', label: 'Tablero de control', code: '~/' },
-  { href: '/client-status', label: 'Estado del cliente', code: 'CLI' },
+  { href: '/dashboard', code: '~/' },
+  { href: '/client-status', code: 'CLI' },
   { separator: true },
-  { href: '/organizations', label: 'Organizaciones y sedes', code: 'ORG', roles: [ADMIN, ADMIN_ORGANIZACION] },
-  { href: '/users', label: 'Usuarios', code: 'USR', roles: [ADMIN, ADMIN_ORGANIZACION] },
-  { href: '/plan', label: 'Mi plan', code: 'PLN', roles: [ADMIN_ORGANIZACION, 'RESPONSABLE_GESTION_IT'] },
-  { href: '/plans', label: 'Planes y solicitudes', code: 'PLN', roles: [ADMIN] },
-  { href: '/logs', label: 'Bitácoras', code: 'BIT', roles: [ADMIN] },
-  { href: '/admin', label: 'Panel de administración', code: 'ADM', roles: [ADMIN] },
+  { href: '/organizations', code: 'ORG', roles: [ADMIN, ADMIN_ORGANIZACION] },
+  { href: '/users', code: 'USR', roles: [ADMIN, ADMIN_ORGANIZACION] },
+  { href: '/plan', code: 'PLN', roles: [ADMIN_ORGANIZACION, 'RESPONSABLE_GESTION_IT'] },
+  { href: '/plans', code: 'PLN', roles: [ADMIN] },
+  { href: '/logs', code: 'BIT', roles: [ADMIN] },
+  { href: '/admin', code: 'ADM', roles: [ADMIN] },
   { separator: true },
-  { href: '/devices', label: 'Dispositivos', code: 'DEV' },
-  { href: '/baselines', label: 'Baselines', code: 'BL' },
-  { href: '/rules', label: 'Reglas', code: 'RUL' },
-  { href: '/audits', label: 'Auditorías', code: 'RUN' },
-  { href: '/history', label: 'Historial de auditorías', code: 'HIS' },
-  { href: '/results', label: 'Hallazgos', code: 'LOG' },
-  { href: '/alerts', label: 'Alertas críticas', code: 'ALR' },
-  { href: '/reports', label: 'Reportes', code: 'REP' },
+  { href: '/devices', code: 'DEV' },
+  { href: '/baselines', code: 'BL' },
+  { href: '/rules', code: 'RUL' },
+  { href: '/audits', code: 'RUN' },
+  { href: '/history', code: 'HIS' },
+  { href: '/results', code: 'LOG' },
+  { href: '/alerts', code: 'ALR' },
+  { href: '/reports', code: 'REP' },
 ];
+
+const clave = (href?: string) => `menu.${href?.slice(1)}` as Clave;
+const etiqueta = (href?: string) => es[clave(href)];
 ---
 
-<aside class="command-rail" aria-label="Navegación principal">
-  <a class="rail-brand" href="/dashboard" aria-label="AuditNet · Inicio" title="AuditNet">
+<aside class="command-rail" aria-label={es['consola.navegacion']} data-i18n-aria-label="consola.navegacion">
+  <a class="rail-brand" href="/dashboard" aria-label={es['consola.inicio']} data-i18n-aria-label="consola.inicio" title="AuditNet">
     <span>A_</span>
   </a>
 
@@ -40,18 +45,21 @@ const railItems = [
       <a
         href={item.href}
         class:list={["rail-link", currentPath === item.href && "is-active"]}
-        data-label={item.label}
+        data-label={etiqueta(item.href)}
+        data-i18n-label={clave(item.href)}
         data-roles={item.roles?.join(',')}
-        aria-label={item.label}
-        title={item.label}
+        aria-label={etiqueta(item.href)}
+        data-i18n-aria-label={clave(item.href)}
+        title={etiqueta(item.href)}
+        data-i18n-title={clave(item.href)}
       >
         <span>{item.code}</span>
       </a>
     ))}
   </nav>
 
-  <div class="rail-runtime" aria-label="Estado local">
-    <span class="rail-status-dot is-online" title="API disponible"></span>
+  <div class="rail-runtime" aria-label={es['consola.estadoLocal']} data-i18n-aria-label="consola.estadoLocal">
+    <span class="rail-status-dot is-online" title={es['consola.apiDisponible']} data-i18n-title="consola.apiDisponible"></span>
     <span class="rail-runtime-label">LOC</span>
   </div>
 </aside>

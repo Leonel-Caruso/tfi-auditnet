@@ -1,9 +1,11 @@
 ---
 import PublicLayout from '../layouts/PublicLayout.astro';
+import es from '../i18n/es';
 ---
 
 <PublicLayout
-  title="Acceso a la consola de auditoría de redes"
+  title={es['login.metaTitulo']}
+  tituloClave="login.metaTitulo"
   description="AuditNet: auditoría y control de configuraciones de red Cisco IOS/IOS-XE para organizaciones. Ingresá a la consola con tu usuario."
   indexable
   path="/login"
@@ -14,14 +16,11 @@ import PublicLayout from '../layouts/PublicLayout.astro';
         <div class="hero-mark" id="hero-mark" role="img" aria-label="AuditNet">
           <span aria-hidden="true">A</span><span class="hero-mark-typed" aria-hidden="true"></span><span class="hero-mark-cursor" aria-hidden="true">_</span>
         </div>
-        <span class="eyebrow eyebrow-light">TFI · Ingeniería en Sistemas Informáticos</span>
-        <h1>Control y auditoría de configuraciones de red</h1>
-        <p>
-          Una consola única para administrar acceso, organizar infraestructura y construir un flujo
-          de auditoría técnica sobre configuraciones Cisco IOS/IOS-XE.
-        </p>
+        <span class="eyebrow eyebrow-light" data-i18n="acceso.tesis">{es['acceso.tesis']}</span>
+        <h1 data-i18n="login.titular">{es['login.titular']}</h1>
+        <p data-i18n="login.bajada">{es['login.bajada']}</p>
 
-        <div class="login-terminal" aria-label="Flujo técnico principal">
+        <div class="login-terminal" aria-label={es['login.flujo']} data-i18n-aria-label="login.flujo">
           <div class="terminal-bar">
             <span class="terminal-dot is-accent"></span>
             <span class="terminal-dot"></span>
@@ -41,31 +40,30 @@ import PublicLayout from '../layouts/PublicLayout.astro';
     <section class="login-form-panel">
       <form id="login-form" class="login-card">
         <div class="login-card-heading">
-          <span class="eyebrow">Acceso a consola</span>
-          <h2>Iniciar sesión</h2>
-          <p>Ingresá con tus credenciales para operar la plataforma.</p>
+          <span class="eyebrow" data-i18n="login.seccion">{es['login.seccion']}</span>
+          <h2 data-i18n="login.titulo">{es['login.titulo']}</h2>
+          <p data-i18n="login.ayuda">{es['login.ayuda']}</p>
         </div>
 
         <label class="field">
-          <span>usuario o correo</span>
-          <input id="identity" name="identity" type="text" autocomplete="username" placeholder="tu.usuario o nombre@empresa.com" required autofocus />
+          <span data-i18n="login.identidad">{es['login.identidad']}</span>
+          <input id="identity" name="identity" type="text" autocomplete="username" placeholder={es['login.identidadEjemplo']}
+            data-i18n-placeholder="login.identidadEjemplo" required autofocus />
         </label>
 
         <label class="field">
-          <span>contraseña</span>
+          <span data-i18n="login.contrasena">{es['login.contrasena']}</span>
           <input id="password" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required />
         </label>
-        <a class="login-link" href="/recover">¿Olvidaste tu contraseña?</a>
+        <a class="login-link" href="/recover" data-i18n="login.olvido">{es['login.olvido']}</a>
 
         <div id="login-error" class="alert alert-error is-hidden" role="alert"></div>
 
-        <button id="login-button" class="button button-primary button-full" type="submit">
-          Ingresar
-        </button>
+        <button id="login-button" class="button button-primary button-full" type="submit" data-i18n="login.ingresar">{es['login.ingresar']}</button>
 
         <div class="login-security-note">
           <span class="security-dot"></span>
-          conexión cifrada · sesión protegida
+          <span data-i18n="login.seguridad">{es['login.seguridad']}</span>
         </div>
       </form>
     </section>
@@ -73,6 +71,7 @@ import PublicLayout from '../layouts/PublicLayout.astro';
 
   <script>
     import { getToken, isSessionExpired, login } from '../lib/auth';
+    import { t } from '../lib/i18n';
     import { animarLogo } from '../lib/logo-animado';
 
     animarLogo(document.querySelector<HTMLElement>('#hero-mark'));
@@ -87,7 +86,7 @@ import PublicLayout from '../layouts/PublicLayout.astro';
 
     const reason = new URLSearchParams(window.location.search).get('reason');
     if (reason === 'expired' && errorBox) {
-      errorBox.textContent = 'Tu sesión terminó (venció o cambiaron los datos de tu cuenta). Volvé a iniciar sesión para continuar.';
+      errorBox.textContent = t('login.sesionTerminada');
       errorBox.classList.remove('is-hidden');
       window.history.replaceState({}, '', '/login');
     }
@@ -103,7 +102,7 @@ import PublicLayout from '../layouts/PublicLayout.astro';
 
       if (button) {
         button.disabled = true;
-        button.textContent = 'Validando...';
+        button.textContent = t('login.validando');
       }
 
       try {
@@ -111,13 +110,13 @@ import PublicLayout from '../layouts/PublicLayout.astro';
         window.location.assign('/dashboard');
       } catch (error) {
         if (errorBox) {
-          errorBox.textContent = error instanceof Error ? error.message : 'No se pudo iniciar sesión.';
+          errorBox.textContent = error instanceof Error ? error.message : t('login.error');
           errorBox.classList.remove('is-hidden');
         }
       } finally {
         if (button) {
           button.disabled = false;
-          button.textContent = 'Ingresar';
+          button.textContent = t('login.ingresar');
         }
       }
     });

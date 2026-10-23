@@ -744,6 +744,52 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
   resumen sale ese día.
 - **Prueba:** `RevisionPeriodicaServiceTest`, CP-B13-06.
 
+## D-57 · Idioma guardado por usuario (Bloque 14)
+
+- **Decisión:** la consola está en español, inglés y portugués de Brasil (pt-BR). Cada usuario tiene su idioma en
+  `usuarios.idioma` (management V7: `es`, `en` o `pt`; por defecto `es`), que se elige en Mi cuenta o en el menú del
+  usuario (`PUT /api/auth/me/language`, evento `USUARIO_MODIFICADO` en la bitácora de sistema) y vuelve en la
+  respuesta del login. Antes de ingresar, el selector de la pantalla de acceso lo recuerda solo en el navegador.
+- **Orden:** idioma de la cuenta, si no el elegido en el navegador, si no español. No se toma el idioma del navegador
+  del sistema operativo: quien no eligió nada ve siempre español.
+- **Prueba:** `AuthServiceTest`, `test_idiomas.py`, CP-B14-01 a CP-B14-03.
+
+## D-58 · Traducción en el navegador con las mismas direcciones (Bloque 14)
+
+- **Decisión:** se mantienen las direcciones actuales (`/login`, `/account`...) y el sitio estático se compila una
+  sola vez, en español. Los textos llevan una marca con su clave (`data-i18n`, y variantes para `placeholder`,
+  `title`, `aria-label`) y, si el idioma no es español, se reemplazan al cargar la página; los textos que arman los
+  scripts salen del mismo diccionario (`t()`). Se descartaron las rutas por idioma de Astro (plan original): triplicaban
+  las páginas y cambiaban direcciones que ya usan los correos, el CI y la documentación, sin beneficio para buscadores
+  (solo el login se indexa).
+- **Sin parpadeo:** un script en el encabezado fija `lang` antes de dibujar y, en inglés o portugués, oculta la página
+  hasta traducirla (con un máximo de 3 segundos por si falla un script).
+- **Control:** `en.ts` y `pt.ts` se tipan con las claves de `es.ts`, así que `npm run check` (en el CI) falla si a un
+  diccionario le falta o le sobra una clave. Las pruebas de pantalla verifican que no quede ninguna clave a la vista.
+- **Límite:** los datos cargados (nombres de reglas, descripciones, razón social) no se traducen.
+- **Prueba:** `test_idiomas.py`, CP-B14-01 a CP-B14-04.
+
+## D-59 · Mensajes del servidor traducidos por catálogo (Bloque 14)
+
+- **Decisión:** los servicios siguen generando sus mensajes en español y un filtro de respuesta los traduce según el
+  encabezado `Accept-Language`, que la consola envía en cada pedido. Cada servicio tiene su catálogo
+  (`src/main/resources/i18n/mensajes.txt`): el texto en español y su versión en inglés y portugués, con `{0}`, `{1}`...
+  para las partes variables (nombres, cantidades). Se descartó pasar los errores a códigos (plan original): obligaba a
+  tocar cada validación de los dos servicios y a cambiar el contrato de la API sin cambio visible para el usuario.
+- **Control:** al cargarse, el catálogo valida que cada mensaje tenga los tres idiomas y las mismas partes variables;
+  una prueba lo recorre completo.
+- **Límite:** un mensaje que no está en el catálogo se muestra en español. Los mensajes del motor de base de datos o de
+  librerías externas no se traducen (se muestran los genéricos de la consola).
+- **Prueba:** `CatalogoMensajesTest` en los dos servicios, CP-B14-05.
+
+## D-60 · Correos en el idioma del destinatario (Bloque 14)
+
+- **Decisión:** el idioma se resuelve al enviar, con el correo del destinatario (`usuarios.idioma`); si no corresponde a
+  ningún usuario, español. Los textos de las plantillas están en `correo/textos_<idioma>.properties` (mismas claves en
+  los tres, verificado por prueba) y las fechas y meses se escriben según el idioma. audit-core guarda el período del
+  resumen mensual como `2026-09` y management lo escribe al armar el correo.
+- **Prueba:** `PlantillasCorreoTest`, `CorreoServiceTest`, CP-B14-06.
+
 ## Pendientes detectados (para migraciones futuras)
 
 - `auditorias_configuracion.estado` solo admite `FINALIZADA` (CHECK de Hibernate). Alcanza mientras la auditoría sea

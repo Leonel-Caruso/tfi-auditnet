@@ -37,15 +37,24 @@ def abrir(entorno, navegador):
     """Abre una página con sesión iniciada (o sin sesión si perfil es None) y junta los errores de JavaScript."""
     contextos = []
 
-    def _abrir(ruta, perfil=None, tamanio=ESCRITORIO):
+    def _abrir(ruta, perfil=None, tamanio=ESCRITORIO, idioma=None):
+        """idioma: el elegido en el navegador (sin sesión) o el guardado en la cuenta (con sesión)."""
         contexto = navegador.new_context(viewport=tamanio)
         contextos.append(contexto)
+        if idioma and not perfil:
+            contexto.add_init_script(f"localStorage.getItem('auditnet.idioma') || "
+                                     f"localStorage.setItem('auditnet.idioma', '{idioma}');")
         if perfil:
+            guardado = f", idioma: '{idioma}'" if idioma else ""
+            # Solo al abrir: al recargar se conserva lo que la página haya guardado en la sesión.
             contexto.add_init_script(f"""
-                sessionStorage.setItem('tfi.auth.token', '{perfil}');
-                sessionStorage.setItem('tfi.auth.expiresAt', String(Date.now() + 3600e3));
-                sessionStorage.setItem('tfi.auth.user', JSON.stringify({{userId: 1, nombre: 'Operador',
-                  username: 'operador', email: 'operador@acme.test', organizationId: 2, roles: ['{perfil}']}}));
+                if (!sessionStorage.getItem('tfi.auth.token')) {{
+                  sessionStorage.setItem('tfi.auth.token', '{perfil}');
+                  sessionStorage.setItem('tfi.auth.expiresAt', String(Date.now() + 3600e3));
+                  sessionStorage.setItem('tfi.auth.user', JSON.stringify({{userId: 1, nombre: 'Operador',
+                    username: 'operador', email: 'operador@acme.test', organizationId: 2,
+                    roles: ['{perfil}']{guardado}}}));
+                }}
             """)
         pagina = contexto.new_page()
         pagina.errores = []

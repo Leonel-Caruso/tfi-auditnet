@@ -1,5 +1,6 @@
 // Utilidades de presentación compartidas entre pantallas.
 import type { AlertStatus, FindingStatus, RiskLevel } from './api';
+import { localeActual } from './i18n';
 
 /** Escapa texto antes de insertarlo como HTML (los datos vienen de usuarios y de configuraciones). */
 export const escapeHtml = (value: unknown) =>
@@ -13,7 +14,7 @@ export const escapeHtml = (value: unknown) =>
 export const formatDate = (value: string | null | undefined) => {
   if (!value) return '—';
   try {
-    return new Intl.DateTimeFormat('es-AR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value));
+    return new Intl.DateTimeFormat(localeActual(), { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value));
   } catch {
     return value;
   }

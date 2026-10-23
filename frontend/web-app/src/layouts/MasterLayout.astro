@@ -2,31 +2,39 @@
 import Sidebar from '../components/Sidebar.astro';
 import Topbar from '../components/Topbar.astro';
 import HeadMeta from '../components/HeadMeta.astro';
+import es from '../i18n/es';
 import '../styles/global.css';
 
 interface Props {
   title: string;
   description?: string;
   section?: string;
+  /**
+   * Prefijo de las claves del encabezado en los diccionarios: con "cuenta" se usan cuenta.titulo, cuenta.seccion y
+   * cuenta.descripcion. Sin prefijo, el encabezado queda en español.
+   */
+  i18n?: string;
 }
 
 const {
   title,
   description = 'Plataforma de auditoría y control de configuraciones de red.',
   section = 'Consola',
+  i18n,
 } = Astro.props;
+const clave = (campo: string) => (i18n ? `${i18n}.${campo}` : undefined);
 ---
 
 <!doctype html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <HeadMeta title={`${title} · AuditNet`} description={description} />
+    <HeadMeta title={`${title} · AuditNet`} description={description} tituloClave={clave('titulo')} />
   </head>
   <body class="app-body">
     <div id="session-loading" class="session-loading">
       <div class="spinner"></div>
-      <span>Validando sesión…</span>
+      <span data-i18n="consola.validando">{es['consola.validando']}</span>
     </div>
 
     <div id="protected-shell" class="app-shell is-hidden">
@@ -36,9 +44,9 @@ const {
         <main class="page-content">
           <div class="page-heading">
             <div>
-              <span class="eyebrow">{section}</span>
-              <h1>{title}</h1>
-              <p>{description}</p>
+              <span class="eyebrow" data-i18n={clave('seccion')}>{section}</span>
+              <h1 data-i18n={clave('titulo')}>{title}</h1>
+              <p data-i18n={clave('descripcion')}>{description}</p>
             </div>
           </div>
           <slot />
@@ -47,9 +55,12 @@ const {
     </div>
 
     <script>
-      import { getStoredUser, logout, verifySession } from '../lib/auth';
+      import { getStoredUser, logout, saveLanguage, verifySession } from '../lib/auth';
       import { PROFILE_ORDER, ROLE_LABEL } from '../lib/api';
       import { enhanceDateInputs } from '../lib/datepicker';
+      import { conectarSelectorIdioma, mostrarTraducida, t } from '../lib/i18n';
+
+      mostrarTraducida();
 
       // Calendario propio en todos los campos de fecha.
       enhanceDateInputs(document);
@@ -85,11 +96,11 @@ const {
           if (nameNode) nameNode.textContent = displayName;
           // Con varios perfiles se muestra el de mayor alcance.
           const mainRole = [...roles].sort((a, b) => PROFILE_ORDER.indexOf(a) - PROFILE_ORDER.indexOf(b))[0];
-          if (roleNode) roleNode.textContent = mainRole ? ROLE_LABEL[mainRole] ?? mainRole : 'sin perfil';
+          if (roleNode) roleNode.textContent = mainRole ? ROLE_LABEL[mainRole] ?? mainRole : t('perfil.ninguno');
           if (avatarNode) avatarNode.textContent = `${displayName.slice(0, 1).toUpperCase()}_`;
           if (handleNode) handleNode.textContent = stored?.username ?? current.username;
           if (connectionNode) {
-            connectionNode.textContent = 'en línea';
+            connectionNode.textContent = t('consola.enLinea');
             connectionNode.classList.add('is-online');
           }
 
@@ -99,6 +110,8 @@ const {
           // authFetch/verifySession redirige a /login cuando corresponde.
         }
       }
+
+      conectarSelectorIdioma(document.querySelector('#user-popover') ?? document, saveLanguage);
 
       const userMenuButton = document.querySelector<HTMLButtonElement>('#user-menu-button');
       const userPopover = document.querySelector<HTMLElement>('#user-popover');
@@ -134,7 +147,11 @@ const {
         reportes: '/reports', reporte: '/reports', rep: '/reports', reports: '/reports',
         cliente: '/client-status', cli: '/client-status', estado: '/client-status', tablero: '/dashboard',
         admin: '/admin', adm: '/admin', panel: '/admin', salud: '/admin',
-        cuenta: '/account', 'mi cuenta': '/account', contraseña: '/account', password: '/account'
+        cuenta: '/account', 'mi cuenta': '/account', contraseña: '/account', password: '/account',
+        account: '/account', 'my account': '/account', conta: '/account', 'minha conta': '/account',
+        users: '/users', 'usuários': '/users', organizations: '/organizations', 'organizações': '/organizations',
+        achados: '/results', relatorios: '/reports', 'relatórios': '/reports',
+        painel: '/dashboard', idioma: '/account', language: '/account'
       };
 
       commandPalette?.addEventListener('keydown', (event) => {

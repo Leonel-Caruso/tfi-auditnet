@@ -2,6 +2,7 @@ package ar.edu.uai.tfi.management.infrastructure.persistence.repository;
 
 import ar.edu.uai.tfi.management.domain.model.EstadoAcceso;
 import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
+import ar.edu.uai.tfi.management.domain.model.Idioma;
 import ar.edu.uai.tfi.management.domain.model.PreferenciasAviso;
 import ar.edu.uai.tfi.management.domain.model.Usuario;
 import ar.edu.uai.tfi.management.domain.repository.UsuarioRepository;
@@ -170,6 +171,30 @@ public class PanacheUsuarioRepository implements PanacheRepository<UsuarioEntity
         entity.avisoVencimientos = preferencias.vencimientos();
         entity.avisoResumen = preferencias.resumen();
         flush();
+    }
+
+    @Override
+    public Idioma idioma(Long id) {
+        return Idioma.desde(obtener(id).idioma).orElse(Idioma.ES);
+    }
+
+    @Override
+    public void guardarIdioma(Long id, Idioma idioma) {
+        obtener(id).idioma = idioma.codigo();
+        flush();
+    }
+
+    @Override
+    public Optional<Idioma> idiomaPorEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return Optional.empty();
+        }
+        return getEntityManager()
+                .createQuery("select u.idioma from UsuarioEntity u where lower(u.email) = :email", String.class)
+                .setParameter("email", email.trim().toLowerCase(Locale.ROOT))
+                .getResultStream()
+                .findFirst()
+                .flatMap(Idioma::desde);
     }
 
     private UsuarioEntity obtener(Long id) {

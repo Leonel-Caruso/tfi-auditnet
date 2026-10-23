@@ -1,17 +1,20 @@
 ---
+import es, { type Clave } from '../i18n/es';
+
 interface Props {
-  title: string;
-  text: string;
+  /** Claves de los diccionarios para el título y el texto. */
+  titulo: Clave;
+  texto: Clave;
 }
 
-const { title, text } = Astro.props;
+const { titulo, texto } = Astro.props;
 ---
 
 <section class="login-brand-panel">
   <div class="login-brand-content">
     <div class="hero-mark" role="img" aria-label="AuditNet"><span aria-hidden="true">A_</span></div>
-    <span class="eyebrow eyebrow-light">AuditNet · acceso a la consola</span>
-    <h1>{title}</h1>
-    <p>{text}</p>
+    <span class="eyebrow eyebrow-light" data-i18n="acceso.marca">{es['acceso.marca']}</span>
+    <h1 data-i18n={titulo}>{es[titulo]}</h1>
+    <p data-i18n={texto}>{es[texto]}</p>
   </div>
 </section>

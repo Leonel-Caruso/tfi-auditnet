@@ -48,6 +48,7 @@ las tablas del primero, **sin saltear su V1**.
 | V5 | management-service | Planes: catálogo `planes`, plan asignado y límites acordados en `organizaciones_cliente` (las existentes quedan en Inicial) y `solicitudes_cambio_plan` (una pendiente por organización) (D-46) | 11 |
 | V6 | management-service | Correo y recuperación: bandeja de salida `correos_salientes` (común a los dos servicios), preferencias `aviso_*` en `usuarios` y `recuperaciones_contrasena` (solo el hash del token) (D-50, D-52, D-53) | 12 |
 | V8 | audit-core-service | Revisión periódica: `politicas_revision`, marcas de aviso en hallazgos y dispositivos, `origen` de la auditoría y `resumenes_mensuales` (D-54 a D-56) | 13 |
+| V7 | management-service | Idioma del usuario: `usuarios.idioma` (`es`, `en` o `pt`; por defecto `es`) (D-57) | 14 |
 
 Desde la V5 de management, audit-core lee el plan de `planes` y `organizaciones_cliente` con una consulta nativa:
 al desplegar, management-service va primero (D-47).

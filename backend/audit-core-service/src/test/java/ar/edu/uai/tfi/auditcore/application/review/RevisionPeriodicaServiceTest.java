@@ -102,7 +102,7 @@ class RevisionPeriodicaServiceTest {
 
         assertEquals(1, resultado.resumenes());
         Map<String, Object> resumen = avisos.deTipo(Tipo.RESUMEN_MENSUAL).get(0).datos();
-        assertEquals("septiembre de 2026", resumen.get("periodo"));
+        assertEquals("2026-09", resumen.get("periodo"));
         assertEquals(1L, resumen.get("cerrados"));
         assertEquals(0L, resumen.get("auditorias"));
         assertEquals(2 * 2, resultado.correos(), "vencimientos y resumen, de dos destinatarios cada uno");

@@ -1,3 +1,5 @@
+import { t, type Clave } from './i18n';
+
 export const MANAGEMENT_API_URL =
   import.meta.env.PUBLIC_MANAGEMENT_API_URL ?? 'http://localhost:8081';
 
@@ -14,6 +16,8 @@ export type LoginResponse = {
   username: string;
   email: string;
   roles: string[];
+  /** Idioma guardado del usuario: es, en o pt. */
+  idioma: string;
 };
 
 export type CurrentUser = {
@@ -119,14 +123,6 @@ export type StorageStatus = {
 
 export type StorageSyncResult = { configuraciones: number; reportes: number; pendientes: number };
 
-export const ROLE_LABEL: Record<string, string> = {
-  ADMINISTRADOR_SISTEMA: 'Administrador del sistema',
-  ADMINISTRADOR_ORGANIZACION: 'Administrador de organización',
-  ANALISTA_RED: 'Analista de redes',
-  AUDITOR_TECNICO: 'Auditor técnico',
-  RESPONSABLE_GESTION_IT: 'Responsable de gestión IT',
-};
-
 /** Perfiles de mayor a menor alcance (orden de las listas y del perfil que se muestra en la barra). */
 export const PROFILE_ORDER = [
   'ADMINISTRADOR_SISTEMA',
@@ -135,6 +131,11 @@ export const PROFILE_ORDER = [
   'AUDITOR_TECNICO',
   'RESPONSABLE_GESTION_IT',
 ];
+
+/** Nombre de cada perfil en el idioma de la consola. */
+export const ROLE_LABEL: Record<string, string> = Object.fromEntries(
+  PROFILE_ORDER.map((perfil) => [perfil, t(`perfil.${perfil}` as Clave)]),
+);
 
 /** Perfiles de la operación diaria: los que asigna el administrador de una organización. */
 export const OPERATION_ROLES = ['ANALISTA_RED', 'AUDITOR_TECNICO', 'RESPONSABLE_GESTION_IT'];
@@ -257,11 +258,11 @@ export function jsonRequest(method: 'POST' | 'PUT' | 'PATCH', payload: unknown):
 export async function readApiError(response: Response): Promise<string> {
   try {
     const payload = await response.json();
-    return payload?.message ?? payload?.error ?? 'La operación no pudo completarse.';
+    return payload?.message ?? payload?.error ?? t('error.operacion');
   } catch {
-    if (response.status === 401) return 'Credenciales inválidas o sesión vencida.';
-    if (response.status === 403) return 'No tenés permisos para realizar esta operación.';
-    return `Error HTTP ${response.status}.`;
+    if (response.status === 401) return t('error.credenciales');
+    if (response.status === 403) return t('error.permisos');
+    return t('error.http', { estado: response.status });
   }
 }
 

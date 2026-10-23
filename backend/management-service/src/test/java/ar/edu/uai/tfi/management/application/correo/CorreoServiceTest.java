@@ -3,13 +3,16 @@ package ar.edu.uai.tfi.management.application.correo;
 import ar.edu.uai.tfi.management.domain.model.CorreoSaliente;
 import ar.edu.uai.tfi.management.domain.model.EstadoCorreo;
 import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
+import ar.edu.uai.tfi.management.domain.model.Idioma;
 import ar.edu.uai.tfi.management.domain.model.TipoCorreo;
+import ar.edu.uai.tfi.management.domain.model.Usuario;
 import ar.edu.uai.tfi.management.support.EnMemoriaGestion;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -26,7 +29,9 @@ class CorreoServiceTest {
     private final EnMemoriaGestion.Organizaciones organizaciones = new EnMemoriaGestion.Organizaciones();
     private final EnMemoriaGestion.RelojAjustable reloj = new EnMemoriaGestion.RelojAjustable(AHORA);
     private int despachosPedidos;
-    private final CorreoService service = new CorreoService(correos, envio, organizaciones, () -> despachosPedidos++);
+    private final EnMemoriaGestion.Usuarios usuarios = new EnMemoriaGestion.Usuarios();
+    private final CorreoService service = new CorreoService(correos, envio, organizaciones, () -> despachosPedidos++,
+            usuarios);
 
     CorreoServiceTest() {
         organizaciones.agregar(2L, "ACME", "ACME S.A.", EstadoRegistro.ACTIVO);
@@ -79,6 +84,20 @@ class CorreoServiceTest {
         CorreoSaliente fallido = correos.items.get(1L);
         assertEquals(EstadoCorreo.FALLIDO, fallido.estado());
         assertFalse(fallido.datos().containsKey("token"));
+    }
+
+    @Test
+    void elCorreoSaleEnElIdiomaDelDestinatario() {
+        Usuario ana = usuarios.agregar(new Usuario(50L, 2L, "Ana", "ana@acme.test", "ana", "hash",
+                EstadoRegistro.ACTIVO, Set.of("ANALISTA_RED")));
+        usuarios.guardarIdioma(ana.id(), Idioma.EN);
+        service.encolar(TipoCorreo.ALTA_USUARIO, 2L, "ANA@acme.test", "Ana", Map.of("usuario", "ana"));
+        service.encolar(TipoCorreo.ALTA_USUARIO, 2L, "otro@acme.test", "Otro", Map.of("usuario", "otro"));
+
+        service.despachar();
+
+        assertEquals("Your access to AuditNet", envio.enviados.get(0).asunto());
+        assertEquals("Tu acceso a AuditNet", envio.enviados.get(1).asunto(), "sin usuario conocido, español");
     }
 
     @Test

@@ -11,6 +11,7 @@ public record LoginResponse(
         String nombre,
         String username,
         String email,
-        Set<String> roles
+        Set<String> roles,
+        String idioma
 ) {
 }

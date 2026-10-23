@@ -5,6 +5,7 @@ import ar.edu.uai.tfi.management.application.ExcepcionAplicacion;
 import ar.edu.uai.tfi.management.domain.model.EstadoAcceso;
 import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
 import ar.edu.uai.tfi.management.domain.model.EventoSistema;
+import ar.edu.uai.tfi.management.domain.model.Idioma;
 import ar.edu.uai.tfi.management.domain.model.ResultadoEvento;
 import ar.edu.uai.tfi.management.domain.model.TipoEventoSistema;
 import ar.edu.uai.tfi.management.domain.model.Usuario;
@@ -51,6 +52,19 @@ class AuthServiceTest {
         assertEquals(7L, evento.usuarioAfectadoId());
         assertEquals(3L, evento.organizacionId());
         assertEquals(INICIO, usuarios.estadoAcceso(7L).ultimoAcceso());
+    }
+
+    @Test
+    void elIdiomaElegidoSeGuardaYVuelveEnElLogin() {
+        AuthService service = servicio(usuario(EstadoRegistro.ACTIVO, Set.of("ANALISTA_RED")));
+        assertEquals(Idioma.ES, service.login("ana", "clave-correcta-1").idioma(), "por defecto, español");
+
+        assertEquals(Idioma.PT, service.guardarIdioma(7L, "pt-BR"));
+        assertEquals(Idioma.PT, service.login("ana", "clave-correcta-1").idioma());
+        assertTrue(eventos.stream().anyMatch(evento -> "idioma=pt".equals(evento.detalle())));
+
+        ExcepcionAplicacion error = assertThrows(ExcepcionAplicacion.class, () -> service.guardarIdioma(7L, "fr"));
+        assertEquals(ErrorAplicacion.SOLICITUD_INVALIDA, error.tipo());
     }
 
     @Test

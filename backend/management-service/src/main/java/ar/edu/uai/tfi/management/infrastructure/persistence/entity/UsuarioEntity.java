@@ -1,6 +1,7 @@
 package ar.edu.uai.tfi.management.infrastructure.persistence.entity;
 
 import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
+import ar.edu.uai.tfi.management.domain.model.Idioma;
 import jakarta.persistence.*;
 
 import java.util.LinkedHashSet;
@@ -62,6 +63,9 @@ public class UsuarioEntity {
 
     @Column(name = "aviso_resumen", nullable = false)
     public boolean avisoResumen = true;
+
+    @Column(name = "idioma", nullable = false, length = 2)
+    public String idioma = Idioma.ES.codigo();
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "usuarios_roles",

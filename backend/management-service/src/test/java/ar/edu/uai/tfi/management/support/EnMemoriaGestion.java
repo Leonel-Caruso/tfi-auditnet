@@ -12,6 +12,7 @@ import ar.edu.uai.tfi.management.domain.model.CorreoSaliente;
 import ar.edu.uai.tfi.management.domain.model.EstadoCorreo;
 import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
 import ar.edu.uai.tfi.management.domain.model.EstadoSolicitudPlan;
+import ar.edu.uai.tfi.management.domain.model.Idioma;
 import ar.edu.uai.tfi.management.domain.model.OrganizacionCliente;
 import ar.edu.uai.tfi.management.domain.model.Plan;
 import ar.edu.uai.tfi.management.domain.model.PlanOrganizacion;
@@ -60,6 +61,7 @@ public final class EnMemoriaGestion {
         public final Map<Long, Usuario> usuarios = new LinkedHashMap<>();
         public final Map<Long, EstadoAcceso> accesos = new LinkedHashMap<>();
         public final Map<Long, PreferenciasAviso> preferencias = new HashMap<>();
+        public final Map<Long, Idioma> idiomas = new HashMap<>();
         private long secuencia = 100;
 
         public Usuario agregar(Usuario usuario) {
@@ -181,6 +183,24 @@ public final class EnMemoriaGestion {
         @Override
         public void guardarPreferencias(Long id, PreferenciasAviso valores) {
             preferencias.put(id, valores);
+        }
+
+        @Override
+        public Idioma idioma(Long id) {
+            return idiomas.getOrDefault(id, Idioma.ES);
+        }
+
+        @Override
+        public void guardarIdioma(Long id, Idioma idioma) {
+            idiomas.put(id, idioma);
+        }
+
+        @Override
+        public Optional<Idioma> idiomaPorEmail(String email) {
+            return usuarios.values().stream()
+                    .filter(usuario -> usuario.email().equalsIgnoreCase(email == null ? "" : email.trim()))
+                    .findFirst()
+                    .map(usuario -> idioma(usuario.id()));
         }
     }
 

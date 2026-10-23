@@ -1,0 +1,16 @@
+---
+import es from '../i18n/es';
+
+interface Props {
+  /** Se agrega a la clase base; el comportamiento lo conecta el script de cada layout. */
+  class?: string;
+}
+
+const { class: clase = '' } = Astro.props;
+---
+
+<div class={`language-switch ${clase}`} role="group" aria-label={es['idioma.elegir']} data-i18n-aria-label="idioma.elegir">
+  <button type="button" data-idioma="es" lang="es" title={es['idioma.es']}>ES</button>
+  <button type="button" data-idioma="en" lang="en" title={es['idioma.en']}>EN</button>
+  <button type="button" data-idioma="pt" lang="pt" title={es['idioma.pt']}>PT</button>
+</div>

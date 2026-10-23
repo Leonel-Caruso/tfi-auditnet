@@ -6,13 +6,34 @@ interface Props {
   description: string;
   indexable?: boolean;
   path?: string;
+  /** Clave del título en los diccionarios: en inglés o portugués se reemplaza al cargar. */
+  tituloClave?: string;
 }
 
-const { title, description, indexable = false, path } = Astro.props;
+const { title, description, indexable = false, path, tituloClave } = Astro.props;
 const origen = '__ORIGEN_PUBLICO__';
 ---
 
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<script is:inline>
+  // Idioma antes de mostrar nada: el de la sesión o el elegido en este navegador. En inglés o portugués la página
+  // queda oculta hasta que el script de la página reemplaza los textos (así no se ve el español un instante).
+  (function () {
+    var idioma = 'es';
+    try {
+      var usuario = JSON.parse(sessionStorage.getItem('tfi.auth.user') || 'null');
+      var elegido = (usuario && usuario.idioma) || localStorage.getItem('auditnet.idioma');
+      if (elegido === 'en' || elegido === 'pt') idioma = elegido;
+    } catch (e) {}
+    var raiz = document.documentElement;
+    raiz.lang = idioma;
+    if (idioma !== 'es') {
+      raiz.classList.add('i18n-pendiente');
+      setTimeout(function () { raiz.classList.remove('i18n-pendiente'); }, 3000);
+    }
+  })();
+</script>
+{tituloClave && <meta name="i18n-titulo" content={tituloClave} />}
 <meta name="description" content={description} />
 <meta name="robots" content={indexable ? 'index, follow' : 'noindex, nofollow'} />
 <title>{title}</title>

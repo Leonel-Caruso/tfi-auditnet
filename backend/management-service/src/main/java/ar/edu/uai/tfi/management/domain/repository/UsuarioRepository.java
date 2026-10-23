@@ -2,6 +2,7 @@ package ar.edu.uai.tfi.management.domain.repository;
 
 import ar.edu.uai.tfi.management.domain.model.EstadoAcceso;
 import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
+import ar.edu.uai.tfi.management.domain.model.Idioma;
 import ar.edu.uai.tfi.management.domain.model.PreferenciasAviso;
 import ar.edu.uai.tfi.management.domain.model.Usuario;
 
@@ -59,4 +60,11 @@ public interface UsuarioRepository {
     PreferenciasAviso preferencias(Long id);
 
     void guardarPreferencias(Long id, PreferenciasAviso preferencias);
+
+    Idioma idioma(Long id);
+
+    void guardarIdioma(Long id, Idioma idioma);
+
+    /** Idioma del usuario con ese correo; vacío si ningún usuario lo tiene. */
+    Optional<Idioma> idiomaPorEmail(String email);
 }

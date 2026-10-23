@@ -2,6 +2,7 @@ package ar.edu.uai.tfi.management.api.rest;
 
 import ar.edu.uai.tfi.management.api.rest.dto.auth.AvisosCuentaDto;
 import ar.edu.uai.tfi.management.api.rest.dto.auth.CambiarPasswordRequest;
+import ar.edu.uai.tfi.management.api.rest.dto.auth.IdiomaDto;
 import ar.edu.uai.tfi.management.api.rest.dto.auth.LoginRequest;
 import ar.edu.uai.tfi.management.api.rest.dto.auth.LoginResponse;
 import ar.edu.uai.tfi.management.api.rest.dto.auth.RecuperarPasswordRequest;
@@ -60,7 +61,8 @@ public class AuthResource {
                 usuario.nombre(),
                 usuario.nombreUsuario(),
                 usuario.email(),
-                usuario.roles());
+                usuario.roles(),
+                result.idioma().codigo());
     }
 
     /** El usuario cambia su contraseña. Responde un token nuevo: las demás sesiones abiertas quedan sin efecto. */
@@ -111,6 +113,14 @@ public class AuthResource {
         }
         return AvisosCuentaDto.de(authService.guardarPreferencias(usuarioActual(),
                 new PreferenciasAviso(request.alertas(), request.vencimientos(), request.resumen())));
+    }
+
+    @PUT
+    @Path("/me/language")
+    @Authenticated
+    public IdiomaDto guardarIdioma(IdiomaDto request) {
+        return new IdiomaDto(authService.guardarIdioma(usuarioActual(), request == null ? null : request.idioma())
+                .codigo());
     }
 
     @GET

@@ -1,0 +1,451 @@
+# Mensajes de error que ve el usuario, en español tal como los arma el código y su traducción.
+# {0}, {1}... son las partes variables (nombres, cantidades, fechas): se copian tal cual en la traducción.
+# Un mensaje que no está acá se muestra en español.
+
+es: El cuerpo de la solicitud es obligatorio.
+en: The request body is required.
+pt: O corpo da requisição é obrigatório.
+
+es: El usuario autenticado no tiene una organización asociada.
+en: The signed-in user has no associated organization.
+pt: O usuário autenticado não tem uma organização associada.
+
+es: Solo podés consultar la información de tu organización.
+en: You can only view the information of your organization.
+pt: Você só pode consultar as informações da sua organização.
+
+es: Solo podés registrar dispositivos en tu organización.
+en: You can only register devices in your organization.
+pt: Você só pode registrar dispositivos na sua organização.
+
+es: Un auditor técnico solo puede crear baselines para su propia organización.
+en: A technical auditor can only create baselines for their own organization.
+pt: Um auditor técnico só pode criar baselines para a própria organização.
+
+es: El campo {0} es obligatorio.
+en: The {0} field is required.
+pt: O campo {0} é obrigatório.
+
+es: El campo {0} debe ser un identificador válido.
+en: The {0} field must be a valid identifier.
+pt: O campo {0} deve ser um identificador válido.
+
+es: El campo {0} no puede superar los {1} caracteres.
+en: The {0} field cannot be longer than {1} characters.
+pt: O campo {0} não pode ter mais de {1} caracteres.
+
+es: El campo {0} no puede superar los 100 caracteres.
+en: The {0} field cannot be longer than 100 characters.
+pt: O campo {0} não pode ter mais de 100 caracteres.
+
+es: El identificador no puede superar los 100 caracteres.
+en: The identifier cannot be longer than 100 characters.
+pt: O identificador não pode ter mais de 100 caracteres.
+
+es: El comentario no puede superar los 1000 caracteres.
+en: The comment cannot be longer than 1000 characters.
+pt: O comentário não pode ter mais de 1000 caracteres.
+
+es: La fecha 'desde' no puede ser posterior a 'hasta'.
+en: The 'from' date cannot be later than the 'to' date.
+pt: A data 'de' não pode ser posterior à data 'até'.
+
+es: El filtro '{0}' admite: {1}.
+en: The '{0}' filter accepts: {1}.
+pt: O filtro '{0}' aceita: {1}.
+
+es: El filtro '{0}' debe ser un identificador válido.
+en: The '{0}' filter must be a valid identifier.
+pt: O filtro '{0}' deve ser um identificador válido.
+
+es: El filtro '{0}' debe tener formato ISO-8601, por ejemplo 2026-10-01T00:00:00Z.
+en: The '{0}' filter must use the ISO-8601 format, for example 2026-10-01T00:00:00Z.
+pt: O filtro '{0}' deve ter formato ISO-8601, por exemplo 2026-10-01T00:00:00Z.
+
+es: El valor '{0}' no es válido para el filtro '{1}'.
+en: The value '{0}' is not valid for the '{1}' filter.
+pt: O valor '{0}' não é válido para o filtro '{1}'.
+
+es: El parámetro 'pagina' empieza en 1.
+en: The 'pagina' parameter starts at 1.
+pt: O parâmetro 'pagina' começa em 1.
+
+es: El parámetro 'porPagina' debe estar entre 1 y {0}.
+en: The 'porPagina' parameter must be between 1 and {0}.
+pt: O parâmetro 'porPagina' deve estar entre 1 e {0}.
+
+es: El parámetro '{0}' debe ser un número entero.
+en: The '{0}' parameter must be an integer.
+pt: O parâmetro '{0}' deve ser um número inteiro.
+
+es: El período de prueba venció el {0}: la organización quedó en modo consulta hasta que se apruebe un plan. Pedilo desde Mi plan.
+en: The trial period expired on {0}: the organization is in read-only mode until a plan is approved. Request one from My plan.
+pt: O período de teste venceu em {0}: a organização ficou em modo consulta até que um plano seja aprovado. Peça um em Meu plano.
+
+es: El plan {0} permite hasta {1} dispositivos activos y la organización ya tiene {2}. Para sumar más, pedí un cambio de plan desde Mi plan.
+en: The {0} plan allows up to {1} active devices and the organization already has {2}. To add more, request a plan change from My plan.
+pt: O plano {0} permite até {1} dispositivos ativos e a organização já tem {2}. Para adicionar mais, peça uma mudança de plano em Meu plano.
+
+es: La organización seleccionada no existe.
+en: The selected organization does not exist.
+pt: A organização selecionada não existe.
+
+es: No existe la organización cliente solicitada.
+en: The requested client organization does not exist.
+pt: A organização cliente solicitada não existe.
+
+es: La sede seleccionada no existe.
+en: The selected site does not exist.
+pt: A sede selecionada não existe.
+
+es: La sede seleccionada está deshabilitada.
+en: The selected site is disabled.
+pt: A sede selecionada está desativada.
+
+es: La sede seleccionada no pertenece a la organización del dispositivo.
+en: The selected site does not belong to the device's organization.
+pt: A sede selecionada não pertence à organização do dispositivo.
+
+es: El tipo de dispositivo seleccionado no existe o está inactivo.
+en: The selected device type does not exist or is inactive.
+pt: O tipo de dispositivo selecionado não existe ou está inativo.
+
+es: Ya existe el tipo de dispositivo {0} de {1}.
+en: The device type {0} by {1} already exists.
+pt: Já existe o tipo de dispositivo {0} de {1}.
+
+es: No existe el dispositivo solicitado.
+en: The requested device does not exist.
+pt: O dispositivo solicitado não existe.
+
+es: No existe el dispositivo seleccionado.
+en: The selected device does not exist.
+pt: O dispositivo selecionado não existe.
+
+es: Ya existe un dispositivo con el identificador {0} en esta organización.
+en: A device with the identifier {0} already exists in this organization.
+pt: Já existe um dispositivo com o identificador {0} nesta organização.
+
+es: El dispositivo {0} ya está {1}.
+en: The device {0} is already {1}.
+pt: O dispositivo {0} já está {1}.
+
+es: El estado debe ser ACTIVO o INACTIVO.
+en: The status must be ACTIVO or INACTIVO.
+pt: O status deve ser ACTIVO ou INACTIVO.
+
+es: La criticidad debe ser BAJA, MEDIA, ALTA o CRITICA.
+en: The criticality must be BAJA, MEDIA, ALTA or CRITICA.
+pt: A criticidade deve ser BAJA, MEDIA, ALTA ou CRITICA.
+
+es: El dispositivo seleccionado está inactivo y no admite nuevas configuraciones.
+en: The selected device is inactive and does not accept new configurations.
+pt: O dispositivo selecionado está inativo e não aceita novas configurações.
+
+es: El formato debe ser TEXTO, TXT o CFG.
+en: The format must be TEXTO, TXT or CFG.
+pt: O formato deve ser TEXTO, TXT ou CFG.
+
+es: La configuración no puede estar vacía.
+en: The configuration cannot be empty.
+pt: A configuração não pode estar vazia.
+
+es: La configuración supera el tamaño máximo permitido para el MVP.
+en: The configuration exceeds the maximum size allowed.
+pt: A configuração ultrapassa o tamanho máximo permitido.
+
+es: No existe la configuración solicitada.
+en: The requested configuration does not exist.
+pt: A configuração solicitada não existe.
+
+es: No existe la configuración seleccionada.
+en: The selected configuration does not exist.
+pt: A configuração selecionada não existe.
+
+es: No existe el dispositivo asociado a la configuración.
+en: The device associated with the configuration does not exist.
+pt: O dispositivo associado à configuração não existe.
+
+es: No existe la organización asociada a la configuración.
+en: The organization associated with the configuration does not exist.
+pt: A organização associada à configuração não existe.
+
+es: No existe la baseline solicitada.
+en: The requested baseline does not exist.
+pt: A baseline solicitada não existe.
+
+es: No existe la baseline seleccionada.
+en: The selected baseline does not exist.
+pt: A baseline selecionada não existe.
+
+es: La baseline seleccionada no existe.
+en: The selected baseline does not exist.
+pt: A baseline selecionada não existe.
+
+es: No existe la baseline de la regla.
+en: The rule's baseline does not exist.
+pt: A baseline da regra não existe.
+
+es: La baseline {0} v{1} ya está {2}.
+en: The baseline {0} v{1} is already {2}.
+pt: A baseline {0} v{1} já está {2}.
+
+es: Ya existe una baseline con ese nombre para la organización seleccionada. Para cambiarla, generá una nueva versión.
+en: A baseline with that name already exists for the selected organization. To change it, create a new version.
+pt: Já existe uma baseline com esse nome para a organização selecionada. Para alterá-la, gere uma nova versão.
+
+es: Ya existe la baseline activa {0} v{1} para ese tipo de dispositivo y organización. Generá una nueva versión de esa baseline o desactivala primero.
+en: The active baseline {0} v{1} already exists for that device type and organization. Create a new version of that baseline or deactivate it first.
+pt: Já existe a baseline ativa {0} v{1} para esse tipo de dispositivo e organização. Gere uma nova versão dessa baseline ou desative-a antes.
+
+es: La baseline {0} v{1} está inactiva: sus reglas no se pueden crear ni modificar.
+en: The baseline {0} v{1} is inactive: its rules cannot be created or modified.
+pt: A baseline {0} v{1} está inativa: suas regras não podem ser criadas nem modificadas.
+
+es: La baseline {0} v{1} ya se usó en {2} auditoría: sus reglas no se modifican para conservar la evidencia. Generá una nueva versión de la baseline y modificá las reglas allí.
+en: The baseline {0} v{1} was already used in {2} audit: its rules are not modified to preserve the evidence. Create a new version of the baseline and modify the rules there.
+pt: A baseline {0} v{1} já foi usada em {2} auditoria: suas regras não são modificadas para preservar a evidência. Gere uma nova versão da baseline e modifique as regras nela.
+
+es: La baseline {0} v{1} ya se usó en {2} auditorías: sus reglas no se modifican para conservar la evidencia. Generá una nueva versión de la baseline y modificá las reglas allí.
+en: The baseline {0} v{1} was already used in {2} audits: its rules are not modified to preserve the evidence. Create a new version of the baseline and modify the rules there.
+pt: A baseline {0} v{1} já foi usada em {2} auditorias: suas regras não são modificadas para preservar a evidência. Gere uma nova versão da baseline e modifique as regras nela.
+
+es: No existe la regla solicitada.
+en: The requested rule does not exist.
+pt: A regra solicitada não existe.
+
+es: Los datos de la regla son obligatorios.
+en: The rule data is required.
+pt: Os dados da regra são obrigatórios.
+
+es: Ya existe una regla con el código {0} en esa baseline.
+en: A rule with the code {0} already exists in that baseline.
+pt: Já existe uma regra com o código {0} nessa baseline.
+
+es: La regla {0} ya está {1}.
+en: The rule {0} is already {1}.
+pt: A regra {0} já está {1}.
+
+es: La regla activa {0} ya evalúa la misma condición en esta baseline.
+en: The active rule {0} already checks the same condition in this baseline.
+pt: A regra ativa {0} já avalia a mesma condição nesta baseline.
+
+es: La regla activa {0} exige lo contrario para el mismo patrón ({1}): las dos no se pueden cumplir a la vez.
+en: The active rule {0} requires the opposite for the same pattern ({1}): both cannot be met at the same time.
+pt: A regra ativa {0} exige o contrário para o mesmo padrão ({1}): as duas não podem ser cumpridas ao mesmo tempo.
+
+es: El código solo admite letras, números, guiones, puntos y guiones bajos (ej. SEC-SSH-01).
+en: The code only accepts letters, numbers, hyphens, dots and underscores (e.g. SEC-SSH-01).
+pt: O código só aceita letras, números, hífens, pontos e sublinhados (ex. SEC-SSH-01).
+
+es: El tipo de regla debe ser DEBE_CONTENER, NO_DEBE_CONTENER o VALOR_ESPERADO.
+en: The rule type must be DEBE_CONTENER, NO_DEBE_CONTENER or VALOR_ESPERADO.
+pt: O tipo de regra deve ser DEBE_CONTENER, NO_DEBE_CONTENER ou VALOR_ESPERADO.
+
+es: La severidad debe ser BAJA, MEDIA, ALTA o CRITICA.
+en: The severity must be BAJA, MEDIA, ALTA or CRITICA.
+pt: A severidade deve ser BAJA, MEDIA, ALTA ou CRITICA.
+
+es: El estado debe ser ACTIVA o INACTIVA.
+en: The status must be ACTIVA or INACTIVA.
+pt: O status deve ser ACTIVA ou INACTIVA.
+
+es: Una regla VALOR_ESPERADO necesita el valor esperado del parámetro.
+en: A VALOR_ESPERADO rule needs the parameter's expected value.
+pt: Uma regra VALOR_ESPERADO precisa do valor esperado do parâmetro.
+
+es: El valor esperado solo se usa en reglas de tipo VALOR_ESPERADO.
+en: The expected value is only used in VALOR_ESPERADO rules.
+pt: O valor esperado só é usado em regras do tipo VALOR_ESPERADO.
+
+es: El parámetro debe ser una sola línea de configuración.
+en: The parameter must be a single configuration line.
+pt: O parâmetro deve ser uma única linha de configuração.
+
+es: El patrón debe ser una sola línea de configuración.
+en: The pattern must be a single configuration line.
+pt: O padrão deve ser uma única linha de configuração.
+
+es: El valor esperado debe ser una sola línea de configuración.
+en: The expected value must be a single configuration line.
+pt: O valor esperado deve ser uma única linha de configuração.
+
+es: No existe una baseline activa aplicable al tipo de dispositivo seleccionado.
+en: There is no active baseline for the selected device type.
+pt: Não existe uma baseline ativa aplicável ao tipo de dispositivo selecionado.
+
+es: La baseline aplicable no posee reglas activas para ejecutar la auditoría.
+en: The applicable baseline has no active rules to run the audit.
+pt: A baseline aplicável não tem regras ativas para executar a auditoria.
+
+es: El dispositivo {0} está inactivo: no se pueden ejecutar auditorías sobre él.
+en: The device {0} is inactive: audits cannot be run on it.
+pt: O dispositivo {0} está inativo: não é possível executar auditorias nele.
+
+es: La configuración normalizada es obligatoria para ejecutar la auditoría.
+en: The normalized configuration is required to run the audit.
+pt: A configuração normalizada é obrigatória para executar a auditoria.
+
+es: La auditoría requiere al menos una regla activa.
+en: The audit requires at least one active rule.
+pt: A auditoria requer pelo menos uma regra ativa.
+
+es: No existe la auditoría solicitada.
+en: The requested audit does not exist.
+pt: A auditoria solicitada não existe.
+
+es: No existe el hallazgo solicitado.
+en: The requested finding does not exist.
+pt: O achado solicitado não existe.
+
+es: El estado debe ser ABIERTO, EN_REVISION, RESUELTO o ACEPTADO.
+en: The status must be ABIERTO, EN_REVISION, RESUELTO or ACEPTADO.
+pt: O status deve ser ABIERTO, EN_REVISION, RESUELTO ou ACEPTADO.
+
+es: El hallazgo ya está {0}.
+en: The finding is already {0}.
+pt: O achado já está {0}.
+
+es: No se puede pasar de {0} a {1}. Un hallazgo {2} solo puede pasar a {3}.
+en: It cannot change from {0} to {1}. A {2} finding can only change to {3}.
+pt: Não é possível passar de {0} para {1}. Um achado {2} só pode passar para {3}.
+
+es: Para pasar el hallazgo a {0} hay que indicar un comentario que lo justifique.
+en: To change the finding to {0} you must enter a comment that justifies it.
+pt: Para passar o achado para {0} é preciso informar um comentário que o justifique.
+
+es: Otro usuario cambió el hallazgo a {0} mientras tanto. Actualizá la pantalla y volvé a intentar.
+en: Another user changed the finding to {0} in the meantime. Refresh the screen and try again.
+pt: Outro usuário mudou o achado para {0} enquanto isso. Atualize a tela e tente de novo.
+
+es: No existe la alerta solicitada.
+en: The requested alert does not exist.
+pt: O alerta solicitado não existe.
+
+es: Las alertas solo existen para severidad CRITICA o ALTA.
+en: Alerts only exist for CRITICA or ALTA severity.
+pt: Os alertas só existem para severidade CRITICA ou ALTA.
+
+es: Indicá a qué perfil se deriva: ANALISTA_RED o AUDITOR_TECNICO.
+en: Indicate which profile it is assigned to: ANALISTA_RED or AUDITOR_TECNICO.
+pt: Indique para qual perfil é encaminhado: ANALISTA_RED ou AUDITOR_TECNICO.
+
+es: La alerta ya está ACTIVA.
+en: The alert is already ACTIVA.
+pt: O alerta já está ACTIVA.
+
+es: La alerta ya está en atención por {0}.
+en: The alert is already being handled by {0}.
+pt: O alerta já está em atendimento por {0}.
+
+es: Para devolver la alerta a ACTIVA hay que indicar el motivo.
+en: To return the alert to ACTIVA you must enter the reason.
+pt: Para devolver o alerta para ACTIVA é preciso informar o motivo.
+
+es: La alerta está cerrada porque su hallazgo ya no está pendiente. Para reactivarla, reabrí el hallazgo.
+en: The alert is closed because its finding is no longer pending. To reactivate it, reopen the finding.
+pt: O alerta está fechado porque seu achado não está mais pendente. Para reativá-lo, reabra o achado.
+
+es: Una alerta se cierra cuando su hallazgo se resuelve o se acepta el riesgo. Hacelo desde la pantalla de hallazgos.
+en: An alert closes when its finding is resolved or the risk is accepted. Do it from the findings screen.
+pt: Um alerta é fechado quando seu achado é resolvido ou o risco é aceito. Faça isso na tela de achados.
+
+es: Otro usuario cambió la alerta a {0} mientras tanto. Actualizá la pantalla y volvé a intentar.
+en: Another user changed the alert to {0} in the meantime. Refresh the screen and try again.
+pt: Outro usuário mudou o alerta para {0} enquanto isso. Atualize a tela e tente de novo.
+
+es: Los criterios del reporte son obligatorios.
+en: The report criteria are required.
+pt: Os critérios do relatório são obrigatórios.
+
+es: Indicá el rango de fechas (desde y hasta) o auditorías específicas.
+en: Enter the date range (from and to) or specific audits.
+pt: Informe o intervalo de datas (de e até) ou auditorias específicas.
+
+es: Los identificadores de auditorías y dispositivos deben ser válidos.
+en: The audit and device identifiers must be valid.
+pt: Os identificadores de auditorias e dispositivos devem ser válidos.
+
+es: Los criterios incluyen {0} auditorías; el máximo por reporte es {1}. Acotá el rango de fechas.
+en: The criteria include {0} audits; the maximum per report is {1}. Narrow the date range.
+pt: Os critérios incluem {0} auditorias; o máximo por relatório é {1}. Reduza o intervalo de datas.
+
+es: No existe la auditoría {0} o no pertenece a la organización.
+en: The audit {0} does not exist or does not belong to the organization.
+pt: A auditoria {0} não existe ou não pertence à organização.
+
+es: No existe el reporte solicitado.
+en: The requested report does not exist.
+pt: O relatório solicitado não existe.
+
+es: El repositorio de archivos no está configurado.
+en: The file repository is not configured.
+pt: O repositório de arquivos não está configurado.
+
+es: El repositorio de archivos no está configurado: no hay dónde guardar el respaldo.
+en: The file repository is not configured: there is nowhere to store the backup.
+pt: O repositório de arquivos não está configurado: não há onde guardar o backup.
+
+es: El repositorio de archivos no responde ({0}).
+en: The file repository is not responding ({0}).
+pt: O repositório de arquivos não responde ({0}).
+
+es: No se pudo guardar el archivo en el repositorio ({0}).
+en: The file could not be saved in the repository ({0}).
+pt: Não foi possível salvar o arquivo no repositório ({0}).
+
+es: No se pudo leer el archivo del repositorio ({0}).
+en: The file could not be read from the repository ({0}).
+pt: Não foi possível ler o arquivo do repositório ({0}).
+
+es: Se interrumpió la operación con el repositorio de archivos.
+en: The operation with the file repository was interrupted.
+pt: A operação com o repositório de arquivos foi interrompida.
+
+es: El archivo solicitado no existe.
+en: The requested file does not exist.
+pt: O arquivo solicitado não existe.
+
+es: Todavía no tiene archivo en el repositorio (pendiente de subir desde el panel de administración).
+en: It has no file in the repository yet (pending upload from the administration panel).
+pt: Ainda não tem arquivo no repositório (pendente de envio pelo painel de administração).
+
+es: Ya existe en el repositorio un archivo distinto con el nombre {0}: no se reemplaza.
+en: A different file named {0} already exists in the repository: it is not replaced.
+pt: Já existe no repositório um arquivo diferente com o nome {0}: ele não é substituído.
+
+es: El respaldo supera los 100 MB: usar los respaldos automáticos de Azure.
+en: The backup exceeds 100 MB: use Azure's automatic backups.
+pt: O backup ultrapassa 100 MB: use os backups automáticos do Azure.
+
+es: No se pudo preparar el archivo del respaldo.
+en: The backup file could not be prepared.
+pt: Não foi possível preparar o arquivo de backup.
+
+es: No se pudo generar el respaldo de la base de datos ({0}).
+en: The database backup could not be generated ({0}).
+pt: Não foi possível gerar o backup do banco de dados ({0}).
+
+es: Cada plazo debe estar entre 1 y {0} días.
+en: Each deadline must be between 1 and {0} days.
+pt: Cada prazo deve estar entre 1 e {0} dias.
+
+es: Los plazos de corrección van de menor a mayor: crítica ≤ alta ≤ media ≤ baja.
+en: Remediation deadlines go from shortest to longest: critical ≤ high ≤ medium ≤ low.
+pt: Os prazos de correção vão do menor para o maior: crítica ≤ alta ≤ média ≤ baixa.
+
+es: Completá todos los plazos de revisión.
+en: Fill in all the review deadlines.
+pt: Preencha todos os prazos de revisão.
+
+es: No hay auditorías que cumplan los criterios: no se generó ningún reporte.
+en: No audits match the criteria: no report was generated.
+pt: Nenhuma auditoria atende aos critérios: nenhum relatório foi gerado.
+
+es: El dato entra en conflicto con otro registro guardado al mismo tiempo. Actualizá la pantalla y volvé a intentar.
+en: The data conflicts with another record saved at the same time. Refresh the screen and try again.
+pt: O dado entra em conflito com outro registro salvo ao mesmo tempo. Atualize a tela e tente de novo.
+
+es: Ocurrió un error inesperado. Código de seguimiento: {0}
+en: An unexpected error occurred. Tracking code: {0}
+pt: Ocorreu um erro inesperado. Código de rastreamento: {0}

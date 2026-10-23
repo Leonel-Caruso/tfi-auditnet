@@ -1,103 +1,109 @@
 ---
 import MasterLayout from '../layouts/MasterLayout.astro';
+import es from '../i18n/es';
 ---
 
-<MasterLayout
-  title="Mi cuenta"
-  section="Cuenta"
-  description="Consultá tus datos de acceso, cambiá tu contraseña y elegí qué avisos recibir por correo."
->
+<MasterLayout title={es['cuenta.titulo']} section={es['cuenta.seccion']} description={es['cuenta.descripcion']} i18n="cuenta">
   <div id="account-message" class="alert alert-success is-hidden" role="status"></div>
 
   <section class="account-grid">
     <article class="panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Identidad</span>
+          <span class="eyebrow" data-i18n="cuenta.identidad">{es['cuenta.identidad']}</span>
           <h2 id="account-name">—</h2>
         </div>
       </div>
       <dl class="technical-definition-list">
-        <div><dt>usuario</dt><dd id="account-username">—</dd></div>
-        <div><dt>correo</dt><dd id="account-email">—</dd></div>
-        <div><dt>organización</dt><dd id="account-organization">—</dd></div>
-        <div><dt>perfil</dt><dd id="account-roles">—</dd></div>
-        <div><dt>sesión vence</dt><dd id="account-expires">—</dd></div>
+        <div><dt data-i18n="cuenta.usuario">{es['cuenta.usuario']}</dt><dd id="account-username">—</dd></div>
+        <div><dt data-i18n="cuenta.correo">{es['cuenta.correo']}</dt><dd id="account-email">—</dd></div>
+        <div><dt data-i18n="cuenta.organizacion">{es['cuenta.organizacion']}</dt><dd id="account-organization">—</dd></div>
+        <div><dt data-i18n="cuenta.perfil">{es['cuenta.perfil']}</dt><dd id="account-roles">—</dd></div>
+        <div><dt data-i18n="cuenta.vence">{es['cuenta.vence']}</dt><dd id="account-expires">—</dd></div>
       </dl>
-      <p class="log-muted" style="margin-top: 14px;">
-        Para cambiar tu nombre, correo, organización o perfil, pedíselo al administrador del sistema.
-      </p>
+      <p class="log-muted" style="margin-top: 14px;" data-i18n="cuenta.cambiosDatos">{es['cuenta.cambiosDatos']}</p>
     </article>
 
     <article class="panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Seguridad</span>
-          <h2>Cambiar contraseña</h2>
+          <span class="eyebrow" data-i18n="cuenta.seguridad">{es['cuenta.seguridad']}</span>
+          <h2 data-i18n="cuenta.cambiarContrasena">{es['cuenta.cambiarContrasena']}</h2>
         </div>
       </div>
       <form id="account-password-form" class="account-form" novalidate>
         <label class="field">
-          <span>contraseña actual *</span>
+          <span data-i18n="cuenta.actual">{es['cuenta.actual']}</span>
           <input id="account-current" type="password" autocomplete="current-password" maxlength="72" required />
         </label>
         <label class="field">
-          <span>contraseña nueva *</span>
+          <span data-i18n="cuenta.nueva">{es['cuenta.nueva']}</span>
           <input id="account-new" type="password" autocomplete="new-password" maxlength="72" required />
         </label>
         <ul id="account-rules" class="password-rules"></ul>
         <label class="field">
-          <span>repetir contraseña nueva *</span>
+          <span data-i18n="cuenta.repetir">{es['cuenta.repetir']}</span>
           <input id="account-confirm" type="password" autocomplete="new-password" maxlength="72" required />
         </label>
         <div id="account-error" class="alert alert-error is-hidden" role="alert" style="margin-bottom: 14px;"></div>
-        <button id="account-submit" class="button button-primary" type="submit">Cambiar contraseña</button>
-        <p class="log-muted" style="margin-top: 12px;">
-          Al cambiarla se cierran tus otras sesiones abiertas. Después de 5 intentos de ingreso fallidos la cuenta se
-          bloquea 15 minutos.
-        </p>
+        <button id="account-submit" class="button button-primary" type="submit" data-i18n="cuenta.cambiar">{es['cuenta.cambiar']}</button>
+        <p class="log-muted" style="margin-top: 12px;" data-i18n="cuenta.notaContrasena">{es['cuenta.notaContrasena']}</p>
       </form>
+    </article>
+
+    <article class="panel account-wide" id="language-panel">
+      <div class="panel-heading">
+        <div>
+          <span class="eyebrow" data-i18n="cuenta.idiomaSeccion">{es['cuenta.idiomaSeccion']}</span>
+          <h2 data-i18n="cuenta.idiomaTitulo">{es['cuenta.idiomaTitulo']}</h2>
+        </div>
+      </div>
+      <div id="account-language" class="language-options" role="group" aria-label={es['idioma.elegir']} data-i18n-aria-label="idioma.elegir">
+        <button type="button" class="language-option" data-idioma="es" lang="es"><strong>Español</strong><small>ES</small></button>
+        <button type="button" class="language-option" data-idioma="en" lang="en"><strong>English</strong><small>EN</small></button>
+        <button type="button" class="language-option" data-idioma="pt" lang="pt-BR"><strong>Português</strong><small>PT</small></button>
+      </div>
+      <div id="language-error" class="alert alert-error is-hidden" role="alert" style="margin-bottom: 14px;"></div>
+      <p class="log-muted" data-i18n="cuenta.idiomaAyuda">{es['cuenta.idiomaAyuda']}</p>
     </article>
 
     <article class="panel account-wide" id="notifications-panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Correo</span>
-          <h2>Avisos por correo</h2>
+          <span class="eyebrow" data-i18n="cuenta.correoSeccion">{es['cuenta.correoSeccion']}</span>
+          <h2 data-i18n="cuenta.avisos">{es['cuenta.avisos']}</h2>
         </div>
       </div>
       <form id="notifications-form" class="notice-form" novalidate>
         <fieldset class="notice-checks" id="notification-options">
           <label class="role-check" data-notice="alertas">
             <input type="checkbox" name="alertas" />
-            <strong>Alertas críticas nuevas</strong>
-            <small>Un correo por auditoría cuando aparecen alertas de severidad crítica o alta.</small>
+            <strong data-i18n="cuenta.avisoAlertas">{es['cuenta.avisoAlertas']}</strong>
+            <small data-i18n="cuenta.avisoAlertasAyuda">{es['cuenta.avisoAlertasAyuda']}</small>
           </label>
           <label class="role-check" data-notice="vencimientos">
             <input type="checkbox" name="vencimientos" />
-            <strong>Vencimientos y configuraciones desactualizadas</strong>
-            <small>Revisión diaria: hallazgos que superaron su plazo y equipos sin configuración nueva.</small>
+            <strong data-i18n="cuenta.avisoVencimientos">{es['cuenta.avisoVencimientos']}</strong>
+            <small data-i18n="cuenta.avisoVencimientosAyuda">{es['cuenta.avisoVencimientosAyuda']}</small>
           </label>
           <label class="role-check" data-notice="resumen">
             <input type="checkbox" name="resumen" />
-            <strong>Resumen mensual</strong>
-            <small>Los primeros días de cada mes, la actividad del mes anterior de tu organización.</small>
+            <strong data-i18n="cuenta.avisoResumen">{es['cuenta.avisoResumen']}</strong>
+            <small data-i18n="cuenta.avisoResumenAyuda">{es['cuenta.avisoResumenAyuda']}</small>
           </label>
         </fieldset>
-        <p id="notifications-none" class="log-muted is-hidden">
-          Tu perfil no recibe avisos de auditoría. Los correos de tu cuenta (alta y recuperación de contraseña) llegan
-          siempre.
-        </p>
+        <p id="notifications-none" class="log-muted is-hidden" data-i18n="cuenta.sinAvisos">{es['cuenta.sinAvisos']}</p>
         <div id="notifications-error" class="alert alert-error is-hidden" role="alert" style="margin-bottom: 14px;"></div>
-        <button id="notifications-submit" class="button button-primary" type="submit">Guardar avisos</button>
+        <button id="notifications-submit" class="button button-primary" type="submit" data-i18n="cuenta.guardarAvisos">{es['cuenta.guardarAvisos']}</button>
       </form>
     </article>
   </section>
 
   <script>
-    import { authFetch, getStoredUser, saveSession } from '../lib/auth';
+    import { authFetch, getStoredUser, saveLanguage, saveSession } from '../lib/auth';
     import { jsonRequest, readApiError, ROLE_LABEL, type LoginResponse, type Organization } from '../lib/api';
     import { formatDate } from '../lib/format';
+    import { conectarSelectorIdioma, t, type Idioma } from '../lib/i18n';
     import { passwordRulesHtml, updatePasswordRules } from '../lib/password';
 
     const user = getStoredUser();
@@ -134,9 +140,9 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       show('#account-error', null);
       const actual = field('#account-current').value;
       const nueva = field('#account-new').value;
-      if (!actual) return show('#account-error', 'Ingresá tu contraseña actual.');
-      if (!syncRules()) return show('#account-error', 'La contraseña nueva no cumple la política.');
-      if (nueva !== field('#account-confirm').value) return show('#account-error', 'Las contraseñas nuevas no coinciden.');
+      if (!actual) return show('#account-error', t('cuenta.faltaActual'));
+      if (!syncRules()) return show('#account-error', t('cuenta.politica'));
+      if (nueva !== field('#account-confirm').value) return show('#account-error', t('cuenta.distintas'));
 
       const submit = document.querySelector<HTMLButtonElement>('#account-submit');
       if (submit) submit.disabled = true;
@@ -148,9 +154,20 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         (event.target as HTMLFormElement).reset();
         syncRules();
         renderIdentity();
-        show('#account-message', 'Contraseña actualizada. Tus otras sesiones abiertas se cerraron.');
+        show('#account-message', t('cuenta.contrasenaCambiada'));
       } finally {
         if (submit) submit.disabled = false;
+      }
+    });
+
+    // Al elegir otro idioma se guarda en la cuenta y la página se recarga traducida.
+    conectarSelectorIdioma(document.querySelector('#account-language') ?? document, async (idioma: Idioma) => {
+      show('#language-error', null);
+      try {
+        await saveLanguage(idioma);
+      } catch (error) {
+        show('#language-error', (error as Error).message);
+        throw error;
       }
     });
 
@@ -202,7 +219,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         const response = await authFetch('/api/auth/me/notifications', jsonRequest('PUT', payload));
         if (!response.ok) return show('#notifications-error', await readApiError(response));
         renderNotices(await response.json() as Notices);
-        show('#account-message', 'Preferencias de aviso guardadas.');
+        show('#account-message', t('cuenta.avisosGuardados'));
       } finally {
         if (submit) submit.disabled = false;
       }

@@ -1,33 +1,20 @@
 ---
+import es, { type Clave } from '../i18n/es';
+import SelectorIdioma from './SelectorIdioma.astro';
+
 // En el build estático la ruta termina en '/' (ej. /logs/): se normaliza para comparar.
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
-const labels: Record<string, string> = {
-  '/dashboard': 'inicio',
-  '/organizations': 'organizaciones',
-  '/users': 'usuarios',
-  '/plan': 'mi plan',
-  '/plans': 'planes',
-  '/logs': 'bitácoras',
-  '/devices': 'dispositivos',
-  '/baselines': 'baselines',
-  '/rules': 'reglas',
-  '/audits': 'auditorías',
-  '/history': 'historial',
-  '/results': 'hallazgos',
-  '/alerts': 'alertas',
-  '/client-status': 'estado del cliente',
-  '/reports': 'reportes',
-  '/admin': 'administración',
-  '/account': 'mi cuenta',
-};
-const currentLabel = labels[path] ?? 'consola';
+const rutas = ['dashboard', 'organizations', 'users', 'plan', 'plans', 'logs', 'devices', 'baselines', 'rules', 'audits',
+  'history', 'results', 'alerts', 'client-status', 'reports', 'admin', 'account'];
+const slug = path.slice(1);
+const claveRuta = (rutas.includes(slug) ? `ruta.${slug}` : 'ruta.consola') as Clave;
 ---
 
 <header class="console-header">
-  <div class="console-breadcrumb" aria-label="Ubicación actual">
+  <div class="console-breadcrumb" aria-label={es['consola.ubicacion']} data-i18n-aria-label="consola.ubicacion">
     <strong>AuditNet</strong>
     <span>/</span>
-    <code>{currentLabel}</code>
+    <code data-i18n={claveRuta}>{es[claveRuta]}</code>
   </div>
 
   <div class="command-palette-shell">
@@ -38,16 +25,18 @@ const currentLabel = labels[path] ?? 'consola';
       type="text"
       autocomplete="off"
       spellcheck="false"
-      placeholder="ir a módulo..."
-      aria-label="Navegar a un módulo"
+      placeholder={es['consola.irA']}
+      data-i18n-placeholder="consola.irA"
+      aria-label={es['consola.irAAyuda']}
+      data-i18n-aria-label="consola.irAAyuda"
     />
     <kbd>Enter</kbd>
   </div>
 
   <div class="header-actions">
-    <div class="service-state" title="Conexión con los servicios">
+    <div class="service-state" title={es['consola.conexion']} data-i18n-title="consola.conexion">
       <span class="service-dot"></span>
-      <code id="topbar-connection">conectando</code>
+      <code id="topbar-connection" data-i18n="consola.conectando">{es['consola.conectando']}</code>
     </div>
 
     <div class="compact-user">
@@ -60,11 +49,13 @@ const currentLabel = labels[path] ?? 'consola';
       <div id="user-popover" class="user-popover is-hidden">
         <div class="user-popover-copy">
           <strong id="user-name">Usuario</strong>
-          <code id="user-role">sin perfil</code>
+          <code id="user-role" data-i18n="perfil.ninguno">{es['perfil.ninguno']}</code>
         </div>
         <div class="user-popover-divider"></div>
-        <a class="user-popover-action" href="/account">Mi cuenta</a>
-        <button id="logout-button" class="user-popover-action" type="button">Cerrar sesión</button>
+        <SelectorIdioma class="language-switch-menu" />
+        <div class="user-popover-divider"></div>
+        <a class="user-popover-action" href="/account" data-i18n="consola.miCuenta">{es['consola.miCuenta']}</a>
+        <button id="logout-button" class="user-popover-action" type="button" data-i18n="consola.salir">{es['consola.salir']}</button>
       </div>
     </div>
   </div>

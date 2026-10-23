@@ -1,14 +1,15 @@
 // Política de contraseñas, igual que PoliticaContrasena en management-service. Acá solo se muestra el avance
 // mientras se escribe; el backend la vuelve a validar.
+import { t } from './i18n';
 
 export type PasswordRule = { id: string; text: string; ok: (password: string, username: string) => boolean };
 
 export const PASSWORD_RULES: PasswordRule[] = [
-  { id: 'length', text: 'entre 10 y 72 caracteres', ok: (p) => p.length >= 10 && p.length <= 72 },
-  { id: 'mix', text: 'combina letras y números', ok: (p) => /\p{L}/u.test(p) && /\d/.test(p) },
+  { id: 'length', text: t('contrasena.largo'), ok: (p) => p.length >= 10 && p.length <= 72 },
+  { id: 'mix', text: t('contrasena.mezcla'), ok: (p) => /\p{L}/u.test(p) && /\d/.test(p) },
   {
     id: 'username',
-    text: 'no contiene el nombre de usuario',
+    text: t('contrasena.usuario'),
     ok: (p, u) => p.length > 0 && (!u.trim() || !p.toLowerCase().includes(u.trim().toLowerCase())),
   },
 ];

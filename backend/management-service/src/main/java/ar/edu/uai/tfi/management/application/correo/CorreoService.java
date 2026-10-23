@@ -4,10 +4,12 @@ import ar.edu.uai.tfi.management.application.port.AvisoDespachoPort;
 import ar.edu.uai.tfi.management.application.port.EnvioCorreoPort;
 import ar.edu.uai.tfi.management.domain.model.CorreoSaliente;
 import ar.edu.uai.tfi.management.domain.model.EstadoCorreo;
+import ar.edu.uai.tfi.management.domain.model.Idioma;
 import ar.edu.uai.tfi.management.domain.model.OrganizacionCliente;
 import ar.edu.uai.tfi.management.domain.model.TipoCorreo;
 import ar.edu.uai.tfi.management.domain.repository.CorreoRepository;
 import ar.edu.uai.tfi.management.domain.repository.OrganizacionClienteRepository;
+import ar.edu.uai.tfi.management.domain.repository.UsuarioRepository;
 import io.quarkus.narayana.jta.runtime.TransactionConfiguration;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
@@ -37,6 +39,7 @@ public class CorreoService implements BandejaCorreo {
     private final EnvioCorreoPort envio;
     private final OrganizacionClienteRepository organizaciones;
     private final AvisoDespachoPort despacho;
+    private final UsuarioRepository usuarios;
     private final PlantillasCorreo plantillas = new PlantillasCorreo();
 
     @ConfigProperty(name = "auditnet.url-publica", defaultValue = "http://localhost:4321")
@@ -44,11 +47,12 @@ public class CorreoService implements BandejaCorreo {
     Clock reloj = Clock.systemUTC();
 
     public CorreoService(CorreoRepository repository, EnvioCorreoPort envio, OrganizacionClienteRepository organizaciones,
-                         AvisoDespachoPort despacho) {
+                         AvisoDespachoPort despacho, UsuarioRepository usuarios) {
         this.repository = repository;
         this.envio = envio;
         this.organizaciones = organizaciones;
         this.despacho = despacho;
+        this.usuarios = usuarios;
     }
 
     /** Resultado de un despacho; {@code pendientes} son los que quedan para el próximo. */
@@ -95,8 +99,10 @@ public class CorreoService implements BandejaCorreo {
                 continue;
             }
             try {
+                // El idioma se toma al enviar: el del usuario dueño del correo, o español.
+                Idioma idioma = usuarios.idiomaPorEmail(correo.destinatario()).orElse(Idioma.ES);
                 MensajeCorreo mensaje = plantillas.armar(correo, nombreOrganizacion(correo.organizacionId()),
-                        urlPublica);
+                        urlPublica, idioma);
                 repository.actualizar(correo.enviado(reloj.instant(), envio.enviar(mensaje)));
                 enviados++;
             } catch (FalloEnvioCorreo fallo) {

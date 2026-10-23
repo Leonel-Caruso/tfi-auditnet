@@ -1,5 +1,6 @@
 ---
 import HeadMeta from '../components/HeadMeta.astro';
+import SelectorIdioma from '../components/SelectorIdioma.astro';
 import '../styles/global.css';
 
 interface Props {
@@ -7,6 +8,8 @@ interface Props {
   description?: string;
   indexable?: boolean;
   path?: string;
+  /** Clave del título en los diccionarios. */
+  tituloClave?: string;
 }
 
 const {
@@ -14,6 +17,7 @@ const {
   description = 'Acceso seguro a la consola de auditoría de configuraciones de red.',
   indexable = false,
   path,
+  tituloClave,
 } = Astro.props;
 ---
 
@@ -21,9 +25,18 @@ const {
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <HeadMeta title={`${title} · AuditNet`} description={description} indexable={indexable} path={path} />
+    <HeadMeta title={`${title} · AuditNet`} description={description} indexable={indexable} path={path}
+      tituloClave={tituloClave} />
   </head>
   <body class="public-body">
+    <SelectorIdioma class="language-switch-public" />
     <slot />
+
+    <script>
+      import { conectarSelectorIdioma, mostrarTraducida } from '../lib/i18n';
+
+      mostrarTraducida();
+      conectarSelectorIdioma(document.querySelector('.language-switch-public') ?? document);
+    </script>
   </body>
 </html>

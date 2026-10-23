@@ -193,17 +193,19 @@ avisos una sola vez; ejecución manual del job en Azure.
 
 ## Bloque 14 · Multi idioma (español, inglés, portugués)
 
-- Idioma guardado por usuario (management V7, `usuarios.idioma`), elegible en Mi cuenta y en la barra superior; en el
-  login, selector que se recuerda en el navegador.
-- Frontend: diccionarios `es`, `en`, `pt` y rutas por idioma de Astro (sin parpadeo de texto); los textos que arman
-  los scripts usan el mismo diccionario.
-- Backend: los errores llevan un código y el mensaje sale del idioma pedido (encabezado `Accept-Language`).
-- Correos, reporte PDF y CSV en el idioma del usuario. Los datos cargados (nombres de reglas, descripciones) no se
-  traducen.
+- Idioma guardado por usuario (management V7, `usuarios.idioma`), elegible en Mi cuenta y en el menú del usuario; en
+  el login, selector que se recuerda en el navegador (D-57).
+- Frontend: diccionarios `es`, `en`, `pt` con las mismas direcciones (sin rutas por idioma) y sin parpadeo de texto;
+  los textos que arman los scripts usan el mismo diccionario (D-58).
+- Backend: catálogo de mensajes por servicio, traducidos según `Accept-Language` (D-59).
+- Correos, reporte PDF y CSV en el idioma del usuario (D-60). Los datos cargados (nombres de reglas, descripciones) no
+  se traducen.
 - Se resuelven acá las etiquetas que siguen en inglés en los formularios.
+- Se entrega en dos partes: **14a** (idioma guardado, selector, login y recuperación, menú, Mi cuenta, correos y
+  mensajes del servidor) y **14b** (el resto de las pantallas, reporte PDF y CSV).
 
-**Pruebas:** chequeo en el CI de que los tres diccionarios tienen las mismas claves; pruebas de pantalla en los tres
-idiomas sin claves faltantes ni desbordes.
+**Pruebas:** `npm run check` falla si los tres diccionarios no tienen las mismas claves; pruebas de pantalla en los
+tres idiomas sin claves faltantes ni desbordes.
 
 ---
 

@@ -1,10 +1,12 @@
 import {
   AUDIT_CORE_API_URL,
+  jsonRequest,
   MANAGEMENT_API_URL,
   readApiError,
   type CurrentUser,
   type LoginResponse,
 } from './api';
+import { esIdioma, idiomaActual, recordarIdioma, t, type Idioma } from './i18n';
 
 const TOKEN_KEY = 'tfi.auth.token';
 const USER_KEY = 'tfi.auth.user';
@@ -12,7 +14,7 @@ const EXPIRES_KEY = 'tfi.auth.expiresAt';
 
 export type StoredUser = Pick<
   LoginResponse,
-  'userId' | 'organizationId' | 'nombre' | 'username' | 'email' | 'roles'
+  'userId' | 'organizationId' | 'nombre' | 'username' | 'email' | 'roles' | 'idioma'
 >;
 
 export async function login(identidad: string, password: string): Promise<LoginResponse> {
@@ -20,11 +22,11 @@ export async function login(identidad: string, password: string): Promise<LoginR
   try {
     response = await fetch(`${MANAGEMENT_API_URL}/api/auth/login`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Accept-Language': idiomaActual() },
       body: JSON.stringify({ identidad, password }),
     });
   } catch {
-    throw new Error('No se pudo conectar con el servicio de acceso. Verificá management-service en el puerto 8081.');
+    throw new Error(t('error.conexionAcceso'));
   }
 
   if (!response.ok) {
@@ -37,6 +39,7 @@ export async function login(identidad: string, password: string): Promise<LoginR
 }
 
 export function saveSession(result: LoginResponse): void {
+  const idioma: Idioma = esIdioma(result.idioma) ? result.idioma : 'es';
   const user: StoredUser = {
     userId: result.userId,
     organizationId: result.organizationId,
@@ -44,11 +47,14 @@ export function saveSession(result: LoginResponse): void {
     username: result.username,
     email: result.email,
     roles: result.roles,
+    idioma,
   };
 
   sessionStorage.setItem(TOKEN_KEY, result.accessToken);
   sessionStorage.setItem(USER_KEY, JSON.stringify(user));
   sessionStorage.setItem(EXPIRES_KEY, String(Date.now() + result.expiresIn * 1000));
+  // El idioma guardado del usuario manda; también queda para la pantalla de acceso de este navegador.
+  recordarIdioma(idioma);
 }
 
 export function getToken(): string | null {
@@ -106,6 +112,8 @@ async function authorizedFetch(
 
   const headers = new Headers(init.headers);
   headers.set('Authorization', `Bearer ${token}`);
+  // Los servicios devuelven los mensajes en este idioma.
+  headers.set('Accept-Language', idiomaActual());
 
   let response: Response;
   try {
@@ -114,7 +122,7 @@ async function authorizedFetch(
       headers,
     });
   } catch {
-    throw new Error('No se pudo conectar con la API. Verificá que los servicios backend estén iniciados.');
+    throw new Error(t('error.conexionApi'));
   }
 
   if (response.status === 401) {
@@ -138,6 +146,12 @@ export async function verifySession(): Promise<CurrentUser> {
     throw new Error(await readApiError(response));
   }
   return (await response.json()) as CurrentUser;
+}
+
+/** Guarda el idioma en la cuenta: lo usan la consola en cualquier navegador y los correos. */
+export async function saveLanguage(idioma: Idioma): Promise<void> {
+  const response = await authFetch('/api/auth/me/language', jsonRequest('PUT', { idioma }));
+  if (!response.ok) throw new Error(await readApiError(response));
 }
 
 export function hasRole(role: string): boolean {
