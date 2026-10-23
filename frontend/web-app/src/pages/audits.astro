@@ -1,31 +1,29 @@
 ---
+import { es } from '../i18n';
 import MasterLayout from '../layouts/MasterLayout.astro';
 ---
 
 <MasterLayout
-  title="Auditorías"
-  section="Motor de auditoría"
-  description="Importá configuraciones de dispositivos y auditalas contra la baseline que les corresponde."
+  title={es['auditorias.titulo']} section={es['auditorias.seccion']} description={es['auditorias.descripcion']}
+  i18n="auditorias"
 >
   <div id="audit-success" class="alert alert-success is-hidden"></div>
   <div id="audit-error" class="alert alert-error is-hidden"></div>
 
   <section class="panel compact-panel audit-toolbar">
     <div class="device-toolbar-copy">
-      <span class="eyebrow">Auditorías</span>
+      <span class="eyebrow" data-i18n="auditorias.auditoriasTitulo">{es['auditorias.auditoriasTitulo']}</span>
       <div>
-        <strong id="configuration-count">0 configuraciones</strong>
-        <span>versiones auditables disponibles</span>
+        <strong id="configuration-count" data-i18n="auditorias.ceroConfiguraciones">{es['auditorias.ceroConfiguraciones']}</strong>
+        <span data-i18n="auditorias.versionesAuditablesDisponibles">{es['auditorias.versionesAuditablesDisponibles']}</span>
       </div>
     </div>
     <div class="device-toolbar-actions">
       <div class="terminal-search">
         <span>&gt;</span>
-        <input id="audit-search" type="search" placeholder="buscar dispositivo, versión o usuario..." />
+        <input id="audit-search" type="search" placeholder={es['auditorias.buscarDispositivoVersionUsuario']} data-i18n-placeholder="auditorias.buscarDispositivoVersionUsuario" />
       </div>
-      <button id="open-config-dialog" class="button button-primary device-create-action" type="button">
-        + cargar configuración
-      </button>
+      <button id="open-config-dialog" class="button button-primary device-create-action" type="button" data-i18n="auditorias.cargarConfiguracion">{es['auditorias.cargarConfiguracion']}</button>
     </div>
   </section>
 
@@ -34,8 +32,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       <article class="panel audit-panel">
         <div class="panel-heading">
           <div>
-            <span class="eyebrow">Configuraciones</span>
-            <h2>Configuraciones auditables</h2>
+            <span class="eyebrow" data-i18n="auditorias.configuracionesTitulo">{es['auditorias.configuracionesTitulo']}</span>
+            <h2 data-i18n="auditorias.configuracionesAuditables">{es['auditorias.configuracionesAuditables']}</h2>
           </div>
         </div>
 
@@ -43,20 +41,20 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <table class="data-table audit-table">
             <thead>
               <tr>
-                <th>CONFIG</th>
-                <th>DISPOSITIVO</th>
-                <th>VERSIÓN</th>
-                <th>FORMATO</th>
-                <th>IMPORTADA POR</th>
-                <th>FECHA</th>
+                <th data-i18n="auditorias.colConfig">{es['auditorias.colConfig']}</th>
+                <th data-i18n="general.colDispositivo">{es['general.colDispositivo']}</th>
+                <th data-i18n="auditorias.colVersion">{es['auditorias.colVersion']}</th>
+                <th data-i18n="auditorias.colFormato">{es['auditorias.colFormato']}</th>
+                <th data-i18n="auditorias.colImportadaPor">{es['auditorias.colImportadaPor']}</th>
+                <th data-i18n="general.colFecha">{es['general.colFecha']}</th>
               </tr>
             </thead>
             <tbody id="configuration-table-body"></tbody>
           </table>
           <div id="configuration-empty" class="empty-state compact-empty">
             <div>
-              <code>0 configuraciones</code>
-              <p>Todavía no hay configuraciones importadas para auditar.</p>
+              <code data-i18n="auditorias.ceroConfiguraciones">{es['auditorias.ceroConfiguraciones']}</code>
+              <p data-i18n="auditorias.todaviaHayConfiguracionesImportadas">{es['auditorias.todaviaHayConfiguracionesImportadas']}</p>
             </div>
           </div>
         </div>
@@ -65,8 +63,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       <article class="panel audit-panel">
         <div class="panel-heading">
           <div>
-            <span class="eyebrow">Ejecuciones</span>
-            <h2>Auditorías ejecutadas</h2>
+            <span class="eyebrow" data-i18n="auditorias.ejecuciones">{es['auditorias.ejecuciones']}</span>
+            <h2 data-i18n="auditorias.auditoriasEjecutadas">{es['auditorias.auditoriasEjecutadas']}</h2>
           </div>
         </div>
 
@@ -74,21 +72,21 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <table class="data-table audit-table">
             <thead>
               <tr>
-                <th>AUDIT</th>
-                <th>DISPOSITIVO</th>
-                <th>BASELINE</th>
-                <th>REGLAS</th>
-                <th>CUMPLE</th>
-                <th>HALLAZGOS</th>
-                <th>RESULTADO</th>
+                <th data-i18n="auditorias.colAudit">{es['auditorias.colAudit']}</th>
+                <th data-i18n="general.colDispositivo">{es['general.colDispositivo']}</th>
+                <th data-i18n="general.colBaseline">{es['general.colBaseline']}</th>
+                <th data-i18n="auditorias.colReglas">{es['auditorias.colReglas']}</th>
+                <th data-i18n="auditorias.colCumple">{es['auditorias.colCumple']}</th>
+                <th data-i18n="general.colHallazgos">{es['general.colHallazgos']}</th>
+                <th data-i18n="general.colResultado">{es['general.colResultado']}</th>
               </tr>
             </thead>
             <tbody id="audit-table-body"></tbody>
           </table>
           <div id="audit-empty" class="empty-state compact-empty">
             <div>
-              <code>0 auditorías</code>
-              <p>No hay auditorías ejecutadas todavía.</p>
+              <code data-i18n="auditorias.ceroAuditorias">{es['auditorias.ceroAuditorias']}</code>
+              <p data-i18n="auditorias.hayAuditoriasEjecutadasTodavia">{es['auditorias.hayAuditoriasEjecutadasTodavia']}</p>
             </div>
           </div>
         </div>
@@ -98,15 +96,15 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <aside class="panel audit-inspector">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Auditoría seleccionada</span>
-          <h2>Contexto de auditoría</h2>
+          <span class="eyebrow" data-i18n="auditorias.auditoriaSeleccionada">{es['auditorias.auditoriaSeleccionada']}</span>
+          <h2 data-i18n="auditorias.contextoAuditoria">{es['auditorias.contextoAuditoria']}</h2>
         </div>
         <span class="inspector-led"></span>
       </div>
 
       <div id="audit-inspector-empty" class="inspector-empty">
-        <code>sin selección</code>
-        <p>Seleccioná una configuración para revisar su contexto o una auditoría para ver resultados.</p>
+        <code data-i18n="general.sinSeleccion">{es['general.sinSeleccion']}</code>
+        <p data-i18n="auditorias.seleccionaConfiguracionRevisarContexto">{es['auditorias.seleccionaConfiguracionRevisarContexto']}</p>
       </div>
 
       <div id="audit-inspector-content" class="inspector-content is-hidden"></div>
@@ -117,28 +115,28 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <form id="config-form" class="device-form">
       <div class="dialog-header">
         <div>
-          <span class="eyebrow">Importar configuración</span>
-          <h2>Cargar configuración</h2>
-          <p>Importá un running-config mediante texto pegado o archivo TXT/CFG.</p>
+          <span class="eyebrow" data-i18n="auditorias.importarConfiguracion">{es['auditorias.importarConfiguracion']}</span>
+          <h2 data-i18n="auditorias.cargarConfiguracionTitulo">{es['auditorias.cargarConfiguracionTitulo']}</h2>
+          <p data-i18n="auditorias.importaRunningConfigMediante">{es['auditorias.importaRunningConfigMediante']}</p>
         </div>
-        <button id="close-config-dialog" class="dialog-close" type="button" aria-label="Cerrar">×</button>
+        <button id="close-config-dialog" class="dialog-close" type="button" aria-label={es['general.cerrar']} data-i18n-aria-label="general.cerrar">×</button>
       </div>
 
       <div class="device-form-grid">
         <label class="field field-span-2">
-          <span>dispositivo *</span>
+          <span data-i18n="auditorias.dispositivoObligatorio">{es['auditorias.dispositivoObligatorio']}</span>
           <select id="config-device" class="form-select" required>
-            <option value="">Seleccionar dispositivo...</option>
+            <option value="" data-i18n="auditorias.seleccionarDispositivo">{es['auditorias.seleccionarDispositivo']}</option>
           </select>
         </label>
 
         <label class="field field-span-2">
-          <span>archivo (opcional)</span>
+          <span data-i18n="auditorias.archivoOpcional">{es['auditorias.archivoOpcional']}</span>
           <input id="config-file" type="file" accept=".txt,.cfg,text/plain" />
         </label>
 
         <label class="field field-span-2">
-          <span>configuración (running-config) *</span>
+          <span data-i18n="auditorias.configuracionRunningConfigObligatorio">{es['auditorias.configuracionRunningConfigObligatorio']}</span>
           <textarea
             id="config-content"
             class="mono-input config-editor"
@@ -150,15 +148,15 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       </div>
 
       <div class="rule-help">
-        <code>original</code>
-        <span>Se conserva exactamente el contenido recibido.</span>
-        <code>normalizada</code>
-        <span>Se genera una copia normalizada para comparar reglas sin alterar el original.</span>
+        <code data-i18n="auditorias.original">{es['auditorias.original']}</code>
+        <span data-i18n="auditorias.conservaExactamenteContenidoRecibido">{es['auditorias.conservaExactamenteContenidoRecibido']}</span>
+        <code data-i18n="auditorias.normalizada">{es['auditorias.normalizada']}</code>
+        <span data-i18n="auditorias.generaCopiaNormalizadaComparar">{es['auditorias.generaCopiaNormalizadaComparar']}</span>
       </div>
 
       <div class="dialog-actions">
-        <button id="cancel-config" class="button button-ghost" type="button">Cancelar</button>
-        <button class="button button-primary" type="submit">Importar configuración</button>
+        <button id="cancel-config" class="button button-ghost" type="button" data-i18n="general.cancelar">{es['general.cancelar']}</button>
+        <button class="button button-primary" type="submit" data-i18n="auditorias.importarConfiguracion">{es['auditorias.importarConfiguracion']}</button>
       </div>
     </form>
   </dialog>
@@ -167,6 +165,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     import { auditFetch, getStoredUser, hasRole } from '../lib/auth';
     import { readApiError } from '../lib/api';
     import { saveResponse } from '../lib/download';
+    import { plural, severityCode } from '../lib/format';
+    import { etiqueta, localeActual, t } from '../lib/i18n';
     import type {
       AuditDetail,
       AuditSummary,
@@ -221,7 +221,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
     const formatDate = (value: string) => {
       try {
-        return new Intl.DateTimeFormat('es-AR', {
+        return new Intl.DateTimeFormat(localeActual(), {
           dateStyle: 'short',
           timeStyle: 'short',
         }).format(new Date(value));
@@ -271,7 +271,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
     const renderDeviceOptions = () => {
       if (!configDevice) return;
-      configDevice.innerHTML = '<option value="">Seleccionar dispositivo...</option>' +
+      configDevice.innerHTML = `<option value="">${escapeHtml(t('auditorias.seleccionarDispositivo'))}</option>` +
         devices
           .filter((device) => device.estado === 'ACTIVO')
           .map((device) => `<option value="${device.id}">${escapeHtml(device.identificador)} · ${escapeHtml(device.nombre)}</option>`)
@@ -299,7 +299,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       });
 
       if (count) {
-        count.textContent = `${configurations.length} ${configurations.length === 1 ? 'configuración' : 'configuraciones'}`;
+        count.textContent = plural(configurations.length, 'auditorias.configuraciones');
       }
 
       body.innerHTML = filtered.map((configuration) => {
@@ -347,7 +347,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
             <td>${audit.totalReglas}</td>
             <td>${audit.reglasCumplidas}</td>
             <td><strong>${audit.totalHallazgos}</strong></td>
-            <td><span class="status-badge ${resultClass}">${escapeHtml(audit.resultado)}</span></td>
+            <td><span class="status-badge ${resultClass}">${escapeHtml(etiqueta('resultado', audit.resultado))}</span></td>
           </tr>`;
       }).join('');
 
@@ -387,7 +387,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         const hash = response.headers.get('X-AuditNet-SHA256') ?? '';
         await saveResponse(response, `CFG-${String(id).padStart(3, '0')}.txt`);
         box.className = 'file-integrity is-ok';
-        message.innerHTML = `Integridad verificada: el archivo coincide con el registrado al importarlo.<br><code>SHA-256 ${escapeHtml(hash)}</code>`;
+        message.innerHTML = `${escapeHtml(t('auditorias.integridadVerificada'))}<br><code>SHA-256 ${escapeHtml(hash)}</code>`;
       } finally {
         if (button) button.disabled = false;
       }
@@ -409,32 +409,32 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       showInspector(`
         <div class="inspector-identity">
           <span class="inspector-code">CFG-${String(configuration.id).padStart(3, '0')} · v${configuration.version}</span>
-          <h3>${escapeHtml(device?.identificador ?? `Dispositivo #${configuration.dispositivoId}`)}</h3>
-          <span class="status-badge status-ready">AUDITABLE</span>
+          <h3>${escapeHtml(device?.identificador ?? t('auditorias.dispositivoNumero', { id: configuration.dispositivoId }))}</h3>
+          <span class="status-badge status-ready">${t('auditorias.auditable')}</span>
         </div>
         <dl class="technical-definition-list">
-          <div><dt>dispositivo</dt><dd>${escapeHtml(device?.nombre ?? '—')}</dd></div>
-          <div><dt>origen</dt><dd>${escapeHtml(configuration.nombreFuente)}</dd></div>
-          <div><dt>formato</dt><dd>${escapeHtml(configuration.formato)}</dd></div>
-          <div><dt>versión</dt><dd>v${configuration.version}</dd></div>
-          <div><dt>importó</dt><dd>${escapeHtml(configuration.usuarioResponsable)}</dd></div>
-          <div><dt>baseline</dt><dd>${escapeHtml(baseline?.nombre ?? 'Sin baseline aplicable')}</dd></div>
-          <div><dt>reglas activas</dt><dd>${ruleCount}</dd></div>
+          <div><dt>${t('general.dispositivo')}</dt><dd>${escapeHtml(device?.nombre ?? '—')}</dd></div>
+          <div><dt>${t('auditorias.origen')}</dt><dd>${escapeHtml(configuration.nombreFuente)}</dd></div>
+          <div><dt>${t('auditorias.formato')}</dt><dd>${escapeHtml(configuration.formato)}</dd></div>
+          <div><dt>${t('baselines.versionDetalle')}</dt><dd>v${configuration.version}</dd></div>
+          <div><dt>${t('auditorias.importo')}</dt><dd>${escapeHtml(configuration.usuarioResponsable)}</dd></div>
+          <div><dt>${t('general.baseline')}</dt><dd>${escapeHtml(baseline?.nombre ?? t('auditorias.sinBaselineAplicable'))}</dd></div>
+          <div><dt>${t('auditorias.reglasActivas')}</dt><dd>${ruleCount}</dd></div>
         </dl>
         <div class="config-preview">
-          <span>vista previa normalizada</span>
+          <span>${t('auditorias.vistaPrevia')}</span>
           <pre>${escapeHtml(preview)}</pre>
         </div>
         <div id="config-file-status" class="file-integrity">
-          <span id="config-file-message">Archivo original en el repositorio de archivos (con verificación SHA-256).</span>
-          <button id="config-file-download" class="button button-ghost button-small" type="button">Descargar archivo original</button>
+          <span id="config-file-message">${t('auditorias.archivoOriginal')}</span>
+          <button id="config-file-download" class="button button-ghost button-small" type="button">${t('auditorias.descargarOriginal')}</button>
         </div>
         ${canOperate ? `
           <button id="execute-selected-audit" class="button button-primary button-full" type="button"
             ${!baseline || ruleCount === 0 ? 'disabled' : ''}>
-            ▶ ejecutar auditoría
+            ▶ ${t('auditorias.ejecutar')}
           </button>` : ''}
-        ${!baseline ? '<div class="alert alert-error">No existe una baseline activa aplicable.</div>' : ''}
+        ${!baseline ? `<div class="alert alert-error">${t('auditorias.sinBaselineActiva')}</div>` : ''}
       `);
 
       document.querySelector<HTMLButtonElement>('#execute-selected-audit')?.addEventListener('click', () => executeAudit(configuration.id));
@@ -468,7 +468,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
             <strong>${escapeHtml(evaluation.nombreRegla)}</strong>
           </div>
           <span class="status-badge ${evaluation.cumple ? 'status-ready' : 'status-strong'}">
-            ${evaluation.cumple ? 'CUMPLE' : 'HALLAZGO'}
+            ${t(evaluation.cumple ? 'auditorias.cumple' : 'auditorias.hallazgo')}
           </span>
           <small>${escapeHtml(evaluation.evidencia)}</small>
         </div>
@@ -477,25 +477,25 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       showInspector(`
         <div class="inspector-identity">
           <span class="inspector-code">AUD-${String(audit.id).padStart(3, '0')}</span>
-          <h3>${escapeHtml(device?.identificador ?? `Dispositivo #${audit.dispositivoId}`)}</h3>
-          <span class="status-badge ${audit.resultado === 'CUMPLE' ? 'status-ready' : 'status-strong'}">${escapeHtml(audit.resultado)}</span>
+          <h3>${escapeHtml(device?.identificador ?? t('auditorias.dispositivoNumero', { id: audit.dispositivoId }))}</h3>
+          <span class="status-badge ${audit.resultado === 'CUMPLE' ? 'status-ready' : 'status-strong'}">${escapeHtml(etiqueta('resultado', audit.resultado))}</span>
         </div>
         <dl class="technical-definition-list">
-          <div><dt>baseline</dt><dd>${escapeHtml(baseline?.nombre ?? `#${audit.baselineId}`)}</dd></div>
-          <div><dt>configuración</dt><dd>CFG-${String(audit.configuracionId).padStart(3, '0')}</dd></div>
-          <div><dt>reglas evaluadas</dt><dd>${audit.totalReglas}</dd></div>
-          <div><dt>reglas cumplidas</dt><dd>${audit.reglasCumplidas}</dd></div>
-          <div><dt>hallazgos</dt><dd>${audit.totalHallazgos}</dd></div>
-          <div><dt>severidad máxima</dt><dd>${escapeHtml(audit.severidadMaxima)}</dd></div>
-          <div><dt>ejecutó</dt><dd>${escapeHtml(audit.ejecutadoPor)}</dd></div>
-          <div><dt>fecha</dt><dd>${escapeHtml(formatDate(audit.fechaEjecucion))}</dd></div>
+          <div><dt>${t('general.baseline')}</dt><dd>${escapeHtml(baseline?.nombre ?? `#${audit.baselineId}`)}</dd></div>
+          <div><dt>${t('auditorias.configuracion')}</dt><dd>CFG-${String(audit.configuracionId).padStart(3, '0')}</dd></div>
+          <div><dt>${t('auditorias.reglasEvaluadas')}</dt><dd>${audit.totalReglas}</dd></div>
+          <div><dt>${t('auditorias.reglasCumplidas')}</dt><dd>${audit.reglasCumplidas}</dd></div>
+          <div><dt>${t('auditorias.hallazgos')}</dt><dd>${audit.totalHallazgos}</dd></div>
+          <div><dt>${t('auditorias.severidadMaxima')}</dt><dd>${escapeHtml(severityCode(audit.severidadMaxima))}</dd></div>
+          <div><dt>${t('auditorias.ejecuto')}</dt><dd>${escapeHtml(audit.ejecutadoPor)}</dd></div>
+          <div><dt>${t('bitacoras.fecha')}</dt><dd>${escapeHtml(formatDate(audit.fechaEjecucion))}</dd></div>
         </dl>
         <div class="evaluation-list">
-          <span class="eyebrow">Evaluación de reglas</span>
+          <span class="eyebrow">${t('auditorias.evaluacionReglas')}</span>
           ${evaluations}
         </div>
-        ${audit.totalHallazgos > 0 ? `<a class="button button-ghost button-full" href="/results?auditoria=${audit.id}">Ver hallazgos →</a>` : ''}
-        <a class="button button-ghost button-full" href="/history?auditoria=${audit.id}">Ver en el historial (evolución) →</a>
+        ${audit.totalHallazgos > 0 ? `<a class="button button-ghost button-full" href="/results?auditoria=${audit.id}">${t('auditorias.verHallazgos')}</a>` : ''}
+        <a class="button button-ghost button-full" href="/history?auditoria=${audit.id}">${t('auditorias.verHistorial')}</a>
       `);
     };
 
@@ -515,7 +515,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         const detail = await response.json() as AuditDetail;
         showMessage(
           'success',
-          `Auditoría AUD-${String(detail.auditoria.id).padStart(3, '0')} finalizada: ${detail.auditoria.totalHallazgos} hallazgo(s).`
+          t('auditorias.finalizada', { codigo: `AUD-${String(detail.auditoria.id).padStart(3, '0')}`, hallazgos: plural(detail.auditoria.totalHallazgos, 'informe.hallazgo') }),
         );
         await refreshAll();
         selectedAuditId = detail.auditoria.id;
@@ -524,7 +524,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         renderAudits();
         renderAuditDetail(detail);
       } catch (error) {
-        showMessage('error', error instanceof Error ? error.message : 'No se pudo ejecutar la auditoría.');
+        showMessage('error', error instanceof Error ? error.message : t('auditorias.errorEjecutar'));
       } finally {
         if (button) button.disabled = false;
       }
@@ -571,18 +571,18 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
         const created = await response.json() as DeviceConfiguration;
         closeDialog();
-        showMessage('success', `Configuración CFG-${String(created.id).padStart(3, '0')} importada como versión ${created.version}.`);
+        showMessage('success', t('auditorias.importada', { codigo: `CFG-${String(created.id).padStart(3, '0')}`, version: created.version }));
         await refreshAll();
         selectConfiguration(created.id);
       } catch (error) {
-        showMessage('error', error instanceof Error ? error.message : 'No se pudo importar la configuración.');
+        showMessage('error', error instanceof Error ? error.message : t('auditorias.errorImportar'));
       }
     });
 
     searchInput?.addEventListener('input', renderConfigurations);
 
     refreshAll().catch((error) => {
-      showMessage('error', error instanceof Error ? error.message : 'No se pudieron cargar los datos de auditoría.');
+      showMessage('error', error instanceof Error ? error.message : t('auditorias.errorCargar'));
     });
   </script>
 </MasterLayout>

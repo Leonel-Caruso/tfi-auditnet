@@ -1,8 +1,6 @@
 // Idioma de la consola. El texto en español queda en el HTML compilado; para inglés y portugués se reemplaza al cargar
 // la página (elementos con data-i18n) y los scripts arman sus textos con t().
-import es, { type Clave } from '../i18n/es';
-import en from '../i18n/en';
-import pt from '../i18n/pt';
+import { en, es, pt, type Clave } from '../i18n';
 
 export type Idioma = 'es' | 'en' | 'pt';
 export type { Clave };
@@ -44,6 +42,13 @@ export function t(clave: Clave, datos: Record<string, string | number> = {}): st
   const texto = DICCIONARIOS[idiomaActual()][clave] ?? es[clave] ?? clave;
   return texto.replace(/\{(\w+)\}/g, (marca, nombre: string) =>
     nombre in datos ? String(datos[nombre]) : marca);
+}
+
+/** Nombre de un código (CRITICA, ACTIVO...) del grupo indicado; si no tiene traducción, el código tal cual. */
+export function etiqueta(grupo: string, codigo: string | null | undefined): string {
+  if (!codigo) return '—';
+  const clave = `${grupo}.${codigo}`;
+  return clave in es ? t(clave as Clave) : codigo;
 }
 
 /** Recuerda el idioma en este navegador (y en la sesión abierta, si hay). No lo guarda en el servidor. */

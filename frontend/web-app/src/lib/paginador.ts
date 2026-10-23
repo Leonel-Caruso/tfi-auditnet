@@ -1,5 +1,6 @@
 // Paginador de tablas. En el navegador, recortar() pagina una lista ya cargada; en el servidor, actualizar()
 // recibe el total que la API informa en X-Total-Count.
+import { t } from './i18n';
 
 export const OPCIONES_POR_PAGINA = [10, 25, 50, 100];
 
@@ -55,19 +56,19 @@ export function crearPaginador(contenedor: HTMLElement | null, opciones: Opcione
     const opcionesHtml = OPCIONES_POR_PAGINA
       .map((valor) => `<option value="${valor}" ${valor === porPagina ? 'selected' : ''}>${valor}</option>`)
       .join('');
-    const textoPagina = `Página ${pagina} de ${ultimaPagina()}`;
-    if (activo) anuncio.textContent = `${textoPagina}, ${desde} a ${hasta} de ${total}`;
+    const textoPagina = t('paginador.pagina', { pagina, total: ultimaPagina() });
+    if (activo) anuncio.textContent = t('paginador.anuncio', { pagina: textoPagina, desde, hasta, total });
     cuerpo.innerHTML = `
-      <span class="pager-range">${desde}–${hasta} de ${total}</span>
+      <span class="pager-range">${t('paginador.rango', { desde, hasta, total })}</span>
       <div class="pager-controls">
         <button type="button" class="button button-ghost button-small" data-pager="anterior" ${pagina <= 1 ? 'disabled' : ''}
-          aria-label="Página anterior">‹<span class="pager-word"> Anterior</span></button>
+          aria-label="${t('paginador.anteriorAyuda')}">‹<span class="pager-word"> ${t('paginador.anterior')}</span></button>
         <span class="pager-page">${textoPagina}</span>
         <button type="button" class="button button-ghost button-small" data-pager="siguiente" ${pagina >= ultimaPagina() ? 'disabled' : ''}
-          aria-label="Página siguiente"><span class="pager-word">Siguiente </span>›</button>
+          aria-label="${t('paginador.siguienteAyuda')}"><span class="pager-word">${t('paginador.siguiente')} </span>›</button>
       </div>
-      <label class="pager-size"><span>por página</span>
-        <select class="technical-select" data-pager="tamanio" aria-label="Filas por página">${opcionesHtml}</select>
+      <label class="pager-size"><span>${t('paginador.porPagina')}</span>
+        <select class="technical-select" data-pager="tamanio" aria-label="${t('paginador.porPaginaAyuda')}">${opcionesHtml}</select>
       </label>`;
     if (activo) {
       const control = cuerpo.querySelector<HTMLButtonElement | HTMLSelectElement>(`[data-pager="${activo}"]`);

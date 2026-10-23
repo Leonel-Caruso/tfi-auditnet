@@ -2,8 +2,10 @@
 // nombre y formato (date: AAAA-MM-DD, datetime-local: AAAA-MM-DDTHH:mm).
 // Con data-time="end" (campo "hasta"), un día sin hora toma 23:59 en lugar de 00:00.
 
-const MONTHS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-const WEEKDAYS = ['lu', 'ma', 'mi', 'ju', 'vi', 'sá', 'do'];
+import { t } from './i18n';
+
+const MONTHS = t('calendario.meses').split(',');
+const WEEKDAYS = t('calendario.dias').split(',');
 
 type Mode = 'date' | 'datetime';
 type Parts = { year: number; month: number; day: number; hour: number; minute: number };
@@ -41,7 +43,7 @@ function enhance(input: HTMLInputElement): void {
   if (input.dataset.datepicker === 'ready') return;
   const mode: Mode = input.type === 'datetime-local' ? 'datetime' : 'date';
   const endOfDay = input.dataset.time === 'end';
-  const label = input.closest('label')?.querySelector('span')?.textContent?.trim() ?? 'fecha';
+  const label = input.closest('label')?.querySelector('span')?.textContent?.trim() ?? t('calendario.fecha');
   const initial = input.value;
 
   // El input original queda en el formulario como texto oculto (así form.reset() lo vacía) y conserva el nombre.
@@ -70,7 +72,7 @@ function enhance(input: HTMLInputElement): void {
   const popover = document.createElement('div');
   popover.className = 'dp-popover';
   popover.setAttribute('role', 'dialog');
-  popover.setAttribute('aria-label', `Elegir ${label}`);
+  popover.setAttribute('aria-label', t('calendario.elegir', { campo: label }));
   popover.hidden = true;
   field.append(popover);
 
@@ -89,9 +91,9 @@ function enhance(input: HTMLInputElement): void {
 
   function sync(): void {
     const parts = parse(read(), mode);
-    valueNode.textContent = display(parts, mode) || (mode === 'date' ? 'dd/mm/aaaa' : 'dd/mm/aaaa --:--');
+    valueNode.textContent = display(parts, mode) || t(mode === 'date' ? 'calendario.formato' : 'calendario.formatoHora');
     trigger.classList.toggle('is-empty', !parts);
-    trigger.setAttribute('aria-label', `${label}: ${display(parts, mode) || 'sin fecha'}`);
+    trigger.setAttribute('aria-label', `${label}: ${display(parts, mode) || t('calendario.sinFecha')}`);
   }
 
   function commit(next: string): void {
@@ -119,7 +121,7 @@ function enhance(input: HTMLInputElement): void {
       const classes = ['dp-day'];
       if (sameDay(selected, view.year, view.month, day)) classes.push('is-selected');
       if (today.getFullYear() === view.year && today.getMonth() === view.month && today.getDate() === day) classes.push('is-today');
-      cells.push(`<button type="button" class="${classes.join(' ')}" data-day="${day}" tabindex="${day === focusDay ? 0 : -1}" aria-label="${day} de ${MONTHS[view.month]} de ${view.year}"${sameDay(selected, view.year, view.month, day) ? ' aria-pressed="true"' : ''}>${day}</button>`);
+      cells.push(`<button type="button" class="${classes.join(' ')}" data-day="${day}" tabindex="${day === focusDay ? 0 : -1}" aria-label="${t('calendario.dia', { dia: day, mes: MONTHS[view.month], anio: view.year })}"${sameDay(selected, view.year, view.month, day) ? ' aria-pressed="true"' : ''}>${day}</button>`);
     }
 
     const hour = selected?.hour ?? (endOfDay ? 23 : 0);
@@ -129,9 +131,9 @@ function enhance(input: HTMLInputElement): void {
 
     popover.innerHTML = `
       <div class="dp-head">
-        <button type="button" class="dp-nav" data-nav="-1" aria-label="Mes anterior">‹</button>
+        <button type="button" class="dp-nav" data-nav="-1" aria-label="${t('calendario.mesAnterior')}">‹</button>
         <strong>${MONTHS[view.month]} <span>${view.year}</span></strong>
-        <button type="button" class="dp-nav" data-nav="1" aria-label="Mes siguiente">›</button>
+        <button type="button" class="dp-nav" data-nav="1" aria-label="${t('calendario.mesSiguiente')}">›</button>
       </div>
       <div class="dp-grid" role="grid">
         ${WEEKDAYS.map((name) => `<span class="dp-weekday">${name}</span>`).join('')}
@@ -139,14 +141,14 @@ function enhance(input: HTMLInputElement): void {
       </div>
       ${mode === 'datetime' ? `
       <div class="dp-time">
-        <span>hora</span>
-        <select class="technical-select" data-part="hour" aria-label="Hora">${options(24, hour)}</select>
+        <span>${t('calendario.hora')}</span>
+        <select class="technical-select" data-part="hour" aria-label="${t('calendario.horaAyuda')}">${options(24, hour)}</select>
         <b>:</b>
-        <select class="technical-select" data-part="minute" aria-label="Minutos">${options(60, minute)}</select>
+        <select class="technical-select" data-part="minute" aria-label="${t('calendario.minutos')}">${options(60, minute)}</select>
       </div>` : ''}
       <div class="dp-foot">
-        <button type="button" class="dp-link" data-action="today">hoy</button>
-        <button type="button" class="dp-link" data-action="clear">limpiar</button>
+        <button type="button" class="dp-link" data-action="today">${t('calendario.hoy')}</button>
+        <button type="button" class="dp-link" data-action="clear">${t('calendario.limpiar')}</button>
       </div>`;
   }
 

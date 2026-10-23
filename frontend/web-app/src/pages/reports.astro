@@ -1,11 +1,11 @@
 ---
+import { es } from '../i18n';
 import MasterLayout from '../layouts/MasterLayout.astro';
 ---
 
 <MasterLayout
-  title="Reportes de auditoría"
-  section="Resultados y trazabilidad"
-  description="Generá reportes de auditoría con hallazgos, severidad, impacto y evidencia. Quedan guardados y se descargan en PDF o CSV."
+  title={es['reportes.titulo']} section={es['reportes.seccion']} description={es['reportes.descripcion']}
+  i18n="reportes"
 >
   <div id="report-error" class="alert alert-error is-hidden report-no-print" role="alert"></div>
   <div id="report-success" class="alert alert-success is-hidden report-no-print" role="status"></div>
@@ -14,68 +14,68 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <form id="report-form" class="panel compact-panel" novalidate>
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Nuevo reporte</span>
-          <h2>Criterios</h2>
+          <span class="eyebrow" data-i18n="reportes.nuevoReporte">{es['reportes.nuevoReporte']}</span>
+          <h2 data-i18n="reportes.criterios">{es['reportes.criterios']}</h2>
         </div>
       </div>
-      <p id="report-readonly" class="log-muted is-hidden">Tu perfil puede consultar y descargar reportes, pero no generarlos.</p>
+      <p id="report-readonly" class="log-muted is-hidden" data-i18n="reportes.perfilPuedeConsultarDescargar">{es['reportes.perfilPuedeConsultarDescargar']}</p>
       <div class="log-filter-grid report-criteria">
         <label class="log-filter">
-          <span>desde</span>
+          <span data-i18n="general.desde">{es['general.desde']}</span>
           <input name="desde" class="technical-input" type="date" />
         </label>
         <label class="log-filter">
-          <span>hasta</span>
+          <span data-i18n="general.hasta">{es['general.hasta']}</span>
           <input name="hasta" class="technical-input" type="date" />
         </label>
         <label class="log-filter" id="report-org-filter" hidden>
-          <span>organización</span>
-          <select name="organizacionId" class="technical-select"><option value="">todas</option></select>
+          <span data-i18n="general.organizacion">{es['general.organizacion']}</span>
+          <select name="organizacionId" class="technical-select"><option value="" data-i18n="general.todas">{es['general.todas']}</option></select>
         </label>
         <label class="log-filter">
-          <span>dispositivo</span>
-          <select name="dispositivoId" class="technical-select"><option value="">todos</option></select>
+          <span data-i18n="general.dispositivo">{es['general.dispositivo']}</span>
+          <select name="dispositivoId" class="technical-select"><option value="" data-i18n="general.todos">{es['general.todos']}</option></select>
         </label>
         <label class="log-filter">
-          <span>auditorías específicas</span>
-          <input name="auditorias" class="technical-input" type="text" inputmode="numeric" placeholder="ej: 12, 15 (opcional)" />
+          <span data-i18n="reportes.auditoriasEspecificas">{es['reportes.auditoriasEspecificas']}</span>
+          <input name="auditorias" class="technical-input" type="text" inputmode="numeric" placeholder={es['reportes.ejOpcional']} data-i18n-placeholder="reportes.ejOpcional" />
         </label>
       </div>
       <fieldset class="report-checks">
-        <legend>severidad de los hallazgos</legend>
-        <label><input type="checkbox" name="severidad" value="CRITICA" />CRITICA</label>
-        <label><input type="checkbox" name="severidad" value="ALTA" />ALTA</label>
-        <label><input type="checkbox" name="severidad" value="MEDIA" />MEDIA</label>
-        <label><input type="checkbox" name="severidad" value="BAJA" />BAJA</label>
+        <legend data-i18n="reportes.severidadHallazgos">{es['reportes.severidadHallazgos']}</legend>
+        <label><input type="checkbox" name="severidad" value="CRITICA" /><span data-i18n="severidad.CRITICA">{es['severidad.CRITICA']}</span></label>
+        <label><input type="checkbox" name="severidad" value="ALTA" /><span data-i18n="severidad.ALTA">{es['severidad.ALTA']}</span></label>
+        <label><input type="checkbox" name="severidad" value="MEDIA" /><span data-i18n="severidad.MEDIA">{es['severidad.MEDIA']}</span></label>
+        <label><input type="checkbox" name="severidad" value="BAJA" /><span data-i18n="severidad.BAJA">{es['severidad.BAJA']}</span></label>
       </fieldset>
       <fieldset class="report-checks">
-        <legend>estado de los hallazgos</legend>
-        <label><input type="checkbox" name="estado" value="ABIERTO" />ABIERTO</label>
-        <label><input type="checkbox" name="estado" value="EN_REVISION" />EN_REVISION</label>
-        <label><input type="checkbox" name="estado" value="RESUELTO" />RESUELTO</label>
-        <label><input type="checkbox" name="estado" value="ACEPTADO" />ACEPTADO</label>
+        <legend data-i18n="reportes.estadoHallazgos">{es['reportes.estadoHallazgos']}</legend>
+        <label><input type="checkbox" name="estado" value="ABIERTO" /><span data-i18n="hallazgo.ABIERTO">{es['hallazgo.ABIERTO']}</span></label>
+        <label><input type="checkbox" name="estado" value="EN_REVISION" /><span data-i18n="hallazgo.EN_REVISION">{es['hallazgo.EN_REVISION']}</span></label>
+        <label><input type="checkbox" name="estado" value="RESUELTO" /><span data-i18n="hallazgo.RESUELTO">{es['hallazgo.RESUELTO']}</span></label>
+        <label><input type="checkbox" name="estado" value="ACEPTADO" /><span data-i18n="hallazgo.ACEPTADO">{es['hallazgo.ACEPTADO']}</span></label>
       </fieldset>
-      <p class="technical-hint">Sin marcar = todos. Con auditorías específicas, las fechas son opcionales.</p>
-      <button id="report-submit" type="submit" class="button button-primary button-full">Generar reporte</button>
+      <p class="technical-hint" data-i18n="reportes.sinMarcarTodosAuditorias">{es['reportes.sinMarcarTodosAuditorias']}</p>
+      <button id="report-submit" type="submit" class="button button-primary button-full" data-i18n="reportes.generarReporte">{es['reportes.generarReporte']}</button>
     </form>
 
     <article class="panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Disponibles</span>
-          <h2>Reportes generados</h2>
+          <span class="eyebrow" data-i18n="reportes.disponibles">{es['reportes.disponibles']}</span>
+          <h2 data-i18n="reportes.reportesGenerados">{es['reportes.reportesGenerados']}</h2>
         </div>
         <span id="report-count" class="counter-chip">—</span>
       </div>
       <div class="table-wrap">
         <table class="data-table finding-table log-table">
           <thead>
-            <tr><th>REPORTE</th><th>TÍTULO</th><th>AUDITORÍAS</th><th>HALLAZGOS</th><th>GENERADO</th></tr>
+            <tr><th data-i18n="reportes.colReporte">{es['reportes.colReporte']}</th><th data-i18n="reportes.colTitulo">{es['reportes.colTitulo']}</th><th data-i18n="reportes.colAuditorias">{es['reportes.colAuditorias']}</th><th data-i18n="general.colHallazgos">{es['general.colHallazgos']}</th><th data-i18n="reportes.colGenerado">{es['reportes.colGenerado']}</th></tr>
           </thead>
           <tbody id="report-list"></tbody>
         </table>
         <div id="report-empty" class="empty-state compact-empty is-hidden">
-          <div><code>0 reportes</code><p>Todavía no se generaron reportes.</p></div>
+          <div><code data-i18n="reportes.ceroReportes">{es['reportes.ceroReportes']}</code><p data-i18n="reportes.todaviaGeneraronReportes">{es['reportes.todaviaGeneraronReportes']}</p></div>
         </div>
       </div>
     </article>
@@ -95,6 +95,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       type Site,
     } from '../lib/api';
     import { code, escapeHtml, formatDate } from '../lib/format';
+    import { t } from '../lib/i18n';
     import { printPageStyle, reportDocumentHtml } from '../lib/report-document';
     import { loadVisibleSites } from '../lib/sites';
 
@@ -136,9 +137,11 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       return date.toISOString();
     };
     const orgName = (id: number | null) => id == null
-      ? 'todas las organizaciones'
-      : organizations.find((organization) => organization.id === id)?.razonSocial ?? `organización #${id}`;
-    const siteName = (id: number | null) => id == null ? 'sin sede' : sites.find((site) => site.id === id)?.nombre ?? `sede #${id}`;
+      ? t('tablero.todasOrganizaciones')
+      : organizations.find((organization) => organization.id === id)?.razonSocial ?? t('tablero.organizacionNumero', { id });
+    const siteName = (id: number | null) => id == null
+      ? t('tablero.sinSede')
+      : sites.find((site) => site.id === id)?.nombre ?? t('tablero.sedeNumero', { id });
 
     const renderList = () => {
       const body = document.querySelector<HTMLTableSectionElement>('#report-list');
@@ -178,12 +181,12 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       view.innerHTML = `
         <div class="report-toolbar report-no-print">
           <div>
-            <span class="eyebrow">Vista del documento</span>
+            <span class="eyebrow">${t('reportes.vistaDocumento')}</span>
             <strong>${rep}</strong>
           </div>
           <div class="report-actions">
-            <button id="report-print" type="button" class="button button-primary button-small">Descargar PDF</button>
-            <button id="report-csv" type="button" class="button button-ghost button-small">Descargar CSV</button>
+            <button id="report-print" type="button" class="button button-primary button-small">${t('reportes.descargarPdf')}</button>
+            <button id="report-csv" type="button" class="button button-ghost button-small">${t('reportes.descargarCsv')}</button>
           </div>
         </div>
         ${reportDocumentHtml(report, reportContext)}`;
@@ -215,7 +218,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const url = URL.createObjectURL(await response.blob());
       const link = document.createElement('a');
       link.href = url;
-      link.download = `reporte-${code('REP', id)}.csv`;
+      link.download = `${t('reportes.archivoCsv')}-${code('REP', id)}.csv`;
       document.body.append(link);
       link.click();
       link.remove();
@@ -281,14 +284,14 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         const auditText = String(data.get('auditorias') ?? '').trim();
         const auditIds = auditText ? auditText.split(/[\s,;]+/).filter(Boolean).map((value) => Number(value.replace(/^AUD-0*/i, ''))) : [];
         if (auditIds.some((id) => !Number.isInteger(id) || id <= 0)) {
-          return showError('Las auditorías específicas deben ser números separados por coma (ej: 12, 15).');
+          return showError(t('reportes.auditoriasInvalidas'));
         }
         const desde = dayToIso(String(data.get('desde') ?? ''), false);
         const hasta = dayToIso(String(data.get('hasta') ?? ''), true);
         if (auditIds.length === 0 && (!desde || !hasta)) {
-          return showError('Indicá el rango de fechas (desde y hasta) o auditorías específicas.');
+          return showError(t('reportes.faltaRango'));
         }
-        if (desde && hasta && desde > hasta) return showError("La fecha 'desde' no puede ser posterior a 'hasta'.");
+        if (desde && hasta && desde > hasta) return showError(t('bitacoras.rangoInvalido'));
 
         const device = Number(data.get('dispositivoId')) || null;
         const submit = document.querySelector<HTMLButtonElement>('#report-submit');
@@ -306,10 +309,10 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           if (!response.ok) return showError(await readApiError(response));
           if (response.status !== 201) {
             const body = await response.json() as { message?: string };
-            return showError(body.message ?? 'No hay resultados para reportar.');
+            return showError(body.message ?? t('reportes.sinResultados'));
           }
           const report = await response.json() as AuditReport;
-          showSuccess(`${code('REP', report.id)} generado: ${report.totalAuditorias} auditorías y ${report.totalHallazgos} hallazgos.`);
+          showSuccess(t('reportes.generado', { codigo: code('REP', report.id), auditorias: report.totalAuditorias, hallazgos: report.totalHallazgos }));
           await loadReports();
           selectedId = report.id;
           renderList();
@@ -329,6 +332,6 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         const initial = Number(params.get('reporte')) || null;
         if (initial) void openReport(initial);
       })
-      .catch((error) => showError(error instanceof Error ? error.message : 'No se pudieron cargar los reportes.'));
+      .catch((error) => showError(error instanceof Error ? error.message : t('reportes.errorCargar')));
   </script>
 </MasterLayout>

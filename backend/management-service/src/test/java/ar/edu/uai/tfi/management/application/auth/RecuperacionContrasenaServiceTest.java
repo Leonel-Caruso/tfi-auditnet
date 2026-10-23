@@ -5,6 +5,7 @@ import ar.edu.uai.tfi.management.application.ExcepcionAplicacion;
 import ar.edu.uai.tfi.management.domain.model.EstadoAcceso;
 import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
 import ar.edu.uai.tfi.management.domain.model.EventoSistema;
+import ar.edu.uai.tfi.management.domain.model.Idioma;
 import ar.edu.uai.tfi.management.domain.model.RecuperacionContrasena;
 import ar.edu.uai.tfi.management.domain.model.ResultadoEvento;
 import ar.edu.uai.tfi.management.domain.model.TipoCorreo;
@@ -49,7 +50,7 @@ class RecuperacionContrasenaServiceTest {
 
     @Test
     void elPedidoGuardaSoloElHashYEnviaElEnlace() {
-        service.solicitar("ANA@acme.test");
+        service.solicitar("ANA@acme.test", Idioma.ES);
 
         assertEquals(1, avisos.items.size());
         EnMemoriaGestion.Avisos.Aviso aviso = avisos.items.get(0);
@@ -63,8 +64,16 @@ class RecuperacionContrasenaServiceTest {
     }
 
     @Test
+    void elCorreoSaleEnElIdiomaDeLaPantallaSinCambiarElDeLaCuenta() {
+        service.solicitar("ana", Idioma.PT);
+
+        assertEquals("pt", avisos.items.get(0).datos().get("idioma"));
+        assertEquals(Idioma.ES, usuarios.idioma(10L));
+    }
+
+    @Test
     void unaCuentaInexistenteNoRecibeNadaPeroLaRespuestaEsLaMisma() {
-        service.solicitar("nadie@acme.test");
+        service.solicitar("nadie@acme.test", Idioma.ES);
 
         assertTrue(avisos.items.isEmpty());
         assertTrue(recuperaciones.items.isEmpty());
@@ -74,10 +83,10 @@ class RecuperacionContrasenaServiceTest {
 
     @Test
     void dosPedidosSeguidosEnvianUnSoloCorreo() {
-        service.solicitar("ana");
-        service.solicitar("ana");
+        service.solicitar("ana", Idioma.ES);
+        service.solicitar("ana", Idioma.ES);
         reloj.avanzar(Duration.ofMinutes(3));
-        service.solicitar("ana");
+        service.solicitar("ana", Idioma.ES);
 
         assertEquals(2, avisos.items.size());
         assertNotNull(recuperaciones.items.get(1L).usadaEn(), "El enlace anterior queda anulado");
@@ -86,7 +95,7 @@ class RecuperacionContrasenaServiceTest {
     @Test
     void elEnlaceCambiaLaContrasenaUnaSolaVezYCierraLasSesiones() {
         usuarios.accesos.put(10L, new EstadoAcceso(10L, 0, AHORA.plusSeconds(600), null, null));
-        service.solicitar("ana");
+        service.solicitar("ana", Idioma.ES);
         String token = (String) avisos.items.get(0).datos().get("token");
 
         service.restablecer(token, "Nueva2026Segura");
@@ -100,7 +109,7 @@ class RecuperacionContrasenaServiceTest {
 
     @Test
     void unEnlaceVencidoODesconocidoNoSirve() {
-        service.solicitar("ana");
+        service.solicitar("ana", Idioma.ES);
         String token = (String) avisos.items.get(0).datos().get("token");
         reloj.avanzar(Duration.ofMinutes(31));
 
@@ -112,7 +121,7 @@ class RecuperacionContrasenaServiceTest {
 
     @Test
     void laContrasenaNuevaRespetaLaPolitica() {
-        service.solicitar("ana");
+        service.solicitar("ana", Idioma.ES);
         String token = (String) avisos.items.get(0).datos().get("token");
 
         assertInvalido(() -> service.restablecer(token, "corta"));
@@ -123,7 +132,7 @@ class RecuperacionContrasenaServiceTest {
     void unaCuentaDeshabilitadaNoRecuperaLaContrasena() {
         usuarios.cambiarEstado(10L, EstadoRegistro.DESHABILITADO);
 
-        service.solicitar("ana");
+        service.solicitar("ana", Idioma.ES);
 
         assertTrue(avisos.items.isEmpty());
     }

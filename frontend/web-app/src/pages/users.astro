@@ -1,43 +1,40 @@
 ---
+import { es } from '../i18n';
 import MasterLayout from '../layouts/MasterLayout.astro';
 ---
 
 <MasterLayout
-  title="Usuarios y perfiles"
-  section="Control de acceso"
-  description="Administrá usuarios y perfiles de acceso: altas, cambios, bajas, contraseñas y desbloqueo de cuentas."
+  title={es['usuarios.titulo']} section={es['usuarios.seccion']} description={es['usuarios.descripcion']}
+  i18n="usuarios"
 >
-  <p id="users-scope-note" class="alert alert-info is-hidden" style="margin-bottom: 14px;">
-    Gestionás los usuarios de tu organización con perfiles de operación. Los administradores los gestiona el
-    administrador del sistema.
-  </p>
+  <p id="users-scope-note" class="alert alert-info is-hidden" style="margin-bottom: 14px;" data-i18n="usuarios.gestionasUsuariosOrganizacionPerfiles">{es['usuarios.gestionasUsuariosOrganizacionPerfiles']}</p>
   <div id="users-error" class="alert alert-error is-hidden" role="alert"></div>
   <div id="users-message" class="alert alert-success is-hidden" role="status"></div>
 
   <section class="panel">
     <div class="panel-heading">
       <div>
-        <span class="eyebrow">Accesos</span>
-        <h2>Usuarios</h2>
+        <span class="eyebrow" data-i18n="usuarios.accesos">{es['usuarios.accesos']}</span>
+        <h2 data-i18n="usuarios.usuarios">{es['usuarios.usuarios']}</h2>
       </div>
       <div class="panel-heading-actions">
         <span id="users-count" class="counter-chip">—</span>
-        <button id="user-create" class="button button-primary button-small" type="button">+ usuario</button>
+        <button id="user-create" class="button button-primary button-small" type="button" data-i18n="usuarios.nuevoUsuario">{es['usuarios.nuevoUsuario']}</button>
       </div>
     </div>
 
     <div class="users-toolbar">
       <label class="terminal-search">
         <span>&gt;</span>
-        <input id="user-search" type="search" placeholder="buscar nombre, usuario o correo..." />
+        <input id="user-search" type="search" placeholder={es['usuarios.buscarNombreUsuarioCorreo']} data-i18n-placeholder="usuarios.buscarNombreUsuarioCorreo" />
       </label>
       <label class="log-filter">
-        <span>estado</span>
+        <span data-i18n="general.estado">{es['general.estado']}</span>
         <select id="user-status-filter" class="technical-select">
-          <option value="">todos</option>
-          <option value="ACTIVO">activos</option>
-          <option value="DESHABILITADO">deshabilitados</option>
-          <option value="BLOQUEADO">bloqueados</option>
+          <option value="" data-i18n="general.todos">{es['general.todos']}</option>
+          <option value="ACTIVO" data-i18n="usuarios.activos">{es['usuarios.activos']}</option>
+          <option value="DESHABILITADO" data-i18n="usuarios.deshabilitados">{es['usuarios.deshabilitados']}</option>
+          <option value="BLOQUEADO" data-i18n="usuarios.bloqueados">{es['usuarios.bloqueados']}</option>
         </select>
       </label>
     </div>
@@ -46,12 +43,12 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       <table class="data-table">
         <thead>
           <tr>
-            <th>Usuario</th>
-            <th>Organización</th>
-            <th>Perfil</th>
-            <th>Estado</th>
-            <th>Último acceso</th>
-            <th aria-label="Acciones"></th>
+            <th data-i18n="usuarios.colUsuario">{es['usuarios.colUsuario']}</th>
+            <th data-i18n="usuarios.colOrganizacion">{es['usuarios.colOrganizacion']}</th>
+            <th data-i18n="usuarios.colPerfil">{es['usuarios.colPerfil']}</th>
+            <th data-i18n="usuarios.colEstado">{es['usuarios.colEstado']}</th>
+            <th data-i18n="usuarios.ultimoAcceso">{es['usuarios.ultimoAcceso']}</th>
+            <th aria-label={es['usuarios.acciones']} data-i18n-aria-label="usuarios.acciones"></th>
           </tr>
         </thead>
         <tbody id="users-body">
@@ -59,7 +56,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         </tbody>
       </table>
       <div id="users-empty" class="empty-state compact-empty is-hidden">
-        <div><code>0 usuarios</code><p>No hay usuarios que coincidan con el filtro.</p></div>
+        <div><code data-i18n="usuarios.ceroUsuarios">{es['usuarios.ceroUsuarios']}</code><p data-i18n="usuarios.hayUsuariosCoincidanFiltro">{es['usuarios.hayUsuariosCoincidanFiltro']}</p></div>
       </div>
     </div>
   </section>
@@ -68,25 +65,25 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <article class="panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Perfiles</span>
-          <h2>Perfiles de acceso</h2>
+          <span class="eyebrow" data-i18n="usuarios.perfiles">{es['usuarios.perfiles']}</span>
+          <h2 data-i18n="usuarios.perfilesAcceso">{es['usuarios.perfilesAcceso']}</h2>
         </div>
       </div>
-      <p class="log-muted">Los cinco perfiles son fijos y sus permisos los aplican los servicios. Solo se puede ajustar la descripción.</p>
+      <p class="log-muted" data-i18n="usuarios.cincoPerfilesSonFijos">{es['usuarios.cincoPerfilesSonFijos']}</p>
       <div id="role-list" class="role-list" style="margin-top: 12px;"><div class="skeleton-row"></div></div>
     </article>
 
     <article class="panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Permisos</span>
-          <h2>Matriz de permisos</h2>
+          <span class="eyebrow" data-i18n="usuarios.permisos">{es['usuarios.permisos']}</span>
+          <h2 data-i18n="usuarios.matrizPermisos">{es['usuarios.matrizPermisos']}</h2>
         </div>
       </div>
       <div class="table-wrap">
         <table class="data-table permission-table">
           <thead>
-            <tr><th>Módulo · acción</th><th title="Administrador del sistema">ADM</th><th title="Administrador de organización">ORG</th><th title="Analista de redes">ANL</th><th title="Auditor técnico">AUD</th><th title="Responsable de gestión IT">RSP</th></tr>
+            <tr><th data-i18n="usuarios.moduloAccion">{es['usuarios.moduloAccion']}</th><th title={es['perfil.ADMINISTRADOR_SISTEMA']} data-i18n-title="perfil.ADMINISTRADOR_SISTEMA" data-i18n="usuarios.colAdm">{es['usuarios.colAdm']}</th><th title={es['perfil.ADMINISTRADOR_ORGANIZACION']} data-i18n-title="perfil.ADMINISTRADOR_ORGANIZACION" data-i18n="usuarios.colOrg">{es['usuarios.colOrg']}</th><th title={es['perfil.ANALISTA_RED']} data-i18n-title="perfil.ANALISTA_RED" data-i18n="usuarios.colAnl">{es['usuarios.colAnl']}</th><th title={es['perfil.AUDITOR_TECNICO']} data-i18n-title="perfil.AUDITOR_TECNICO" data-i18n="usuarios.colAud">{es['usuarios.colAud']}</th><th title={es['perfil.RESPONSABLE_GESTION_IT']} data-i18n-title="perfil.RESPONSABLE_GESTION_IT" data-i18n="usuarios.colRsp">{es['usuarios.colRsp']}</th></tr>
           </thead>
           <tbody id="permission-body"></tbody>
         </table>
@@ -98,44 +95,44 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <form id="user-form" class="device-form" novalidate>
       <div class="dialog-header">
         <div>
-          <span class="eyebrow" id="user-dialog-eyebrow">Alta de usuario</span>
-          <h2 id="user-dialog-title">Registrar usuario</h2>
-          <p id="user-dialog-help">La cuenta queda activa con el perfil elegido.</p>
+          <span class="eyebrow" id="user-dialog-eyebrow" data-i18n="usuarios.altaUsuario">{es['usuarios.altaUsuario']}</span>
+          <h2 id="user-dialog-title" data-i18n="usuarios.registrarUsuario">{es['usuarios.registrarUsuario']}</h2>
+          <p id="user-dialog-help" data-i18n="usuarios.cuentaQuedaActivaPerfil">{es['usuarios.cuentaQuedaActivaPerfil']}</p>
         </div>
-        <button class="dialog-close" type="button" data-close-dialog aria-label="Cerrar">×</button>
+        <button class="dialog-close" type="button" data-close-dialog aria-label={es['general.cerrar']} data-i18n-aria-label="general.cerrar">×</button>
       </div>
 
       <div class="device-form-grid">
         <label class="field">
-          <span>nombre y apellido *</span>
+          <span data-i18n="usuarios.nombreApellidoObligatorio">{es['usuarios.nombreApellidoObligatorio']}</span>
           <input id="form-user-name" type="text" maxlength="140" autocomplete="off" required />
         </label>
         <label class="field">
-          <span>correo *</span>
+          <span data-i18n="usuarios.correoObligatorio">{es['usuarios.correoObligatorio']}</span>
           <input id="form-user-email" type="email" maxlength="160" autocomplete="off" required />
         </label>
         <label class="field">
-          <span>nombre de usuario *</span>
-          <input id="form-user-username" type="text" maxlength="60" autocomplete="off" placeholder="ej: ana.perez" required />
+          <span data-i18n="usuarios.nombreUsuarioObligatorio">{es['usuarios.nombreUsuarioObligatorio']}</span>
+          <input id="form-user-username" type="text" maxlength="60" autocomplete="off" placeholder={es['usuarios.ejAnaPerez']} data-i18n-placeholder="usuarios.ejAnaPerez" required />
         </label>
         <label class="field">
-          <span>organización *</span>
+          <span data-i18n="general.organizacionObligatorio">{es['general.organizacionObligatorio']}</span>
           <select id="form-user-organization" class="technical-select form-select" required></select>
         </label>
         <label class="field field-span-2" id="form-user-password-field">
-          <span>contraseña inicial *</span>
+          <span data-i18n="usuarios.contrasenaInicialObligatorio">{es['usuarios.contrasenaInicialObligatorio']}</span>
           <input id="form-user-password" type="password" maxlength="72" autocomplete="new-password" required />
         </label>
         <ul id="form-user-password-rules" class="password-rules field-span-2"></ul>
         <fieldset class="role-checks field-span-2" id="user-roles">
-          <legend>perfil *</legend>
+          <legend data-i18n="usuarios.perfilObligatorio">{es['usuarios.perfilObligatorio']}</legend>
         </fieldset>
       </div>
 
       <div id="user-form-error" class="alert alert-error is-hidden"></div>
       <div class="dialog-actions">
-        <button class="button button-ghost" type="button" data-close-dialog>Cancelar</button>
-        <button id="user-submit" class="button button-primary" type="submit">Registrar usuario</button>
+        <button class="button button-ghost" type="button" data-close-dialog data-i18n="general.cancelar">{es['general.cancelar']}</button>
+        <button id="user-submit" class="button button-primary" type="submit" data-i18n="usuarios.registrarUsuario">{es['usuarios.registrarUsuario']}</button>
       </div>
     </form>
   </dialog>
@@ -144,25 +141,25 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <form id="password-form" class="device-form" novalidate>
       <div class="dialog-header">
         <div>
-          <span class="eyebrow">Restablecer contraseña</span>
-          <h2 id="password-dialog-title">Nueva contraseña</h2>
-          <p>Se quita el bloqueo, si lo hubiera, y se cierran las sesiones abiertas del usuario. Comunicale la contraseña por un canal seguro.</p>
+          <span class="eyebrow" data-i18n="usuarios.restablecerContrasena">{es['usuarios.restablecerContrasena']}</span>
+          <h2 id="password-dialog-title" data-i18n="usuarios.nuevaContrasena">{es['usuarios.nuevaContrasena']}</h2>
+          <p data-i18n="usuarios.quitaBloqueoSiHubiera">{es['usuarios.quitaBloqueoSiHubiera']}</p>
         </div>
-        <button class="dialog-close" type="button" data-close-dialog aria-label="Cerrar">×</button>
+        <button class="dialog-close" type="button" data-close-dialog aria-label={es['general.cerrar']} data-i18n-aria-label="general.cerrar">×</button>
       </div>
       <label class="field">
-        <span>contraseña nueva *</span>
+        <span data-i18n="usuarios.contrasenaNuevaObligatorio">{es['usuarios.contrasenaNuevaObligatorio']}</span>
         <input id="reset-password" type="password" maxlength="72" autocomplete="new-password" required />
       </label>
       <ul id="reset-password-rules" class="password-rules"></ul>
       <label class="field">
-        <span>repetir contraseña *</span>
+        <span data-i18n="usuarios.repetirContrasenaObligatorio">{es['usuarios.repetirContrasenaObligatorio']}</span>
         <input id="reset-password-confirm" type="password" maxlength="72" autocomplete="new-password" required />
       </label>
       <div id="password-form-error" class="alert alert-error is-hidden"></div>
       <div class="dialog-actions">
-        <button class="button button-ghost" type="button" data-close-dialog>Cancelar</button>
-        <button class="button button-primary" type="submit">Restablecer</button>
+        <button class="button button-ghost" type="button" data-close-dialog data-i18n="general.cancelar">{es['general.cancelar']}</button>
+        <button class="button button-primary" type="submit" data-i18n="usuarios.restablecer">{es['usuarios.restablecer']}</button>
       </div>
     </form>
   </dialog>
@@ -171,20 +168,20 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <form id="role-form" class="device-form" novalidate>
       <div class="dialog-header">
         <div>
-          <span class="eyebrow">Perfil de acceso</span>
-          <h2 id="role-dialog-title">Editar descripción</h2>
-          <p>El nombre y los permisos del perfil no cambian.</p>
+          <span class="eyebrow" data-i18n="usuarios.perfilAcceso">{es['usuarios.perfilAcceso']}</span>
+          <h2 id="role-dialog-title" data-i18n="general.editarDescripcion">{es['general.editarDescripcion']}</h2>
+          <p data-i18n="usuarios.nombrePermisosPerfilCambian">{es['usuarios.nombrePermisosPerfilCambian']}</p>
         </div>
-        <button class="dialog-close" type="button" data-close-dialog aria-label="Cerrar">×</button>
+        <button class="dialog-close" type="button" data-close-dialog aria-label={es['general.cerrar']} data-i18n-aria-label="general.cerrar">×</button>
       </div>
       <label class="field">
-        <span>descripción *</span>
+        <span data-i18n="general.descripcionObligatorio">{es['general.descripcionObligatorio']}</span>
         <textarea id="role-description" rows="3" maxlength="240" required></textarea>
       </label>
       <div id="role-form-error" class="alert alert-error is-hidden"></div>
       <div class="dialog-actions">
-        <button class="button button-ghost" type="button" data-close-dialog>Cancelar</button>
-        <button class="button button-primary" type="submit">Guardar</button>
+        <button class="button button-ghost" type="button" data-close-dialog data-i18n="general.cancelar">{es['general.cancelar']}</button>
+        <button class="button button-primary" type="submit" data-i18n="general.guardar">{es['general.guardar']}</button>
       </div>
     </form>
   </dialog>
@@ -193,14 +190,14 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <form method="dialog" class="device-form">
       <div class="dialog-header">
         <div>
-          <span class="eyebrow">Confirmar</span>
-          <h2 id="confirm-title">¿Confirmás la operación?</h2>
+          <span class="eyebrow" data-i18n="general.confirmar">{es['general.confirmar']}</span>
+          <h2 id="confirm-title" data-i18n="general.confirmasOperacion">{es['general.confirmasOperacion']}</h2>
           <p id="confirm-text"></p>
         </div>
       </div>
       <div class="dialog-actions">
-        <button class="button button-ghost" value="cancel">Cancelar</button>
-        <button id="confirm-accept" class="button button-primary" value="ok">Confirmar</button>
+        <button class="button button-ghost" value="cancel" data-i18n="general.cancelar">{es['general.cancelar']}</button>
+        <button id="confirm-accept" class="button button-primary" value="ok" data-i18n="general.confirmar">{es['general.confirmar']}</button>
       </div>
     </form>
   </dialog>
@@ -212,6 +209,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       type Organization, type Permission, type Role, type User,
     } from '../lib/api';
     import { escapeHtml, formatDate } from '../lib/format';
+    import { etiqueta, localeActual, t } from '../lib/i18n';
     import { passwordRulesHtml, updatePasswordRules } from '../lib/password';
 
     const me = getStoredUser();
@@ -243,9 +241,9 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       window.setTimeout(() => show('#users-message', null), 4500);
     };
     const value = (selector: string) => ($<HTMLInputElement>(selector)?.value ?? '').trim();
-    const orgName = (id: number) => organizations.find((org) => org.id === id)?.razonSocial ?? `organización #${id}`;
+    const orgName = (id: number) => organizations.find((org) => org.id === id)?.razonSocial ?? t('tablero.organizacionNumero', { id });
     const isLocked = (user: User) => Boolean(user.bloqueadoHasta && new Date(user.bloqueadoHasta).getTime() > Date.now());
-    const timeOnly = (iso: string) => new Intl.DateTimeFormat('es-AR', { hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
+    const timeOnly = (iso: string) => new Intl.DateTimeFormat(localeActual(), { hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
 
     /** Pide confirmación con el diálogo de la consola (en lugar del confirm del navegador). */
     const confirmAction = (title: string, text: string, accept: string) => new Promise<boolean>((resolve) => {
@@ -259,11 +257,11 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     });
 
     const statusBadge = (user: User) => {
-      if (user.estado !== 'ACTIVO') return '<span class="status-badge status-off">deshabilitado</span>';
+      if (user.estado !== 'ACTIVO') return `<span class="status-badge status-off">${t('usuarios.deshabilitado')}</span>`;
       if (isLocked(user)) {
-        return `<span class="status-badge status-locked" title="Bloqueada por intentos fallidos">bloqueado hasta ${escapeHtml(timeOnly(user.bloqueadoHasta!))}</span>`;
+        return `<span class="status-badge status-locked" title="${t('usuarios.bloqueadaIntentos')}">${escapeHtml(t('usuarios.bloqueadoHasta', { hora: timeOnly(user.bloqueadoHasta!) }))}</span>`;
       }
-      return '<span class="status-badge status-ready">activo</span>';
+      return `<span class="status-badge status-ready">${t('usuarios.activo')}</span>`;
     };
 
     const renderUsers = () => {
@@ -280,23 +278,24 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       body.innerHTML = visible.map((user) => {
         const self = user.id === me?.userId;
         const active = user.estado === 'ACTIVO';
+        const ownPassword = `<a class="button button-ghost button-small" href="/account" title="${t('usuarios.contrasenaPropiaAyuda')}">${t('usuarios.contrasena')}</a>`;
         const actions = canManage(user) ? `
-                <button class="button button-ghost button-small" type="button" data-action="edit">Editar</button>
+                <button class="button button-ghost button-small" type="button" data-action="edit">${t('general.editar')}</button>
                 ${self
-                  ? '<a class="button button-ghost button-small" href="/account" title="Tu contraseña se cambia desde Mi cuenta">Contraseña</a>'
-                  : '<button class="button button-ghost button-small" type="button" data-action="password">Contraseña</button>'}
-                ${isLocked(user) ? '<button class="button button-ghost button-small" type="button" data-action="unlock">Desbloquear</button>' : ''}
-                ${self ? '' : `<button class="button button-ghost button-small" type="button" data-action="${active ? 'disable' : 'enable'}">${active ? 'Deshabilitar' : 'Habilitar'}</button>`}`
+                  ? ownPassword
+                  : `<button class="button button-ghost button-small" type="button" data-action="password">${t('usuarios.contrasena')}</button>`}
+                ${isLocked(user) ? `<button class="button button-ghost button-small" type="button" data-action="unlock">${t('usuarios.desbloquear')}</button>` : ''}
+                ${self ? '' : `<button class="button button-ghost button-small" type="button" data-action="${active ? 'disable' : 'enable'}">${t(active ? 'organizaciones.deshabilitar' : 'organizaciones.habilitar')}</button>`}`
           : self
-            ? '<a class="button button-ghost button-small" href="/account" title="Tu contraseña se cambia desde Mi cuenta">Contraseña</a>'
-            : '<span class="log-muted">lo gestiona el administrador del sistema</span>';
+            ? ownPassword
+            : `<span class="log-muted">${t('usuarios.loGestionaAdministrador')}</span>`;
         return `
           <tr class="user-row ${active ? '' : 'is-disabled'}" data-user-id="${user.id}">
-            <td><strong>${escapeHtml(user.nombre)}${self ? ' <span class="role-chip">vos</span>' : ''}</strong><small>@${escapeHtml(user.nombreUsuario)} · ${escapeHtml(user.email)}</small></td>
+            <td><strong>${escapeHtml(user.nombre)}${self ? ` <span class="role-chip">${t('usuarios.vos')}</span>` : ''}</strong><small>@${escapeHtml(user.nombreUsuario)} · ${escapeHtml(user.email)}</small></td>
             <td>${escapeHtml(orgName(user.organizationId))}</td>
             <td>${user.roles.map((role) => `<span class="role-chip" title="${escapeHtml(role)}">${escapeHtml(ROLE_LABEL[role] ?? role)}</span>`).join('')}</td>
             <td>${statusBadge(user)}</td>
-            <td><span class="log-nowrap">${user.ultimoAcceso ? escapeHtml(formatDate(user.ultimoAcceso)) : '<span class="log-muted">nunca ingresó</span>'}</span></td>
+            <td><span class="log-nowrap">${user.ultimoAcceso ? escapeHtml(formatDate(user.ultimoAcceso)) : `<span class="log-muted">${t('usuarios.nuncaIngreso')}</span>`}</span></td>
             <td><div class="row-actions">${actions}</div></td>
           </tr>`;
       }).join('');
@@ -317,13 +316,13 @@ import MasterLayout from '../layouts/MasterLayout.astro';
             <code class="log-muted"> ${escapeHtml(role.nombre)}</code>
             <p>${escapeHtml(role.descripcion)}</p>
           </div>
-          ${isSystemAdmin ? `<button class="button button-ghost button-small" type="button" data-role-id="${role.id}">Editar</button>` : ''}
+          ${isSystemAdmin ? `<button class="button button-ghost button-small" type="button" data-role-id="${role.id}">${t('general.editar')}</button>` : ''}
         </div>`).join('');
 
       const checks = $('#user-roles');
       if (checks) {
         const assignable = ordered.filter((role) => isSystemAdmin || OPERATION_ROLES.includes(role.nombre));
-        checks.innerHTML = `<legend>perfil *</legend>${assignable.map((role) => `
+        checks.innerHTML = `<legend>${t('usuarios.perfilObligatorio')}</legend>${assignable.map((role) => `
           <label class="role-check">
             <input type="checkbox" name="roles" value="${escapeHtml(role.nombre)}" />
             <strong>${escapeHtml(ROLE_LABEL[role.nombre] ?? role.nombre)}</strong>
@@ -337,10 +336,10 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       if (!body) return;
       body.innerHTML = permissions.map((permission) => `
         <tr>
-          <td><strong>${escapeHtml(permission.modulo)}</strong><small>${escapeHtml(permission.accion)}</small></td>
+          <td><strong>${escapeHtml(etiqueta('permiso', permission.modulo))}</strong><small>${escapeHtml(etiqueta('permiso', permission.accion))}</small></td>
           ${PROFILE_ORDER.map((profile) => permission.perfiles.includes(profile)
-            ? `<td><span class="perm-yes" aria-label="permitido">✓</span></td>`
-            : `<td><span class="perm-no" aria-label="no permitido">—</span></td>`).join('')}
+            ? `<td><span class="perm-yes" aria-label="${t('usuarios.permitido')}">✓</span></td>`
+            : `<td><span class="perm-no" aria-label="${t('usuarios.noPermitido')}">—</span></td>`).join('')}
         </tr>`).join('');
     };
 
@@ -368,7 +367,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const select = $<HTMLSelectElement>('#form-user-organization');
       if (select) {
         select.replaceChildren(...organizations.map((org) => {
-          const option = new Option(`${org.razonSocial}${org.estado === 'ACTIVO' ? '' : ' (deshabilitada)'}`, String(org.id));
+          const option = new Option(`${org.razonSocial}${org.estado === 'ACTIVO' ? '' : ` ${t('dispositivos.deshabilitada')}`}`, String(org.id));
           return option;
         }));
         select.disabled = !isSystemAdmin;
@@ -385,12 +384,10 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const form = $<HTMLFormElement>('#user-form');
       form?.reset();
       show('#user-form-error', null);
-      $('#user-dialog-eyebrow')!.textContent = user ? 'Modificar usuario' : 'Alta de usuario';
-      $('#user-dialog-title')!.textContent = user ? user.nombre : 'Registrar usuario';
-      $('#user-dialog-help')!.textContent = user
-        ? 'Si cambiás el perfil o la organización, las sesiones abiertas de este usuario se cierran.'
-        : 'La cuenta queda activa con el perfil elegido.';
-      $('#user-submit')!.textContent = user ? 'Guardar cambios' : 'Registrar usuario';
+      $('#user-dialog-eyebrow')!.textContent = t(user ? 'usuarios.modificarUsuario' : 'usuarios.altaUsuario');
+      $('#user-dialog-title')!.textContent = user ? user.nombre : t('usuarios.registrarUsuario');
+      $('#user-dialog-help')!.textContent = t(user ? 'usuarios.cambioCierraSesiones' : 'usuarios.cuentaQuedaActivaPerfil');
+      $('#user-submit')!.textContent = t(user ? 'general.guardarCambios' : 'usuarios.registrarUsuario');
       const username = $<HTMLInputElement>('#form-user-username')!;
       username.disabled = Boolean(user);
       $('#form-user-password-field')?.classList.toggle('is-hidden', Boolean(user));
@@ -418,10 +415,10 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       show('#user-form-error', null);
       const selectedRoles = Array.from(document.querySelectorAll<HTMLInputElement>('#user-roles input[name=roles]:checked')).map((check) => check.value);
       if (!value('#form-user-name') || !value('#form-user-email') || (!editing && !value('#form-user-username'))) {
-        return show('#user-form-error', 'Completá nombre, correo y nombre de usuario.');
+        return show('#user-form-error', t('usuarios.completarDatos'));
       }
-      if (selectedRoles.length === 0) return show('#user-form-error', 'Elegí al menos un perfil.');
-      if (!editing && !syncPasswordRules()) return show('#user-form-error', 'La contraseña inicial no cumple la política.');
+      if (selectedRoles.length === 0) return show('#user-form-error', t('usuarios.elegirPerfil'));
+      if (!editing && !syncPasswordRules()) return show('#user-form-error', t('usuarios.contrasenaInicialPolitica'));
 
       const base = {
         organizationId: Number($<HTMLSelectElement>('#form-user-organization')?.value),
@@ -436,8 +433,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         || selectedRoles.some((role) => !editing!.roles.includes(role)));
       if (selfSessionCloses) {
         userDialog?.close();
-        const accepted = await confirmAction('Cambiar tu propia cuenta',
-          'Al cambiar tus perfiles o tu organización se cierra tu sesión y vas a tener que volver a ingresar.', 'Guardar y salir');
+        const accepted = await confirmAction(t('usuarios.cambiarPropia'), t('usuarios.cambiarPropiaAyuda'), t('usuarios.guardarSalir'));
         if (!accepted) return userDialog?.showModal();
       }
       const response = editing
@@ -451,7 +447,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const saved = await response.json() as User;
       userDialog?.close();
       if (selfSessionCloses) return logout();
-      notify(editing ? `Usuario @${saved.nombreUsuario} actualizado.` : `Usuario @${saved.nombreUsuario} registrado.`);
+      notify(t(editing ? 'usuarios.actualizado' : 'usuarios.registrado', { usuario: saved.nombreUsuario }));
       await loadUsers();
     });
 
@@ -464,14 +460,14 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       if (!resetting) return;
       show('#password-form-error', null);
       const password = $<HTMLInputElement>('#reset-password')?.value ?? '';
-      if (!syncResetRules()) return show('#password-form-error', 'La contraseña no cumple la política.');
+      if (!syncResetRules()) return show('#password-form-error', t('restablecer.politica'));
       if (password !== $<HTMLInputElement>('#reset-password-confirm')?.value) {
-        return show('#password-form-error', 'Las contraseñas no coinciden.');
+        return show('#password-form-error', t('restablecer.distintas'));
       }
       const response = await authFetch(`/api/users/${resetting.id}/password`, jsonRequest('POST', { password }));
       if (!response.ok) return show('#password-form-error', await readApiError(response));
       passwordDialog?.close();
-      notify(`Contraseña de @${resetting.nombreUsuario} restablecida. Sus sesiones abiertas se cerraron.`);
+      notify(t('usuarios.contrasenaRestablecida', { usuario: resetting.nombreUsuario }));
       await loadUsers();
     });
 
@@ -489,7 +485,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         $<HTMLFormElement>('#password-form')?.reset();
         $('#reset-password-rules')!.innerHTML = passwordRulesHtml();
         show('#password-form-error', null);
-        $('#password-dialog-title')!.textContent = `Nueva contraseña para @${user.nombreUsuario}`;
+        $('#password-dialog-title')!.textContent = t('usuarios.nuevaContrasenaPara', { usuario: user.nombreUsuario });
         syncResetRules();
         return passwordDialog?.showModal();
       }
@@ -497,18 +493,16 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       let response: Response | null = null;
       if (button.dataset.action === 'unlock') {
         response = await authFetch(`/api/users/${user.id}/unlock`, { method: 'POST' });
-        if (response.ok) notify(`Cuenta @${user.nombreUsuario} desbloqueada.`);
+        if (response.ok) notify(t('usuarios.desbloqueada', { usuario: user.nombreUsuario }));
       } else {
         const disable = button.dataset.action === 'disable';
         const accepted = await confirmAction(
-          disable ? `Deshabilitar a @${user.nombreUsuario}` : `Habilitar a @${user.nombreUsuario}`,
-          disable
-            ? 'No va a poder ingresar y sus sesiones abiertas se cierran en el acto. Su historial se conserva (baja lógica).'
-            : 'Va a poder volver a ingresar con su contraseña actual.',
-          disable ? 'Deshabilitar' : 'Habilitar');
+          t(disable ? 'usuarios.deshabilitarA' : 'usuarios.habilitarA', { usuario: user.nombreUsuario }),
+          t(disable ? 'usuarios.deshabilitarAyuda' : 'usuarios.habilitarAyuda'),
+          t(disable ? 'organizaciones.deshabilitar' : 'organizaciones.habilitar'));
         if (!accepted) return;
         response = await authFetch(`/api/users/${user.id}/status`, jsonRequest('PATCH', { estado: disable ? 'DESHABILITADO' : 'ACTIVO' }));
-        if (response.ok) notify(`Usuario @${user.nombreUsuario} ${disable ? 'deshabilitado' : 'habilitado'}.`);
+        if (response.ok) notify(t(disable ? 'usuarios.deshabilitadoAviso' : 'usuarios.habilitadoAviso', { usuario: user.nombreUsuario }));
       }
       if (!response.ok) return show('#users-error', await readApiError(response));
       await loadUsers();
@@ -529,14 +523,14 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       event.preventDefault();
       if (!editingRole) return;
       const descripcion = ($<HTMLTextAreaElement>('#role-description')?.value ?? '').trim();
-      if (!descripcion) return show('#role-form-error', 'La descripción es obligatoria.');
+      if (!descripcion) return show('#role-form-error', t('usuarios.descripcionObligatoria'));
       const response = await authFetch(`/api/roles/${editingRole.id}`, jsonRequest('PUT', { descripcion }));
       if (!response.ok) return show('#role-form-error', await readApiError(response));
       const saved = await response.json() as Role;
       roles = roles.map((role) => (role.id === saved.id ? saved : role));
       renderRoles();
       roleDialog?.close();
-      notify(`Descripción de ${ROLE_LABEL[saved.nombre] ?? saved.nombre} actualizada.`);
+      notify(t('usuarios.descripcionActualizada', { perfil: ROLE_LABEL[saved.nombre] ?? saved.nombre }));
     });
 
     document.querySelectorAll<HTMLButtonElement>('[data-close-dialog]').forEach((button) => {
@@ -545,6 +539,6 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     $('#user-search')?.addEventListener('input', renderUsers);
     $('#user-status-filter')?.addEventListener('change', renderUsers);
 
-    loadAll().catch((error) => show('#users-error', error instanceof Error ? error.message : 'No se pudieron cargar los usuarios.'));
+    loadAll().catch((error) => show('#users-error', error instanceof Error ? error.message : t('usuarios.errorCargar')));
   </script>
 </MasterLayout>

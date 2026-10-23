@@ -1,59 +1,59 @@
 ---
+import { es } from '../i18n';
 import MasterLayout from '../layouts/MasterLayout.astro';
 ---
 
 <MasterLayout
-  title="Historial de auditorías"
-  section="Resultados y trazabilidad"
-  description="Auditorías anteriores con la configuración evaluada, la baseline y las reglas usadas, y la comparación con la auditoría previa. Solo lectura."
+  title={es['historial.titulo']} section={es['historial.seccion']} description={es['historial.descripcion']}
+  i18n="historial"
 >
   <div id="history-error" class="alert alert-error is-hidden" role="alert"></div>
 
   <form id="history-filters" class="panel compact-panel log-filters" novalidate>
     <div class="log-filter-grid">
       <label class="log-filter">
-        <span>dispositivo</span>
-        <select name="dispositivoId" class="technical-select"><option value="">todos</option></select>
+        <span data-i18n="general.dispositivo">{es['general.dispositivo']}</span>
+        <select name="dispositivoId" class="technical-select"><option value="" data-i18n="general.todos">{es['general.todos']}</option></select>
       </label>
       <label class="log-filter">
-        <span>baseline</span>
-        <select name="baselineId" class="technical-select"><option value="">todas</option></select>
+        <span data-i18n="general.baseline">{es['general.baseline']}</span>
+        <select name="baselineId" class="technical-select"><option value="" data-i18n="general.todas">{es['general.todas']}</option></select>
       </label>
       <label class="log-filter">
-        <span>severidad máxima</span>
+        <span data-i18n="auditorias.severidadMaxima">{es['auditorias.severidadMaxima']}</span>
         <select name="severidad" class="technical-select">
-          <option value="">todas</option>
-          <option value="CRITICA">crítica</option>
-          <option value="ALTA">alta</option>
-          <option value="MEDIA">media</option>
-          <option value="BAJA">baja</option>
-          <option value="NINGUNA">sin hallazgos</option>
+          <option value="" data-i18n="general.todas">{es['general.todas']}</option>
+          <option value="CRITICA" data-i18n="historial.critica">{es['historial.critica']}</option>
+          <option value="ALTA" data-i18n="historial.alta">{es['historial.alta']}</option>
+          <option value="MEDIA" data-i18n="historial.media">{es['historial.media']}</option>
+          <option value="BAJA" data-i18n="historial.baja">{es['historial.baja']}</option>
+          <option value="NINGUNA" data-i18n="historial.sinHallazgos">{es['historial.sinHallazgos']}</option>
         </select>
       </label>
       <label class="log-filter">
-        <span>resultado</span>
+        <span data-i18n="historial.resultado">{es['historial.resultado']}</span>
         <select name="resultado" class="technical-select">
-          <option value="">todos</option>
-          <option value="CON_HALLAZGOS">con hallazgos</option>
-          <option value="CUMPLE">cumple</option>
+          <option value="" data-i18n="general.todos">{es['general.todos']}</option>
+          <option value="CON_HALLAZGOS" data-i18n="historial.conHallazgos">{es['historial.conHallazgos']}</option>
+          <option value="CUMPLE" data-i18n="historial.cumple">{es['historial.cumple']}</option>
         </select>
       </label>
       <label class="log-filter">
-        <span>ejecutada por</span>
-        <input name="ejecutadoPor" class="technical-input" type="text" maxlength="120" autocomplete="off" placeholder="usuario" />
+        <span data-i18n="historial.ejecutadaPor">{es['historial.ejecutadaPor']}</span>
+        <input name="ejecutadoPor" class="technical-input" type="text" maxlength="120" autocomplete="off" placeholder={es['historial.usuario']} data-i18n-placeholder="historial.usuario" />
       </label>
       <label class="log-filter">
-        <span>desde</span>
+        <span data-i18n="general.desde">{es['general.desde']}</span>
         <input name="desde" class="technical-input" type="datetime-local" />
       </label>
       <label class="log-filter">
-        <span>hasta</span>
+        <span data-i18n="general.hasta">{es['general.hasta']}</span>
         <input name="hasta" class="technical-input" type="datetime-local" data-time="end" />
       </label>
     </div>
     <div class="log-filter-actions">
-      <button type="button" id="history-clear" class="button button-ghost button-small">Limpiar</button>
-      <button type="submit" class="button button-primary button-small">Consultar</button>
+      <button type="button" id="history-clear" class="button button-ghost button-small" data-i18n="general.limpiar">{es['general.limpiar']}</button>
+      <button type="submit" class="button button-primary button-small" data-i18n="general.consultar">{es['general.consultar']}</button>
     </div>
   </form>
 
@@ -61,8 +61,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <article class="panel finding-list-panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Registro de auditorías</span>
-          <h2>Auditorías registradas</h2>
+          <span class="eyebrow" data-i18n="historial.registroAuditorias">{es['historial.registroAuditorias']}</span>
+          <h2 data-i18n="historial.auditoriasRegistradas">{es['historial.auditoriasRegistradas']}</h2>
         </div>
         <div class="log-heading-meta">
           <span id="history-count" class="counter-chip">—</span>
@@ -73,40 +73,40 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         <table class="data-table finding-table log-table">
           <thead>
             <tr>
-              <th>AUDITORÍA</th>
-              <th>FECHA</th>
-              <th>DISPOSITIVO</th>
-              <th>BASELINE</th>
-              <th>REGLAS</th>
-              <th>HALLAZGOS</th>
-              <th>SEV. MÁX.</th>
-              <th>EJECUTÓ</th>
+              <th data-i18n="general.colAuditoria">{es['general.colAuditoria']}</th>
+              <th data-i18n="general.colFecha">{es['general.colFecha']}</th>
+              <th data-i18n="general.colDispositivo">{es['general.colDispositivo']}</th>
+              <th data-i18n="general.colBaseline">{es['general.colBaseline']}</th>
+              <th data-i18n="auditorias.colReglas">{es['auditorias.colReglas']}</th>
+              <th data-i18n="general.colHallazgos">{es['general.colHallazgos']}</th>
+              <th data-i18n="historial.colSevMax">{es['historial.colSevMax']}</th>
+              <th data-i18n="historial.colEjecuto">{es['historial.colEjecuto']}</th>
             </tr>
           </thead>
           <tbody id="history-body"></tbody>
         </table>
         <div id="history-empty" class="empty-state compact-empty is-hidden">
           <div>
-            <code>0 auditorías</code>
-            <p>No se encontraron auditorías para los filtros actuales.</p>
+            <code data-i18n="historial.ceroAuditorias">{es['historial.ceroAuditorias']}</code>
+            <p data-i18n="historial.encontraronAuditoriasFiltrosActuales">{es['historial.encontraronAuditoriasFiltrosActuales']}</p>
           </div>
         </div>
       </div>
-      <nav id="history-pager" class="pager is-hidden" aria-label="Páginas del historial"></nav>
+      <nav id="history-pager" class="pager is-hidden" aria-label={es['historial.paginasHistorial']} data-i18n-aria-label="historial.paginasHistorial"></nav>
     </article>
 
     <aside class="panel finding-inspector" aria-live="polite">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Evidencia histórica</span>
-          <h2>Detalle de la auditoría</h2>
+          <span class="eyebrow" data-i18n="historial.evidenciaHistorica">{es['historial.evidenciaHistorica']}</span>
+          <h2 data-i18n="historial.detalleAuditoria">{es['historial.detalleAuditoria']}</h2>
         </div>
         <span class="inspector-led"></span>
       </div>
 
       <div id="history-inspector-empty" class="inspector-empty">
-        <code>sin selección</code>
-        <p>Seleccioná una auditoría para ver la evidencia histórica y su evolución.</p>
+        <code data-i18n="general.sinSeleccion">{es['general.sinSeleccion']}</code>
+        <p data-i18n="historial.seleccionaAuditoriaVerEvidencia">{es['historial.seleccionaAuditoriaVerEvidencia']}</p>
       </div>
 
       <div id="history-inspector-content" class="inspector-content is-hidden"></div>
@@ -125,7 +125,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       type NetworkDevice,
       type RuleChangeCategory,
     } from '../lib/api';
-    import { code, escapeHtml, findingStatusBadge, formatDate, localToIso, severityClass } from '../lib/format';
+    import { code, escapeHtml, findingStatusBadge, formatDate, localToIso, severityClass, severityCode } from '../lib/format';
+    import { etiqueta, t } from '../lib/i18n';
     import { crearPaginador, totalDeRespuesta } from '../lib/paginador';
 
     let audits: AuditSummary[] = [];
@@ -146,7 +147,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     const deviceById = (id: number) => devices.find((item) => item.id === id);
     const baselineById = (id: number) => baselines.find((item) => item.id === id);
     const automaticBadge = (audit: AuditSummary) => audit.origen === 'AUTOMATICA'
-      ? ' <span class="status-badge status-next" title="La ejecutó la revisión periódica">automática</span>'
+      ? ` <span class="status-badge status-next" title="${t('historial.automaticaAyuda')}">${t('historial.automatica')}</span>`
       : '';
 
     const showError = (message: string | null) => {
@@ -156,14 +157,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       node.classList.toggle('is-hidden', !message);
     };
 
-    const CATEGORY_LABEL: Record<RuleChangeCategory, string> = {
-      NUEVO_HALLAZGO: 'nuevos desvíos',
-      CORREGIDO: 'corregidos',
-      PERSISTENTE: 'persisten',
-      SIN_CAMBIO: 'sin cambios',
-      REGLA_NUEVA: 'reglas nuevas',
-      REGLA_RETIRADA: 'reglas retiradas',
-    };
+    const CATEGORIES: RuleChangeCategory[] = ['NUEVO_HALLAZGO', 'CORREGIDO', 'PERSISTENTE', 'SIN_CAMBIO', 'REGLA_NUEVA', 'REGLA_RETIRADA'];
+    const categoryLabel = (category: RuleChangeCategory) => etiqueta('cambio', category);
 
     const buildQuery = () => {
       const query = new URLSearchParams();
@@ -177,7 +172,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const hasta = localToIso(String(data.get('hasta') ?? ''), true);
       if (desde) query.set('desde', desde);
       if (hasta) query.set('hasta', hasta);
-      if (desde && hasta && desde > hasta) throw new Error("La fecha 'desde' no puede ser posterior a 'hasta'.");
+      if (desde && hasta && desde > hasta) throw new Error(t('bitacoras.rangoInvalido'));
       const text = query.toString();
       return text ? `?${text}` : '';
     };
@@ -197,8 +192,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
             <td><code>${audit.reglasCumplidas}/${audit.totalReglas}</code></td>
             <td><strong>${audit.totalHallazgos}</strong></td>
             <td>${audit.severidadMaxima === 'NINGUNA'
-              ? '<span class="status-badge status-ready">NINGUNA</span>'
-              : `<span class="severity-badge ${severityClass(audit.severidadMaxima)}">${escapeHtml(audit.severidadMaxima)}</span>`}</td>
+              ? `<span class="status-badge status-ready">${escapeHtml(severityCode('NINGUNA'))}</span>`
+              : `<span class="severity-badge ${severityClass(audit.severidadMaxima)}">${escapeHtml(severityCode(audit.severidadMaxima))}</span>`}</td>
             <td><small>${escapeHtml(audit.ejecutadoPor)}</small>${automaticBadge(audit)}</td>
           </tr>`;
       }).join('');
@@ -221,24 +216,24 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
     const comparisonHtml = (comparison: AuditComparison) => {
       if (!comparison.anterior) {
-        return '<p class="log-muted">Es la primera auditoría de este dispositivo: no hay una anterior para comparar.</p>';
+        return `<p class="log-muted">${escapeHtml(t('historial.primeraAuditoria'))}</p>`;
       }
-      const chips = (Object.keys(CATEGORY_LABEL) as RuleChangeCategory[])
+      const chips = CATEGORIES
         .filter((category) => (comparison.resumen[category] ?? 0) > 0)
-        .map((category) => `<span class="compare-chip compare-${category.toLowerCase()}">${comparison.resumen[category]} ${CATEGORY_LABEL[category]}</span>`)
+        .map((category) => `<span class="compare-chip compare-${category.toLowerCase()}">${comparison.resumen[category]} ${escapeHtml(categoryLabel(category))}</span>`)
         .join('');
       const relevant = comparison.cambios.filter((change) => change.categoria !== 'SIN_CAMBIO');
       const items = relevant.map((change) => `
         <li class="compare-item compare-${change.categoria.toLowerCase()}">
           <code>${escapeHtml(change.codigoRegla)}</code>
           <span>${escapeHtml(change.nombreRegla)}</span>
-          <small>${escapeHtml(CATEGORY_LABEL[change.categoria])}${change.severidad ? ` · ${escapeHtml(change.severidad)}` : ''}</small>
+          <small>${escapeHtml(categoryLabel(change.categoria))}${change.severidad ? ` · ${escapeHtml(severityCode(change.severidad))}` : ''}</small>
         </li>`).join('');
       return `
-        <p class="log-muted">Respecto de ${code('AUD', comparison.anterior.id)} del ${escapeHtml(formatDate(comparison.anterior.fechaEjecucion))}${
-          comparison.anterior.baselineId !== comparison.actual.baselineId ? ' (con otra versión de baseline)' : ''}:</p>
+        <p class="log-muted">${escapeHtml(t(comparison.anterior.baselineId !== comparison.actual.baselineId ? 'historial.respectoDeOtraBaseline' : 'historial.respectoDe', {
+          auditoria: code('AUD', comparison.anterior.id), fecha: formatDate(comparison.anterior.fechaEjecucion) }))}</p>
         <div class="compare-chips">${chips}</div>
-        ${items ? `<ul class="compare-list">${items}</ul>` : '<p class="log-muted">Todas las reglas dieron el mismo resultado.</p>'}`;
+        ${items ? `<ul class="compare-list">${items}</ul>` : `<p class="log-muted">${escapeHtml(t('historial.mismoResultado'))}</p>`}`;
     };
 
     const selectAudit = async (id: number) => {
@@ -263,7 +258,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
             <code>${escapeHtml(evaluation.codigoRegla)}</code>
             <strong>${escapeHtml(evaluation.nombreRegla)}</strong>
           </div>
-          <span class="status-badge ${evaluation.cumple ? 'status-ready' : 'status-strong'}">${evaluation.cumple ? 'CUMPLE' : 'HALLAZGO'}</span>
+          <span class="status-badge ${evaluation.cumple ? 'status-ready' : 'status-strong'}">${t(evaluation.cumple ? 'auditorias.cumple' : 'auditorias.hallazgo')}</span>
           <small>${escapeHtml(evaluation.patron)} — ${escapeHtml(evaluation.evidencia)}</small>
         </div>`).join('');
 
@@ -281,37 +276,37 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       content.innerHTML = `
         <div class="inspector-identity">
           <span class="inspector-code">${code('AUD', audit.id)} · ${escapeHtml(formatDate(audit.fechaEjecucion))}</span>
-          <h3>${escapeHtml(device?.identificador ?? `Dispositivo #${audit.dispositivoId}`)}</h3>
-          <span class="status-badge ${audit.resultado === 'CUMPLE' ? 'status-ready' : 'status-strong'}">${escapeHtml(audit.resultado)}</span>
+          <h3>${escapeHtml(device?.identificador ?? t('auditorias.dispositivoNumero', { id: audit.dispositivoId }))}</h3>
+          <span class="status-badge ${audit.resultado === 'CUMPLE' ? 'status-ready' : 'status-strong'}">${escapeHtml(etiqueta('resultado', audit.resultado))}</span>
         </div>
-        ${incomplete ? '<div class="alert alert-error">La auditoría tiene datos incompletos por un error previo; se muestra la evidencia disponible.</div>' : ''}
+        ${incomplete ? `<div class="alert alert-error">${escapeHtml(t('historial.incompleta'))}</div>` : ''}
         <dl class="technical-definition-list">
-          <div><dt>baseline</dt><dd>${detail.baseline ? `${escapeHtml(detail.baseline.nombre)} v${detail.baseline.version}` : `#${audit.baselineId}`}</dd></div>
-          <div><dt>configuración</dt><dd>${detail.configuracion
+          <div><dt>${t('general.baseline')}</dt><dd>${detail.baseline ? `${escapeHtml(detail.baseline.nombre)} v${detail.baseline.version}` : `#${audit.baselineId}`}</dd></div>
+          <div><dt>${t('auditorias.configuracion')}</dt><dd>${detail.configuracion
             ? `${code('CFG', detail.configuracion.id)} · v${detail.configuracion.version} · ${escapeHtml(detail.configuracion.nombreFuente)}`
             : code('CFG', audit.configuracionId)}</dd></div>
-          <div><dt>importada</dt><dd>${detail.configuracion
+          <div><dt>${t('historial.importada')}</dt><dd>${detail.configuracion
             ? `${escapeHtml(formatDate(detail.configuracion.fechaImportacion))} · ${escapeHtml(detail.configuracion.usuarioResponsable)}`
             : '—'}</dd></div>
-          <div><dt>reglas cumplidas</dt><dd>${audit.reglasCumplidas}/${audit.totalReglas}</dd></div>
-          <div><dt>ejecutó</dt><dd>${escapeHtml(audit.ejecutadoPor)} ${automaticBadge(audit)}</dd></div>
+          <div><dt>${t('auditorias.reglasCumplidas')}</dt><dd>${audit.reglasCumplidas}/${audit.totalReglas}</dd></div>
+          <div><dt>${t('auditorias.ejecuto')}</dt><dd>${escapeHtml(audit.ejecutadoPor)} ${automaticBadge(audit)}</dd></div>
         </dl>
 
         <div class="baseline-versions">
-          <span>evolución</span>
+          <span>${t('historial.evolucion')}</span>
           ${comparisonHtml(comparison)}
         </div>
 
         <div class="evaluation-list">
-          <span class="eyebrow">Reglas aplicadas</span>
+          <span class="eyebrow">${t('historial.reglasAplicadas')}</span>
           ${evaluations}
         </div>
 
         ${findings ? `
         <div class="baseline-versions">
-          <span>hallazgos generados (estado actual)</span>
+          <span>${t('historial.hallazgosGenerados')}</span>
           <ul class="compare-list">${findings}</ul>
-          <a class="button button-ghost button-small button-full" href="/results?auditoria=${audit.id}">Ver hallazgos de esta auditoría →</a>
+          <a class="button button-ghost button-small button-full" href="/results?auditoria=${audit.id}">${t('historial.verHallazgos')}</a>
         </div>` : ''}
 
         ${detail.configuracion ? `
@@ -320,7 +315,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <span>configuración normalizada (${code('CFG', detail.configuracion.id)})</span>
           <pre id="config-content">cargando...</pre>
         </div>` : ''}
-        <button id="filter-device" class="button button-ghost button-small button-full" type="button">Ver solo el historial de este dispositivo</button>
+        <button id="filter-device" class="button button-ghost button-small button-full" type="button">${t('historial.soloDispositivo')}</button>
         <a class="button button-ghost button-small button-full" href="/reports?auditoria=${audit.id}">Generar reporte de esta auditoría →</a>
       `;
       content.classList.remove('is-hidden');
@@ -349,7 +344,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       try {
         query = buildQuery();
       } catch (error) {
-        showError(error instanceof Error ? error.message : 'Filtros inválidos.');
+        showError(error instanceof Error ? error.message : t('bitacoras.filtrosInvalidos'));
         return;
       }
       const pagina = `pagina=${paginador.pagina}&porPagina=${paginador.porPagina}`;
@@ -405,6 +400,6 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       .then(() => {
         if (initialAudit) void selectAudit(initialAudit);
       })
-      .catch((error) => showError(error instanceof Error ? error.message : 'No se pudo cargar el historial.'));
+      .catch((error) => showError(error instanceof Error ? error.message : t('historial.errorCargar')));
   </script>
 </MasterLayout>

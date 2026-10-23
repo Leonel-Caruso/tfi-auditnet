@@ -14,6 +14,7 @@ import ar.edu.uai.tfi.auditcore.domain.model.ReporteAuditoria;
 import ar.edu.uai.tfi.auditcore.domain.model.SeveridadRegla;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.jwt.JsonWebToken;
@@ -92,29 +93,35 @@ public class ReporteResource {
         return ejecutar(() -> ReporteResponse.de(service.buscar(id, UsuarioAutenticado.organizacion(jwt))));
     }
 
-    /** Descarga en CSV (Excel). El PDF se obtiene imprimiendo la vista del reporte desde el navegador. */
+    /**
+     * Descarga en CSV (Excel), en el idioma de Accept-Language. El PDF se obtiene imprimiendo la vista del reporte
+     * desde el navegador.
+     */
     @GET
     @Path("/{id}/download")
     @Produces("text/csv")
-    public Response descargar(@PathParam("id") Long id) {
+    public Response descargar(@PathParam("id") Long id, @HeaderParam(HttpHeaders.ACCEPT_LANGUAGE) String idioma) {
         return ejecutar(() -> {
             ReporteAuditoria reporte = service.buscar(id, UsuarioAutenticado.organizacion(jwt));
-            // Si el CSV está en el repositorio se entrega ese, verificado contra su SHA-256; si no, se arma de nuevo.
-            Optional<byte[]> guardado;
-            try {
-                guardado = repositorioArchivos.buscar(TipoArchivo.REPORTE, reporte.id())
-                        .map(archivo -> repositorioArchivos.descargar(TipoArchivo.REPORTE, reporte.id()).contenido());
-            } catch (AlmacenArchivosPort.AlmacenamientoException noDisponible) {
-                // Si el repositorio no responde, se arma con los mismos datos.
-                guardado = Optional.empty();
+            // En español, si el CSV está en el repositorio se entrega ese, verificado contra su SHA-256. Si no está, o
+            // se pide en otro idioma, se arma con los mismos datos del reporte.
+            Optional<byte[]> guardado = Optional.empty();
+            if (ExportadorCsv.esIdiomaGuardado(idioma)) {
+                try {
+                    guardado = repositorioArchivos.buscar(TipoArchivo.REPORTE, reporte.id())
+                            .map(archivo -> repositorioArchivos.descargar(TipoArchivo.REPORTE, reporte.id()).contenido());
+                } catch (AlmacenArchivosPort.AlmacenamientoException noDisponible) {
+                    // Si el repositorio no responde, se arma con los mismos datos.
+                    guardado = Optional.empty();
+                }
             }
             Response.ResponseBuilder respuesta = guardado.isPresent()
                     ? Response.ok(guardado.get()).header("X-AuditNet-Integridad", "VERIFICADO")
-                    : Response.ok(ExportadorCsv.exportar(reporte)).header("X-AuditNet-Integridad", "SIN_VERIFICAR");
+                    : Response.ok(ExportadorCsv.exportar(reporte, idioma)).header("X-AuditNet-Integridad", "SIN_VERIFICAR");
             return respuesta
                     .type("text/csv; charset=UTF-8")
                     .header("Content-Disposition",
-                            "attachment; filename=\"reporte-" + String.format("REP-%03d", reporte.id()) + ".csv\"")
+                            "attachment; filename=\"" + ExportadorCsv.nombreArchivo(reporte.id(), idioma) + "\"")
                     .build();
         });
     }

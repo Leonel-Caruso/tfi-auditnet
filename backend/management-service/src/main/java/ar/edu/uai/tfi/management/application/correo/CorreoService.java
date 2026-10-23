@@ -99,10 +99,8 @@ public class CorreoService implements BandejaCorreo {
                 continue;
             }
             try {
-                // El idioma se toma al enviar: el del usuario dueño del correo, o español.
-                Idioma idioma = usuarios.idiomaPorEmail(correo.destinatario()).orElse(Idioma.ES);
                 MensajeCorreo mensaje = plantillas.armar(correo, nombreOrganizacion(correo.organizacionId()),
-                        urlPublica, idioma);
+                        urlPublica, idioma(correo));
                 repository.actualizar(correo.enviado(reloj.instant(), envio.enviar(mensaje)));
                 enviados++;
             } catch (FalloEnvioCorreo fallo) {
@@ -131,6 +129,14 @@ public class CorreoService implements BandejaCorreo {
         CorreoRepository.Resumen resumen = repository.resumen(reloj.instant().minus(Duration.ofHours(24)));
         return new EstadoBandeja(envio.proveedor(), resumen.pendientes(), resumen.enviados(), resumen.fallidos(),
                 repository.ultimos(20));
+    }
+
+    /** El elegido en la pantalla del pedido, si no el de la cuenta del destinatario, si no español. */
+    private Idioma idioma(CorreoSaliente correo) {
+        Object elegido = correo.datos() == null ? null : correo.datos().get(CorreoSaliente.DATO_IDIOMA);
+        return Idioma.desde(elegido == null ? null : elegido.toString())
+                .or(() -> usuarios.idiomaPorEmail(correo.destinatario()))
+                .orElse(Idioma.ES);
     }
 
     private static boolean enlaceVencido(CorreoSaliente correo, Instant ahora) {

@@ -101,6 +101,18 @@ class CorreoServiceTest {
     }
 
     @Test
+    void elIdiomaElegidoEnLaPantallaTienePrioridad() {
+        Usuario ana = usuarios.agregar(new Usuario(50L, 2L, "Ana", "ana@acme.test", "ana", "hash",
+                EstadoRegistro.ACTIVO, Set.of("ANALISTA_RED")));
+        usuarios.guardarIdioma(ana.id(), Idioma.EN);
+        service.encolar(TipoCorreo.ALTA_USUARIO, 2L, "ana@acme.test", "Ana", Map.of("usuario", "ana", "idioma", "pt"));
+
+        service.despachar();
+
+        assertEquals("Seu acesso ao AuditNet", envio.enviados.get(0).asunto());
+    }
+
+    @Test
     void sinProveedorLosAvisosQuedanPendientes() {
         envio.proveedor = null;
         service.encolar(TipoCorreo.ALTA_USUARIO, 2L, "ana@acme.test", "Ana", Map.of("usuario", "ana"));

@@ -1,48 +1,46 @@
 ---
+import { es } from '../i18n';
 import MasterLayout from '../layouts/MasterLayout.astro';
 ---
 
 <MasterLayout
-  title="Reglas"
-  section="Operación técnica"
-  description="Reglas que se verifican en cada auditoría. Definí la condición a revisar, su severidad y la recomendación."
+  title={es['reglas.titulo']} section={es['reglas.seccion']} description={es['reglas.descripcion']}
+  i18n="reglas"
 >
   <section id="rule-message" class="alert is-hidden" role="status"></section>
 
   <section class="policy-toolbar panel compact-panel">
     <div class="device-toolbar-copy">
-      <span class="eyebrow">Reglas de control</span>
+      <span class="eyebrow" data-i18n="reglas.reglasControl">{es['reglas.reglasControl']}</span>
       <div>
-        <strong id="rule-count">0 reglas</strong>
-        <span>controles técnicos configurados</span>
+        <strong id="rule-count" data-i18n="reglas.ceroReglas">{es['reglas.ceroReglas']}</strong>
+        <span data-i18n="reglas.controlesTecnicosConfigurados">{es['reglas.controlesTecnicosConfigurados']}</span>
       </div>
     </div>
 
     <div class="device-toolbar-actions">
       <label class="terminal-search">
         <span>&gt;</span>
-        <input id="rule-search" type="search" placeholder="buscar código, regla, baseline o patrón..." />
+        <input id="rule-search" type="search" placeholder={es['reglas.buscarCodigoReglaBaseline']} data-i18n-placeholder="reglas.buscarCodigoReglaBaseline" />
       </label>
-      <select id="rule-severity-filter" class="technical-select" aria-label="Filtrar por severidad">
-        <option value="">severidad: todas</option>
-        <option value="CRITICA">severidad: crítica</option>
-        <option value="ALTA">severidad: alta</option>
-        <option value="MEDIA">severidad: media</option>
-        <option value="BAJA">severidad: baja</option>
+      <select id="rule-severity-filter" class="technical-select" aria-label={es['reglas.filtrarSeveridad']} data-i18n-aria-label="reglas.filtrarSeveridad">
+        <option value="" data-i18n="reglas.severidadTodas">{es['reglas.severidadTodas']}</option>
+        <option value="CRITICA" data-i18n="reglas.severidadCritica">{es['reglas.severidadCritica']}</option>
+        <option value="ALTA" data-i18n="reglas.severidadAlta">{es['reglas.severidadAlta']}</option>
+        <option value="MEDIA" data-i18n="reglas.severidadMedia">{es['reglas.severidadMedia']}</option>
+        <option value="BAJA" data-i18n="reglas.severidadBaja">{es['reglas.severidadBaja']}</option>
       </select>
-      <select id="rule-status-filter" class="technical-select" aria-label="Filtrar por estado">
-        <option value="">estado: todos</option>
-        <option value="ACTIVA">estado: activa</option>
-        <option value="INACTIVA">estado: inactiva</option>
+      <select id="rule-status-filter" class="technical-select" aria-label={es['general.filtrarEstado']} data-i18n-aria-label="general.filtrarEstado">
+        <option value="" data-i18n="general.estadoTodos">{es['general.estadoTodos']}</option>
+        <option value="ACTIVA" data-i18n="reglas.estadoActiva">{es['reglas.estadoActiva']}</option>
+        <option value="INACTIVA" data-i18n="reglas.estadoInactiva">{es['reglas.estadoInactiva']}</option>
       </select>
       <button
         id="open-rule-dialog"
         class="button button-primary device-create-action"
         type="button"
         data-roles="ADMINISTRADOR_SISTEMA,AUDITOR_TECNICO"
-      >
-        + nueva regla
-      </button>
+       data-i18n="reglas.nuevaRegla">{es['reglas.nuevaRegla']}</button>
     </div>
   </section>
 
@@ -50,8 +48,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <article class="panel policy-list-panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Controles</span>
-          <h2>Controles de configuración</h2>
+          <span class="eyebrow" data-i18n="reglas.controles">{es['reglas.controles']}</span>
+          <h2 data-i18n="reglas.controlesConfiguracion">{es['reglas.controlesConfiguracion']}</h2>
         </div>
       </div>
 
@@ -59,12 +57,12 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         <table class="data-table policy-table">
           <thead>
             <tr>
-              <th>Código</th>
-              <th>Regla</th>
-              <th>Baseline</th>
-              <th>Condición</th>
-              <th>Severidad</th>
-              <th>Estado</th>
+              <th data-i18n="reglas.colCodigo">{es['reglas.colCodigo']}</th>
+              <th data-i18n="reglas.colRegla">{es['reglas.colRegla']}</th>
+              <th data-i18n="reglas.colBaseline">{es['reglas.colBaseline']}</th>
+              <th data-i18n="reglas.colCondicion">{es['reglas.colCondicion']}</th>
+              <th data-i18n="reglas.colSeveridad">{es['reglas.colSeveridad']}</th>
+              <th data-i18n="reglas.colEstado">{es['reglas.colEstado']}</th>
             </tr>
           </thead>
           <tbody id="rules-body"><tr><td colspan="6"><div class="skeleton-row"></div></td></tr></tbody>
@@ -73,24 +71,24 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
       <div id="rules-empty" class="empty-state compact-empty is-hidden">
         <div>
-          <code>0 reglas</code>
-          <p>No hay reglas configuradas con los filtros actuales.</p>
+          <code data-i18n="reglas.ceroReglas">{es['reglas.ceroReglas']}</code>
+          <p data-i18n="reglas.hayReglasConfiguradasFiltros">{es['reglas.hayReglasConfiguradasFiltros']}</p>
         </div>
       </div>
     </article>
 
-    <aside class="panel policy-inspector" aria-label="Detalle de regla">
+    <aside class="panel policy-inspector" aria-label={es['reglas.detalleRegla']} data-i18n-aria-label="reglas.detalleRegla">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Regla seleccionada</span>
-          <h2>Detalle del control</h2>
+          <span class="eyebrow" data-i18n="reglas.reglaSeleccionada">{es['reglas.reglaSeleccionada']}</span>
+          <h2 data-i18n="reglas.detalleControl">{es['reglas.detalleControl']}</h2>
         </div>
         <span class="inspector-led"></span>
       </div>
 
       <div id="rule-inspector-empty" class="inspector-empty">
-        <code>sin selección</code>
-        <p>Seleccioná una regla para revisar condición, severidad, impacto y recomendación.</p>
+        <code data-i18n="general.sinSeleccion">{es['general.sinSeleccion']}</code>
+        <p data-i18n="reglas.seleccionaReglaRevisarCondicion">{es['reglas.seleccionaReglaRevisarCondicion']}</p>
       </div>
 
       <div id="rule-inspector-content" class="inspector-content is-hidden">
@@ -101,34 +99,34 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         </div>
         <p id="rule-inspector-description" class="policy-description">—</p>
         <dl class="technical-definition-list">
-          <div><dt>baseline</dt><dd id="rule-inspector-baseline">—</dd></div>
-          <div><dt>condición</dt><dd id="rule-inspector-type">—</dd></div>
-          <div><dt>severidad</dt><dd id="rule-inspector-severity">—</dd></div>
-          <div><dt>identificador</dt><dd id="rule-inspector-id">—</dd></div>
+          <div><dt data-i18n="general.baseline">{es['general.baseline']}</dt><dd id="rule-inspector-baseline">—</dd></div>
+          <div><dt data-i18n="reglas.condicionDetalle">{es['reglas.condicionDetalle']}</dt><dd id="rule-inspector-type">—</dd></div>
+          <div><dt data-i18n="general.severidad">{es['general.severidad']}</dt><dd id="rule-inspector-severity">—</dd></div>
+          <div><dt data-i18n="general.identificador">{es['general.identificador']}</dt><dd id="rule-inspector-id">—</dd></div>
         </dl>
         <div class="rule-expression-block">
-          <span id="rule-inspector-pattern-label">patrón</span>
+          <span id="rule-inspector-pattern-label" data-i18n="reglas.patron">{es['reglas.patron']}</span>
           <code id="rule-inspector-pattern">—</code>
         </div>
         <div id="rule-inspector-expected-block" class="rule-expression-block is-hidden">
-          <span>valor esperado</span>
+          <span data-i18n="reglas.valorEsperado">{es['reglas.valorEsperado']}</span>
           <code id="rule-inspector-expected">—</code>
         </div>
         <div class="finding-evidence-block">
-          <span>impacto</span>
+          <span data-i18n="reglas.impacto">{es['reglas.impacto']}</span>
           <p id="rule-inspector-impact">—</p>
         </div>
         <div class="rule-recommendation">
-          <span>recomendación</span>
+          <span data-i18n="reglas.recomendacion">{es['reglas.recomendacion']}</span>
           <p id="rule-inspector-recommendation">—</p>
         </div>
         <div id="rule-inspector-frozen" class="inspector-footnote is-hidden">
-          <code>reglas congeladas</code>
-          <span>Su baseline ya se usó en auditorías: para cambiar o reactivar la regla, generá una nueva versión de la baseline. La baja lógica sí está permitida.</span>
+          <code data-i18n="reglas.reglasCongeladas">{es['reglas.reglasCongeladas']}</code>
+          <span data-i18n="reglas.baselineYaUsoAuditorias">{es['reglas.baselineYaUsoAuditorias']}</span>
         </div>
         <div class="inspector-actions" data-roles="ADMINISTRADOR_SISTEMA,AUDITOR_TECNICO">
-          <button id="rule-edit" class="button button-ghost button-small" type="button">Editar</button>
-          <button id="rule-toggle" class="button button-ghost button-small" type="button">Desactivar</button>
+          <button id="rule-edit" class="button button-ghost button-small" type="button" data-i18n="general.editar">{es['general.editar']}</button>
+          <button id="rule-toggle" class="button button-ghost button-small" type="button" data-i18n="reglas.desactivar">{es['reglas.desactivar']}</button>
         </div>
       </div>
     </aside>
@@ -138,28 +136,28 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <form id="rule-form" class="device-form">
       <div class="dialog-header">
         <div>
-          <span id="rule-dialog-eyebrow" class="eyebrow">Nueva regla</span>
-          <h2 id="rule-dialog-title">Crear regla</h2>
-          <p id="rule-dialog-subtitle">Convertí una condición de configuración en un control auditable.</p>
+          <span id="rule-dialog-eyebrow" class="eyebrow" data-i18n="reglas.nuevaReglaTitulo">{es['reglas.nuevaReglaTitulo']}</span>
+          <h2 id="rule-dialog-title" data-i18n="reglas.crearRegla">{es['reglas.crearRegla']}</h2>
+          <p id="rule-dialog-subtitle" data-i18n="reglas.convertiCondicionConfiguracionControl">{es['reglas.convertiCondicionConfiguracionControl']}</p>
         </div>
-        <button id="close-rule-dialog" class="dialog-close" type="button" aria-label="Cerrar">×</button>
+        <button id="close-rule-dialog" class="dialog-close" type="button" aria-label={es['general.cerrar']} data-i18n-aria-label="general.cerrar">×</button>
       </div>
 
       <div class="device-form-grid">
         <label class="field field-span-2">
-          <span>baseline *</span>
-          <select id="rule-baseline" class="form-select" required><option value="">Seleccionar baseline...</option></select>
+          <span data-i18n="reglas.baselineObligatorio">{es['reglas.baselineObligatorio']}</span>
+          <select id="rule-baseline" class="form-select" required><option value="" data-i18n="reglas.seleccionarBaseline">{es['reglas.seleccionarBaseline']}</option></select>
         </label>
         <label class="field">
-          <span>código *</span>
+          <span data-i18n="reglas.codigoObligatorio">{es['reglas.codigoObligatorio']}</span>
           <input id="rule-code" type="text" maxlength="60" placeholder="SEC-SSH-01" required />
         </label>
         <label class="field">
-          <span>nombre *</span>
-          <input id="rule-name" type="text" maxlength="140" placeholder="Forzar SSH versión 2" required />
+          <span data-i18n="general.nombreObligatorio">{es['general.nombreObligatorio']}</span>
+          <input id="rule-name" type="text" maxlength="140" placeholder={es['reglas.forzarSshVersion']} data-i18n-placeholder="reglas.forzarSshVersion" required />
         </label>
         <label class="field">
-          <span>condición *</span>
+          <span data-i18n="reglas.condicionObligatorio">{es['reglas.condicionObligatorio']}</span>
           <select id="rule-type" class="form-select" required>
             <option value="DEBE_CONTENER">DEBE_CONTENER</option>
             <option value="NO_DEBE_CONTENER">NO_DEBE_CONTENER</option>
@@ -167,44 +165,44 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           </select>
         </label>
         <label class="field">
-          <span>severidad *</span>
+          <span data-i18n="general.severidadObligatorio">{es['general.severidadObligatorio']}</span>
           <select id="rule-severity" class="form-select" required>
-            <option value="MEDIA">MEDIA</option>
-            <option value="BAJA">BAJA</option>
-            <option value="ALTA">ALTA</option>
-            <option value="CRITICA">CRITICA</option>
+            <option value="MEDIA" data-i18n="severidad.MEDIA">{es['severidad.MEDIA']}</option>
+            <option value="BAJA" data-i18n="severidad.BAJA">{es['severidad.BAJA']}</option>
+            <option value="ALTA" data-i18n="severidad.ALTA">{es['severidad.ALTA']}</option>
+            <option value="CRITICA" data-i18n="severidad.CRITICA">{es['severidad.CRITICA']}</option>
           </select>
         </label>
         <label id="rule-pattern-field" class="field field-span-2">
-          <span id="rule-pattern-label">patrón *</span>
+          <span id="rule-pattern-label" data-i18n="reglas.patronObligatorio">{es['reglas.patronObligatorio']}</span>
           <input id="rule-pattern" class="mono-input" type="text" maxlength="500" placeholder="ip ssh version 2" required />
         </label>
         <label id="rule-expected-field" class="field field-span-2 is-hidden">
-          <span>valor esperado *</span>
+          <span data-i18n="reglas.valorEsperadoObligatorio">{es['reglas.valorEsperadoObligatorio']}</span>
           <input id="rule-expected" class="mono-input" type="text" maxlength="500" placeholder="16384" />
         </label>
         <label class="field field-span-2">
-          <span>descripción *</span>
-          <textarea id="rule-description" rows="2" maxlength="500" placeholder="La configuración debe utilizar exclusivamente SSH versión 2." required></textarea>
+          <span data-i18n="general.descripcionObligatorio">{es['general.descripcionObligatorio']}</span>
+          <textarea id="rule-description" rows="2" maxlength="500" placeholder={es['reglas.configuracionDebeUtilizarExclusivamente']} data-i18n-placeholder="reglas.configuracionDebeUtilizarExclusivamente" required></textarea>
         </label>
         <label class="field field-span-2">
-          <span>impacto *</span>
-          <textarea id="rule-impact" rows="2" maxlength="500" placeholder="Las credenciales de administración pueden viajar sin cifrar y ser interceptadas." required></textarea>
+          <span data-i18n="reglas.impactoObligatorio">{es['reglas.impactoObligatorio']}</span>
+          <textarea id="rule-impact" rows="2" maxlength="500" placeholder={es['reglas.credencialesAdministracionPuedenViajar']} data-i18n-placeholder="reglas.credencialesAdministracionPuedenViajar" required></textarea>
         </label>
         <label class="field field-span-2">
-          <span>recomendación *</span>
-          <textarea id="rule-recommendation" rows="2" maxlength="500" placeholder="Configurar: ip ssh version 2" required></textarea>
+          <span data-i18n="reglas.recomendacionObligatorio">{es['reglas.recomendacionObligatorio']}</span>
+          <textarea id="rule-recommendation" rows="2" maxlength="500" placeholder={es['reglas.configurarIpSshVersion']} data-i18n-placeholder="reglas.configurarIpSshVersion" required></textarea>
         </label>
       </div>
       <div class="rule-help">
-        <code>DEBE_CONTENER</code><span>cumple si el patrón aparece en la configuración</span>
-        <code>NO_DEBE_CONTENER</code><span>cumple si el patrón no aparece</span>
-        <code>VALOR_ESPERADO</code><span>cumple si alguna línea que empieza con el parámetro tiene ese valor (ej. <em>logging buffered</em> = <em>16384</em>)</span>
+        <code>DEBE_CONTENER</code><span data-i18n="reglas.cumpleSiPatronAparece">{es['reglas.cumpleSiPatronAparece']}</span>
+        <code>NO_DEBE_CONTENER</code><span data-i18n="reglas.cumpleSiNoAparece">{es['reglas.cumpleSiNoAparece']}</span>
+        <code>VALOR_ESPERADO</code><span><span data-i18n="reglas.cumpleSiValor">{es['reglas.cumpleSiValor']}</span> (<span data-i18n="reglas.ejemplo">{es['reglas.ejemplo']}</span> <em>logging buffered</em> = <em>16384</em>)</span>
       </div>
       <div id="rule-form-error" class="alert alert-error is-hidden"></div>
       <div class="dialog-actions">
-        <button id="cancel-rule-dialog" class="button button-ghost" type="button">Cancelar</button>
-        <button id="rule-submit" class="button button-primary" type="submit">Crear regla</button>
+        <button id="cancel-rule-dialog" class="button button-ghost" type="button" data-i18n="general.cancelar">{es['general.cancelar']}</button>
+        <button id="rule-submit" class="button button-primary" type="submit" data-i18n="reglas.crearRegla">{es['reglas.crearRegla']}</button>
       </div>
     </form>
   </dialog>
@@ -219,6 +217,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       type Organization,
       type RuleType,
     } from '../lib/api';
+    import { plural, severityCode } from '../lib/format';
+    import { etiqueta, t } from '../lib/i18n';
 
     const state = {
       rules: [] as BaselineRule[],
@@ -268,11 +268,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       return 'severity-low';
     }
 
-    function conditionLabel(value: RuleType): string {
-      if (value === 'DEBE_CONTENER') return 'must contain';
-      if (value === 'NO_DEBE_CONTENER') return 'must not contain';
-      return 'expected value';
-    }
+    const conditionLabel = (value: RuleType) => etiqueta('condicion', value);
+    const ruleStatus = (value: string) => etiqueta('regla', value);
 
     const conditionText = (rule: BaselineRule) =>
       rule.tipo === 'VALOR_ESPERADO' ? `${rule.patron} = ${rule.valorEsperado ?? ''}` : rule.patron;
@@ -329,13 +326,13 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const severity = document.createElement('td');
       const severityBadge = document.createElement('span');
       severityBadge.className = `severity-badge ${severityClass(rule.severidad)}`;
-      severityBadge.textContent = rule.severidad;
+      severityBadge.textContent = severityCode(rule.severidad);
       severity.appendChild(severityBadge);
 
       const status = document.createElement('td');
       const statusBadge = document.createElement('span');
       statusBadge.className = `status-badge ${rule.estado === 'ACTIVA' ? 'status-ready' : 'status-next'}`;
-      statusBadge.textContent = rule.estado;
+      statusBadge.textContent = ruleStatus(rule.estado);
       status.appendChild(statusBadge);
 
       row.append(code, name, baselineCell, type, severity, status);
@@ -349,7 +346,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
     function render(): void {
       const rules = filteredRules();
-      if (count) count.textContent = `${state.rules.length} ${state.rules.length === 1 ? 'regla' : 'reglas'}`;
+      if (count) count.textContent = plural(state.rules.length, 'reglas.cantidad');
       if (!body || !empty) return;
       body.replaceChildren(...rules.map(buildRow));
       empty.classList.toggle('is-hidden', rules.length > 0);
@@ -373,18 +370,18 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const frozen = isFrozen(rule);
       setText('#rule-inspector-code', rule.codigo);
       setText('#rule-inspector-name', rule.nombre);
-      setText('#rule-inspector-status', rule.estado);
+      setText('#rule-inspector-status', ruleStatus(rule.estado));
       setText('#rule-inspector-description', rule.descripcion);
       setText('#rule-inspector-baseline', baseline ? baselineLabel(baseline) : `#${rule.baselineId}`);
       setText('#rule-inspector-type', rule.tipo);
-      setText('#rule-inspector-severity', rule.severidad);
+      setText('#rule-inspector-severity', severityCode(rule.severidad));
       setText('#rule-inspector-id', String(rule.id));
-      setText('#rule-inspector-pattern-label', expected ? 'parámetro' : 'patrón');
+      setText('#rule-inspector-pattern-label', t(expected ? 'reglas.parametro' : 'reglas.patron'));
       setText('#rule-inspector-pattern', rule.patron);
       setText('#rule-inspector-expected', rule.valorEsperado ?? '—');
       setText('#rule-inspector-impact', rule.impacto);
       setText('#rule-inspector-recommendation', rule.recomendacion);
-      setText('#rule-toggle', rule.estado === 'ACTIVA' ? 'Desactivar' : 'Activar');
+      setText('#rule-toggle', t(rule.estado === 'ACTIVA' ? 'reglas.desactivar' : 'baselines.activar'));
       document.querySelector('#rule-inspector-expected-block')?.classList.toggle('is-hidden', !expected);
       document.querySelector('#rule-inspector-frozen')?.classList.toggle('is-hidden', !frozen);
 
@@ -392,15 +389,15 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       if (editButton) {
         editButton.disabled = frozen || baseline?.estado !== 'ACTIVO';
         editButton.title = frozen
-          ? 'La baseline ya se usó en auditorías: generá una nueva versión para cambiar la regla.'
-          : baseline?.estado !== 'ACTIVO' ? 'La baseline está inactiva.' : '';
+          ? t('reglas.baselineUsada')
+          : baseline?.estado !== 'ACTIVO' ? t('reglas.baselineInactiva') : '';
       }
       const toggleButton = document.querySelector<HTMLButtonElement>('#rule-toggle');
       if (toggleButton) {
         // La baja lógica siempre se permite; reactivar agrega un criterio y requiere una baseline editable.
         const blocked = rule.estado === 'INACTIVA' && (frozen || baseline?.estado !== 'ACTIVO');
         toggleButton.disabled = blocked;
-        toggleButton.title = blocked ? 'Para volver a usar esta regla, generá una nueva versión de la baseline.' : '';
+        toggleButton.title = blocked ? t('reglas.reactivarAyuda') : '';
       }
       const status = document.querySelector('#rule-inspector-status');
       if (status) status.className = `status-badge ${rule.estado === 'ACTIVA' ? 'status-ready' : 'status-next'}`;
@@ -410,13 +407,13 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
     function fillBaselineSelect(selected?: number): void {
       if (!baselineSelect) return;
-      baselineSelect.replaceChildren(new Option('Seleccionar baseline...', ''));
+      baselineSelect.replaceChildren(new Option(t('reglas.seleccionarBaseline'), ''));
       state.baselines
         .filter((baseline) => baseline.estado === 'ACTIVO' || baseline.id === selected)
         .forEach((baseline) => {
           const frozen = baseline.auditorias > 0;
           const option = new Option(
-            `${baselineLabel(baseline)}${frozen ? ' · usada en auditorías (generá una nueva versión)' : ''}`,
+            `${baselineLabel(baseline)}${frozen ? ` · ${t('reglas.usadaEnAuditorias')}` : ''}`,
             String(baseline.id),
           );
           option.disabled = frozen && baseline.id !== selected;
@@ -449,7 +446,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const expected = typeSelect?.value === 'VALOR_ESPERADO';
       document.querySelector('#rule-expected-field')?.classList.toggle('is-hidden', !expected);
       if (expectedInput) expectedInput.required = expected;
-      setText('#rule-pattern-label', expected ? 'parámetro *' : 'patrón *');
+      setText('#rule-pattern-label', t(expected ? 'reglas.parametroObligatorio' : 'reglas.patronObligatorio'));
       const pattern = document.querySelector<HTMLInputElement>('#rule-pattern');
       if (pattern) pattern.placeholder = expected ? 'logging buffered' : 'ip ssh version 2';
     }
@@ -462,12 +459,12 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       if (baselineSelect) baselineSelect.disabled = rule !== null;
       if (codeInput) codeInput.disabled = rule !== null;
 
-      setText('#rule-dialog-eyebrow', rule ? 'Editar regla' : 'Nueva regla');
-      setText('#rule-dialog-title', rule ? `Editar ${rule.codigo}` : 'Crear regla');
+      setText('#rule-dialog-eyebrow', t(rule ? 'reglas.editarRegla' : 'reglas.nuevaReglaTitulo'));
+      setText('#rule-dialog-title', rule ? t('dispositivos.editarIdentificador', { identificador: rule.codigo }) : t('reglas.crearRegla'));
       setText('#rule-dialog-subtitle', rule
-        ? 'El código y la baseline no cambian. El cambio queda en la bitácora con el valor anterior y el nuevo.'
-        : 'Convertí una condición de configuración en un control auditable.');
-      setText('#rule-submit', rule ? 'Guardar cambios' : 'Crear regla');
+        ? t('reglas.edicionAyuda')
+        : t('reglas.convertiCondicionConfiguracionControl'));
+      setText('#rule-submit', t(rule ? 'general.guardarCambios' : 'reglas.crearRegla'));
 
       if (rule) {
         const set = (selector: string, value: string) => {
@@ -528,7 +525,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       }
       const saved = await response.json() as BaselineRule;
       dialog?.close();
-      showMessage(editing ? `Regla ${saved.codigo} actualizada.` : `Regla ${saved.codigo} creada correctamente.`);
+      showMessage(t(editing ? 'reglas.actualizada' : 'reglas.creada', { codigo: saved.codigo }));
       await load();
       showRule(saved);
     });
@@ -538,8 +535,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       if (!rule) return;
       const deactivate = rule.estado === 'ACTIVA';
       const question = deactivate
-        ? `¿Desactivar ${rule.codigo}? Dejará de evaluarse en las auditorías nuevas; las anteriores conservan su resultado.`
-        : `¿Activar ${rule.codigo}? Volverá a evaluarse en las auditorías nuevas.`;
+        ? t('reglas.confirmarDesactivar', { codigo: rule.codigo })
+        : t('reglas.confirmarActivar', { codigo: rule.codigo });
       if (!window.confirm(question)) return;
 
       const response = await auditFetch(`/api/rules/${rule.id}/status`,
@@ -549,13 +546,13 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         return;
       }
       const saved = await response.json() as BaselineRule;
-      showMessage(`Regla ${saved.codigo} ahora está ${saved.estado}.`);
+      showMessage(t('reglas.ahoraEsta', { codigo: saved.codigo, estado: ruleStatus(saved.estado) }));
       await load();
       showRule(saved);
     });
 
     load().catch((error) => {
-      showMessage(error instanceof Error ? error.message : 'No se pudieron cargar las reglas.', 'error');
+      showMessage(error instanceof Error ? error.message : t('reglas.errorCargar'), 'error');
     });
   </script>
 </MasterLayout>

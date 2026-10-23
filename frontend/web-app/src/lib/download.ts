@@ -1,4 +1,5 @@
 // Descarga de archivos que llegan por fetch (con el token), con el nombre que indica el servidor.
+import { localeActual } from './i18n';
 
 /** Toma el nombre de Content-Disposition o usa el indicado. */
 export function fileName(response: Response, fallback: string): string {
@@ -19,7 +20,9 @@ export async function saveResponse(response: Response, fallback: string): Promis
 }
 
 export const formatBytes = (bytes: number) => {
+  const decimal = (valor: number) =>
+    new Intl.NumberFormat(localeActual(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(valor);
   if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1).replace('.', ',')} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} MB`;
+  if (bytes < 1024 * 1024) return `${decimal(bytes / 1024)} KB`;
+  return `${decimal(bytes / (1024 * 1024))} MB`;
 };

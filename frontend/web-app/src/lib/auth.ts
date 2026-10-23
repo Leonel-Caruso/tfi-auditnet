@@ -102,12 +102,12 @@ async function authorizedFetch(
   const token = getToken();
   if (!token) {
     redirectToLogin();
-    throw new Error('Sesión inexistente.');
+    throw new Error(t('error.sinSesion'));
   }
 
   if (isSessionExpired()) {
     redirectToLogin('expired');
-    throw new Error('La sesión venció.');
+    throw new Error(t('error.sesionVencida'));
   }
 
   const headers = new Headers(init.headers);

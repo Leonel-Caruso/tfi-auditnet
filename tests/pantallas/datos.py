@@ -87,6 +87,29 @@ REPORTES = [{"id": 1, "organizacionId": 2, "titulo": "Reporte de septiembre", "t
              "totalHallazgos": 2, "generadoPor": "auditor", "fechaGeneracion": "2026-10-01T12:00:00Z"}]
 
 
+def reporte(id_reporte):
+    """Reporte completo (el documento que se ve en pantalla y se imprime en PDF)."""
+    hallazgo = {"id": 4, "auditoriaId": 1, "dispositivoId": 1, "dispositivoIdentificador": "RTR-CORE-01", "reglaId": 1,
+                "codigoRegla": "SEC-SSH-01", "nombreRegla": "Forzar SSH versión 2", "severidad": "CRITICA",
+                "impacto": "Credenciales sin cifrar", "evidencia": "ip ssh version 1", "recomendacion": "ip ssh version 2",
+                "estado": "ABIERTO", "fechaDeteccion": "2026-09-20T10:00:00Z"}
+    return REPORTES[0] | {"id": id_reporte,
+        "criterios": {"organizacionId": 2, "desde": "2026-09-01T03:00:00Z", "hasta": "2026-10-01T02:59:59Z",
+                      "dispositivoIds": [], "severidades": [], "estados": [], "auditoriaIds": []},
+        "contenido": {
+            "resumen": {"auditorias": 2, "dispositivos": 1, "reglasEvaluadas": 10, "reglasCumplidas": 8, "cumplimiento": 80,
+                        "hallazgos": 2, "hallazgosPendientes": 2, "hallazgosPorSeveridad": {"CRITICA": 1, "ALTA": 1},
+                        "hallazgosPorEstado": {"ABIERTO": 2}, "severidadMaxima": "CRITICA", "resultadoGeneral": "CON_DESVIOS"},
+            "auditorias": [{"id": 1, "fechaEjecucion": "2026-09-20T10:00:00Z", "ejecutadoPor": "auditor", "dispositivoId": 1,
+                            "dispositivoIdentificador": "RTR-CORE-01", "dispositivoNombre": "Router Core",
+                            "criticidadDispositivo": "ALTA", "sedeId": 11, "configuracionId": 1, "configuracionVersion": 1,
+                            "baselineId": 1, "baselineNombre": "Hardening Cisco", "baselineVersion": 1, "totalReglas": 5,
+                            "reglasCumplidas": 4, "totalHallazgos": 1, "severidadMaxima": "CRITICA",
+                            "resultado": "CON_HALLAZGOS"}],
+            "hallazgos": [hallazgo, hallazgo | {"id": 5, "severidad": "ALTA"}],
+            "inconsistencias": []}}
+
+
 def resumen_tablero():
     return {
         "generado": "2026-10-08T15:00:00Z", "nivelRiesgo": "ALTO",

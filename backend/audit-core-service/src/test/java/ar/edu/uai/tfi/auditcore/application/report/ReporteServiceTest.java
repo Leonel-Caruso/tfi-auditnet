@@ -147,6 +147,24 @@ class ReporteServiceTest {
     }
 
     @Test
+    void elCsvSaleEnElIdiomaPedidoConLosDatosSinTraducir() {
+        ReporteAuditoria reporte = service.generar(criterios(2L, List.of(), List.of(), DESDE, HASTA), "auditor", AHORA)
+                .orElseThrow();
+
+        String ingles = ExportadorCsv.exportar(reporte, "en-US,en;q=0.9");
+        String portugues = ExportadorCsv.exportar(reporte, "pt-BR");
+
+        assertTrue(ingles.startsWith("\uFEFFReport,Generated,"), "en inglés Excel separa con coma");
+        assertTrue(ingles.contains(",OPEN,"));
+        assertTrue(portugues.startsWith("\uFEFFRelatório;Gerado;"));
+        assertTrue(portugues.contains(";ABERTO;"));
+        assertEquals(ExportadorCsv.exportar(reporte), ExportadorCsv.exportar(reporte, "fr"), "otro idioma: español");
+        assertEquals("report-REP-001.csv", ExportadorCsv.nombreArchivo(1L, "en"));
+        assertTrue(ExportadorCsv.esIdiomaGuardado(null));
+        assertFalse(ExportadorCsv.esIdiomaGuardado("pt"));
+    }
+
+    @Test
     void elCsvDelReporteQuedaEnElRepositorioDeArchivos() {
         ReporteAuditoria reporte = service.generar(criterios(2L, List.of(), List.of(), DESDE, HASTA), "auditor", AHORA)
                 .orElseThrow();

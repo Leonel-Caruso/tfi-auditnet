@@ -1,40 +1,40 @@
 ---
+import { es } from '../i18n';
 import MasterLayout from '../layouts/MasterLayout.astro';
 ---
 
 <MasterLayout
-  title="Tablero de control"
-  section="Consola"
-  description="Resumen de auditorías, dispositivos, hallazgos y alertas. Cada indicador abre el detalle."
+  title={es['tablero.titulo']} section={es['tablero.seccion']} description={es['tablero.descripcion']}
+  i18n="tablero"
 >
   <div id="dash-error" class="alert alert-error is-hidden" role="alert"></div>
 
   <section class="panel compact-panel dashboard-scope">
     <div>
-      <span class="eyebrow">Tablero de control</span>
-      <h2 id="dash-scope-title">Estado general</h2>
+      <span class="eyebrow" data-i18n="tablero.tableroControl">{es['tablero.tableroControl']}</span>
+      <h2 id="dash-scope-title" data-i18n="tablero.estadoGeneral">{es['tablero.estadoGeneral']}</h2>
     </div>
     <div class="dashboard-scope-actions">
       <label class="log-filter" id="dash-org-filter" hidden>
-        <span>organización</span>
-        <select id="dash-org" class="technical-select"><option value="">todas las organizaciones</option></select>
+        <span data-i18n="general.organizacion">{es['general.organizacion']}</span>
+        <select id="dash-org" class="technical-select"><option value="" data-i18n="tablero.todasOrganizaciones">{es['tablero.todasOrganizaciones']}</option></select>
       </label>
-      <a id="dash-client-link" class="button button-ghost button-small" href="/client-status">Estado por sede →</a>
+      <a id="dash-client-link" class="button button-ghost button-small" href="/client-status" data-i18n="tablero.estadoSede">{es['tablero.estadoSede']}</a>
     </div>
   </section>
 
   <div id="dash-risk"></div>
 
   <section id="dash-kpis" class="metric-grid dashboard-kpis" aria-live="polite">
-    <article class="metric-card"><span class="metric-label">cargando</span><strong>—</strong><small>consultando…</small></article>
+    <article class="metric-card"><span class="metric-label" data-i18n="general.cargando">{es['general.cargando']}</span><strong>—</strong><small data-i18n="general.consultando">{es['general.consultando']}</small></article>
   </section>
 
   <section class="two-column dashboard-row">
     <article class="panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Hallazgos</span>
-          <h2>Hallazgos pendientes por severidad</h2>
+          <span class="eyebrow" data-i18n="tablero.hallazgos">{es['tablero.hallazgos']}</span>
+          <h2 data-i18n="tablero.hallazgosPendientesSeveridad">{es['tablero.hallazgosPendientesSeveridad']}</h2>
         </div>
       </div>
       <div id="dash-severity"></div>
@@ -43,10 +43,10 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <article class="panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Evolución</span>
-          <h2>Desvíos por semana</h2>
+          <span class="eyebrow" data-i18n="tablero.evolucion">{es['tablero.evolucion']}</span>
+          <h2 data-i18n="tablero.desviosSemana">{es['tablero.desviosSemana']}</h2>
         </div>
-        <span class="technical-hint">últimas 8 semanas</span>
+        <span class="technical-hint" data-i18n="tablero.ultimasSemanas">{es['tablero.ultimasSemanas']}</span>
       </div>
       <div id="dash-evolution"></div>
     </article>
@@ -56,10 +56,10 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <article class="panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Operación</span>
-          <h2>Alertas vigentes</h2>
+          <span class="eyebrow" data-i18n="tablero.operacion">{es['tablero.operacion']}</span>
+          <h2 data-i18n="tablero.alertasVigentesTitulo">{es['tablero.alertasVigentesTitulo']}</h2>
         </div>
-        <a class="inline-link" href="/alerts">ver todas →</a>
+        <a class="inline-link" href="/alerts" data-i18n="tablero.verTodas">{es['tablero.verTodas']}</a>
       </div>
       <div id="dash-alerts"></div>
     </article>
@@ -67,10 +67,10 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <article class="panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Histórico</span>
-          <h2>Auditorías recientes</h2>
+          <span class="eyebrow" data-i18n="tablero.historico">{es['tablero.historico']}</span>
+          <h2 data-i18n="tablero.auditoriasRecientes">{es['tablero.auditoriasRecientes']}</h2>
         </div>
-        <a class="inline-link" href="/history">historial →</a>
+        <a class="inline-link" href="/history" data-i18n="tablero.historial">{es['tablero.historial']}</a>
       </div>
       <div id="dash-recent"></div>
     </article>
@@ -79,45 +79,46 @@ import MasterLayout from '../layouts/MasterLayout.astro';
   <section class="panel dashboard-row">
     <div class="panel-heading">
       <div>
-        <span class="eyebrow">Riesgo</span>
-        <h2>Dispositivos con mayor riesgo</h2>
+        <span class="eyebrow" data-i18n="tablero.riesgo">{es['tablero.riesgo']}</span>
+        <h2 data-i18n="tablero.dispositivosMayorRiesgo">{es['tablero.dispositivosMayorRiesgo']}</h2>
       </div>
     </div>
     <div class="table-wrap">
       <table class="data-table log-table">
         <thead>
-          <tr><th>DISPOSITIVO</th><th>SEDE</th><th>CRITICIDAD</th><th>RIESGO</th><th>PENDIENTES</th><th>ALERTAS</th><th>ÚLTIMA AUDITORÍA</th></tr>
+          <tr><th data-i18n="general.colDispositivo">{es['general.colDispositivo']}</th><th data-i18n="general.colSede">{es['general.colSede']}</th><th data-i18n="tablero.colCriticidad">{es['tablero.colCriticidad']}</th><th data-i18n="general.colRiesgo">{es['general.colRiesgo']}</th><th data-i18n="general.colPendientes">{es['general.colPendientes']}</th><th data-i18n="general.colAlertas">{es['general.colAlertas']}</th><th data-i18n="tablero.colUltimaAuditoria">{es['tablero.colUltimaAuditoria']}</th></tr>
         </thead>
         <tbody id="dash-risk-devices"></tbody>
       </table>
       <div id="dash-risk-empty" class="empty-state compact-empty is-hidden">
-        <div><code>sin riesgo</code><p>No hay dispositivos con riesgo alto o medio.</p></div>
+        <div><code data-i18n="tablero.sinRiesgo">{es['tablero.sinRiesgo']}</code><p data-i18n="tablero.hayDispositivosRiesgoAlto">{es['tablero.hayDispositivosRiesgoAlto']}</p></div>
       </div>
     </div>
   </section>
 
   <section class="metric-grid" data-admin-section hidden>
     <article class="metric-card">
-      <span class="metric-label">organizaciones</span>
+      <span class="metric-label" data-i18n="tablero.organizaciones">{es['tablero.organizaciones']}</span>
       <strong id="metric-organizations">—</strong>
-      <small>Clientes registrados</small>
+      <small data-i18n="tablero.clientesRegistrados">{es['tablero.clientesRegistrados']}</small>
     </article>
     <article class="metric-card">
-      <span class="metric-label">sedes</span>
+      <span class="metric-label" data-i18n="tablero.sedes">{es['tablero.sedes']}</span>
       <strong id="metric-sites">—</strong>
-      <small>Sedes operativas registradas</small>
+      <small data-i18n="tablero.sedesOperativasRegistradas">{es['tablero.sedesOperativasRegistradas']}</small>
     </article>
     <article class="metric-card">
-      <span class="metric-label">usuarios</span>
+      <span class="metric-label" data-i18n="tablero.usuarios">{es['tablero.usuarios']}</span>
       <strong id="metric-users">—</strong>
-      <small>Accesos administrados por rol</small>
+      <small data-i18n="tablero.accesosAdministradosRol">{es['tablero.accesosAdministradosRol']}</small>
     </article>
   </section>
 
   <script>
     import { auditFetch, authFetch, getStoredUser, hasRole } from '../lib/auth';
     import { readApiError, type CriticalAlert, type DashboardSummary, type NetworkDevice, type Organization, type ReviewStatus, type Site, type User } from '../lib/api';
-    import { alertStatusBadge, code, escapeHtml, severityClass } from '../lib/format';
+    import { alertStatusBadge, code, escapeHtml, severityClass, severityCode } from '../lib/format';
+    import { t } from '../lib/i18n';
     import {
       deviceRiskRowsHtml,
       evolutionChartHtml,
@@ -149,13 +150,13 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     const selectedOrg = () => Number(document.querySelector<HTMLSelectElement>('#dash-org')?.value) || null;
 
     const alertsHtml = (alerts: CriticalAlert[]) => alerts.length === 0
-      ? '<p class="log-muted">No hay eventos críticos pendientes.</p>'
+      ? `<p class="log-muted">${escapeHtml(t('tablero.sinEventos'))}</p>`
       : `<ul class="compare-list">${alerts.slice(0, 5).map((alert) => `
           <li class="compare-item ${alert.severidad === 'CRITICA' ? 'compare-nuevo_hallazgo' : ''}">
             <a class="inline-link" href="/alerts?alerta=${alert.id}"><code>${code('ALR', alert.id)}</code></a>
             <span>${escapeHtml(alert.codigoRegla ?? '')} · ${escapeHtml(alert.dispositivoIdentificador ?? `#${alert.dispositivoId}`)}</span>
-            <span class="badge-row"><span class="severity-badge ${severityClass(alert.severidad)}">${alert.severidad}</span>${alertStatusBadge(alert.estado)}</span>
-          </li>`).join('')}</ul>${alerts.length > 5 ? `<p class="log-muted">y ${alerts.length - 5} más.</p>` : ''}`;
+            <span class="badge-row"><span class="severity-badge ${severityClass(alert.severidad)}">${escapeHtml(severityCode(alert.severidad))}</span>${alertStatusBadge(alert.estado)}</span>
+          </li>`).join('')}</ul>${alerts.length > 5 ? `<p class="log-muted">${escapeHtml(t('tablero.yMas', { n: alerts.length - 5 }))}</p>` : ''}`;
 
     const load = async () => {
       showError(null);
@@ -169,17 +170,19 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       if (seq !== loadSeq) return;
       if (!summaryResponse.ok) {
         showError(await readApiError(summaryResponse));
-        set('#dash-kpis', '<article class="metric-card"><span class="metric-label">sin datos</span><strong>—</strong><small>No fue posible obtener el resumen.</small></article>');
+        set('#dash-kpis', `<article class="metric-card"><span class="metric-label">${escapeHtml(t('tablero.sinDatos'))}</span><strong>—</strong><small>${escapeHtml(t('tablero.errorResumen'))}</small></article>`);
         return;
       }
       const summary = await summaryResponse.json() as DashboardSummary;
       const review = reviewResponse.ok ? await reviewResponse.json() as ReviewStatus : null;
       if (seq !== loadSeq) return;
 
-      const orgName = org ? organizations.find((item) => item.id === org)?.razonSocial ?? `organización #${org}` : null;
-      const scope = isAdmin ? orgName ?? 'todas las organizaciones' : 'tu organización';
+      const orgName = org
+        ? organizations.find((item) => item.id === org)?.razonSocial ?? t('tablero.organizacionNumero', { id: org })
+        : null;
+      const scope = isAdmin ? orgName ?? t('tablero.todasOrganizaciones') : t('tablero.tuOrganizacion');
       const title = document.querySelector('#dash-scope-title');
-      if (title) title.textContent = isAdmin && !org ? 'Estado general de la plataforma' : `Estado general · ${scope}`;
+      if (title) title.textContent = isAdmin && !org ? t('tablero.estadoPlataforma') : t('tablero.estadoDe', { alcance: scope });
       const clientLink = document.querySelector<HTMLAnchorElement>('#dash-client-link');
       if (clientLink) {
         clientLink.href = org ? `/client-status?organizacion=${org}` : '/client-status';
@@ -199,7 +202,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           .filter((alert) => !org || alert.organizacionId === org);
         set('#dash-alerts', alertsHtml(alerts));
       } else {
-        set('#dash-alerts', `<p class="log-muted">No se pudieron obtener las alertas: ${escapeHtml(await readApiError(alertResponse))}</p>`);
+        set('#dash-alerts', `<p class="log-muted">${escapeHtml(t('tablero.errorAlertas', { error: await readApiError(alertResponse) }))}</p>`);
       }
       wireTooltips(document);
     };
@@ -226,11 +229,11 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     document.querySelector('#dash-org')?.addEventListener('change', () => void load());
 
     if (!isAdmin && !getStoredUser()?.organizationId) {
-      showError('Tu usuario no tiene una organización asociada.');
+      showError(t('tablero.sinOrganizacion'));
     }
     loadReferences()
       .catch(() => {})
       .then(load)
-      .catch((error) => showError(error instanceof Error ? error.message : 'No fue posible obtener el resumen.'));
+      .catch((error) => showError(error instanceof Error ? error.message : t('tablero.errorResumen')));
   </script>
 </MasterLayout>

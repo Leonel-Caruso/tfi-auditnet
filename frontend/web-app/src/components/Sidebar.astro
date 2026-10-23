@@ -1,5 +1,5 @@
 ---
-import es, { type Clave } from '../i18n/es';
+import { es, type Clave } from '../i18n';
 
 // En el build estático la ruta termina en '/' (ej. /logs/): se normaliza para comparar.
 const currentPath = Astro.url.pathname.replace(/\/+$/, '') || '/';

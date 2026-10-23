@@ -217,6 +217,7 @@ RUTAS = [
     (r"/api/alerts/critical", {"GET"}, _lista(datos.ALERTAS)),
     (r"/api/alerts/(\d+)", {"GET"}, _por_id(datos.ALERTAS, lambda a: {"alerta": a, "hallazgo": datos.HALLAZGOS[0]})),
     (r"/api/reports", {"GET"}, _lista(datos.REPORTES)),
+    (r"/api/reports/(\d+)", {"GET"}, lambda h, m, c, b: h._json(200, datos.reporte(int(m[1])))),
     (r"/api/users", {"GET"}, _propias(datos.USUARIOS, "organizationId")),
     (r"/api/plans", {"GET"}, _lista(datos.PLANES)),
     (r"/api/plans/(\w+)", {"PUT"},

@@ -788,7 +788,34 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
   ningún usuario, español. Los textos de las plantillas están en `correo/textos_<idioma>.properties` (mismas claves en
   los tres, verificado por prueba) y las fechas y meses se escriben según el idioma. audit-core guarda el período del
   resumen mensual como `2026-09` y management lo escribe al armar el correo.
-- **Prueba:** `PlantillasCorreoTest`, `CorreoServiceTest`, CP-B14-06.
+- **Excepción (14b):** la recuperación de contraseña sale en el idioma de la pantalla desde donde se pidió (se guarda
+  con el correo pendiente), porque quien la pide todavía no ingresó y no eligió otro. El pedido no cambia el idioma de
+  la cuenta: sin sesión, nadie puede modificar la cuenta de otro.
+- **Prueba:** `PlantillasCorreoTest`, `CorreoServiceTest`, `RecuperacionContrasenaServiceTest`, CP-B14-06 y CP-B14-08.
+
+## D-61 · Diccionarios por pantalla y qué no se traduce (Bloque 14)
+
+- **Decisión:** cada pantalla tiene su diccionario (`frontend/web-app/src/i18n/pantallas/<pantalla>.ts`) con el
+  español, el inglés y el portugués juntos; `general.ts` reúne lo compartido (botones, estados, severidades, paginador,
+  calendario). `index.ts` los une y el tipo exige las mismas claves en los tres idiomas. Los códigos que se muestran
+  como etiqueta (severidad, estado de hallazgo y de alerta) se traducen como código (`CRITICA` → `CRITICAL` /
+  `CRÍTICA`).
+- **No se traducen:** los datos cargados (nombres y descripciones de reglas y baselines, razón social, sedes,
+  descripciones de los perfiles), la evidencia y los textos que guardan los servicios junto con los datos (evidencia
+  de cada regla, observaciones de un reporte, motivos de lo omitido en la revisión, detalle de la salud de los
+  servicios), y los códigos técnicos de las bitácoras (eventos, entidades, operaciones, servicios), que se filtran por
+  ese mismo código.
+- **Prueba:** `test_idiomas.py` recorre todas las pantallas con cada perfil en inglés y en portugués (sin claves a la
+  vista ni textos en español, y sin desbordes en celular), CP-B14-09 a CP-B14-11.
+
+## D-62 · Reporte PDF y CSV en el idioma de quien los descarga (Bloque 14)
+
+- **Decisión:** el PDF se imprime desde la vista del reporte, así que sale en el idioma de la consola (títulos,
+  resumen ejecutivo, tablas, pie de página). El CSV que se guarda en el repositorio de archivos al generar el reporte
+  (con su SHA-256, D-35) sigue siendo el de español; al descargarlo en inglés o portugués se arma en el momento con el
+  mismo contenido del reporte y se informa `X-AuditNet-Integridad: SIN_VERIFICAR`. Cambian los encabezados, los
+  códigos y el separador: `;` en español y portugués, `,` en inglés, que es el que espera Excel en cada caso.
+- **Prueba:** `ReporteServiceTest`, `test_idiomas.py`, CP-B14-12 y CP-B14-13.
 
 ## Pendientes detectados (para migraciones futuras)
 

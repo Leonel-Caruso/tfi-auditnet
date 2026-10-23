@@ -7,8 +7,10 @@ import ar.edu.uai.tfi.management.application.port.BitacoraSistemaPort;
 import ar.edu.uai.tfi.management.application.port.PasswordPort;
 import ar.edu.uai.tfi.management.application.user.MatrizPermisos;
 import ar.edu.uai.tfi.management.application.user.PoliticaContrasena;
+import ar.edu.uai.tfi.management.domain.model.CorreoSaliente;
 import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
 import ar.edu.uai.tfi.management.domain.model.EventoSistema;
+import ar.edu.uai.tfi.management.domain.model.Idioma;
 import ar.edu.uai.tfi.management.domain.model.RecuperacionContrasena;
 import ar.edu.uai.tfi.management.domain.model.TipoCorreo;
 import ar.edu.uai.tfi.management.domain.model.TipoEventoSistema;
@@ -28,6 +30,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.Map;
 import java.util.Optional;
@@ -64,8 +67,9 @@ public class RecuperacionContrasenaService {
         this.bitacora = bitacora;
     }
 
+    /** @param idioma el de la pantalla desde donde se pide; el correo sale en ese idioma (sin cambiar el de la cuenta) */
     @Transactional
-    public void solicitar(String identidad) {
+    public void solicitar(String identidad, Idioma idioma) {
         if (identidad == null || identidad.isBlank()) {
             throw new ExcepcionAplicacion(ErrorAplicacion.SOLICITUD_INVALIDA, "Ingresá tu usuario o correo.");
         }
@@ -90,9 +94,13 @@ public class RecuperacionContrasenaService {
         recuperaciones.anularPendientes(usuario.id(), ahora);
         recuperaciones.guardar(new RecuperacionContrasena(null, usuario.id(), hash(token), ahora,
                 ahora.plus(MINUTOS_VIGENCIA, ChronoUnit.MINUTES), null));
+        Map<String, Object> datos = new HashMap<>(Map.of("usuario", usuario.nombreUsuario(),
+                CorreoSaliente.DATO_SENSIBLE, token, "minutos", MINUTOS_VIGENCIA));
+        if (idioma != null) {
+            datos.put(CorreoSaliente.DATO_IDIOMA, idioma.codigo());
+        }
         correos.encolar(TipoCorreo.RECUPERACION_CONTRASENA, usuario.organizacionId(), usuario.email(),
-                usuario.nombre(), Map.of("usuario", usuario.nombreUsuario(), "token", token,
-                        "minutos", MINUTOS_VIGENCIA));
+                usuario.nombre(), datos);
         bitacora.registrar(EventoSistema.exito(TipoEventoSistema.RECUPERACION_SOLICITADA, usuario.nombreUsuario(),
                 usuario.id(), usuario.organizacionId(), "vence=" + MINUTOS_VIGENCIA + " min"));
     }

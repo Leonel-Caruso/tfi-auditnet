@@ -1,7 +1,8 @@
-// Textos do console em português do Brasil (mesmas chaves que es.ts).
-import type { Clave } from './es';
+// Textos comuns do console em português do Brasil (mesmas chaves que es.ts).
+import type es from './es';
+import type { Textos } from './tipos';
 
-const pt: Record<Clave, string> = {
+const pt: Textos<typeof es> = {
   'idioma.es': 'Español',
   'idioma.en': 'English',
   'idioma.pt': 'Português',
@@ -20,6 +21,8 @@ const pt: Record<Clave, string> = {
   'error.http': 'Erro HTTP {estado}.',
   'error.conexionAcceso': 'Não foi possível conectar ao serviço de acesso. Verifique o management-service na porta 8081.',
   'error.conexionApi': 'Não foi possível conectar à API. Verifique se os serviços de backend estão em execução.',
+  'error.sinSesion': 'Não há uma sessão iniciada.',
+  'error.sesionVencida': 'A sessão expirou.',
 
   'contrasena.largo': 'entre 10 e 72 caracteres',
   'contrasena.mezcla': 'combina letras e números',

@@ -11,11 +11,13 @@ import ar.edu.uai.tfi.management.api.rest.dto.auth.UsuarioActualResponse;
 import ar.edu.uai.tfi.management.application.auth.AuthResult;
 import ar.edu.uai.tfi.management.application.auth.AuthService;
 import ar.edu.uai.tfi.management.application.auth.RecuperacionContrasenaService;
+import ar.edu.uai.tfi.management.domain.model.Idioma;
 import ar.edu.uai.tfi.management.domain.model.PreferenciasAviso;
 import io.quarkus.security.Authenticated;
 import jakarta.json.JsonNumber;
 import jakarta.annotation.security.PermitAll;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.jwt.JsonWebToken;
@@ -80,8 +82,11 @@ public class AuthResource {
     @POST
     @Path("/password-recovery")
     @PermitAll
-    public Response solicitarRecuperacion(RecuperarPasswordRequest request) {
-        recuperacion.solicitar(request == null ? null : request.identidad());
+    public Response solicitarRecuperacion(RecuperarPasswordRequest request,
+                                          @HeaderParam(HttpHeaders.ACCEPT_LANGUAGE) String idiomaPedido) {
+        // Primer idioma del encabezado ("pt-BR,pt;q=0.9" → pt).
+        Idioma idioma = Idioma.desde(idiomaPedido == null ? null : idiomaPedido.split(",")[0]).orElse(null);
+        recuperacion.solicitar(request == null ? null : request.identidad(), idioma);
         return Response.status(Response.Status.ACCEPTED).entity(Map.of("mensaje", MENSAJE_RECUPERACION)).build();
     }
 

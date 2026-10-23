@@ -1,51 +1,47 @@
 ---
+import { es } from '../i18n';
 import MasterLayout from '../layouts/MasterLayout.astro';
 ---
 
 <MasterLayout
-  title="Dispositivos"
-  section="Operación técnica"
-  description="Inventario de dispositivos de red que se pueden auditar. Registrá equipos, editalos o dalos de baja."
+  title={es['dispositivos.titulo']} section={es['dispositivos.seccion']} description={es['dispositivos.descripcion']}
+  i18n="dispositivos"
 >
   <section id="device-message" class="alert is-hidden" role="status"></section>
 
   <section class="device-toolbar panel compact-panel">
     <div class="device-toolbar-copy">
-      <span class="eyebrow">Inventario</span>
+      <span class="eyebrow" data-i18n="dispositivos.inventario">{es['dispositivos.inventario']}</span>
       <div>
-        <strong id="device-count">0 activos</strong>
-        <span>routers y switches registrados</span>
+        <strong id="device-count" data-i18n="dispositivos.ceroActivos">{es['dispositivos.ceroActivos']}</strong>
+        <span data-i18n="dispositivos.routersSwitchesRegistrados">{es['dispositivos.routersSwitchesRegistrados']}</span>
       </div>
     </div>
 
     <div class="device-toolbar-actions">
       <label class="terminal-search">
         <span>&gt;</span>
-        <input id="device-search" type="search" placeholder="buscar identificador, nombre o fabricante..." />
+        <input id="device-search" type="search" placeholder={es['dispositivos.buscarIdentificadorNombreFabricante']} data-i18n-placeholder="dispositivos.buscarIdentificadorNombreFabricante" />
       </label>
 
-      <select id="device-criticality-filter" class="technical-select" aria-label="Filtrar por criticidad">
-        <option value="">criticidad: todas</option>
-        <option value="CRITICA">criticidad: crítica</option>
-        <option value="ALTA">criticidad: alta</option>
-        <option value="MEDIA">criticidad: media</option>
-        <option value="BAJA">criticidad: baja</option>
+      <select id="device-criticality-filter" class="technical-select" aria-label={es['dispositivos.filtrarCriticidad']} data-i18n-aria-label="dispositivos.filtrarCriticidad">
+        <option value="" data-i18n="dispositivos.criticidadTodas">{es['dispositivos.criticidadTodas']}</option>
+        <option value="CRITICA" data-i18n="dispositivos.criticidadCritica">{es['dispositivos.criticidadCritica']}</option>
+        <option value="ALTA" data-i18n="dispositivos.criticidadAlta">{es['dispositivos.criticidadAlta']}</option>
+        <option value="MEDIA" data-i18n="dispositivos.criticidadMedia">{es['dispositivos.criticidadMedia']}</option>
+        <option value="BAJA" data-i18n="dispositivos.criticidadBaja">{es['dispositivos.criticidadBaja']}</option>
       </select>
 
-      <select id="device-status-filter" class="technical-select" aria-label="Filtrar por estado">
-        <option value="">estado: todos</option>
-        <option value="ACTIVO">estado: activo</option>
-        <option value="INACTIVO">estado: inactivo</option>
+      <select id="device-status-filter" class="technical-select" aria-label={es['general.filtrarEstado']} data-i18n-aria-label="general.filtrarEstado">
+        <option value="" data-i18n="general.estadoTodos">{es['general.estadoTodos']}</option>
+        <option value="ACTIVO" data-i18n="dispositivos.estadoActivo">{es['dispositivos.estadoActivo']}</option>
+        <option value="INACTIVO" data-i18n="dispositivos.estadoInactivo">{es['dispositivos.estadoInactivo']}</option>
       </select>
 
-      <button id="open-type-dialog" class="button button-ghost device-create-action" type="button" data-admin-only="true">
-        + tipo
-      </button>
+      <button id="open-type-dialog" class="button button-ghost device-create-action" type="button" data-admin-only="true" data-i18n="dispositivos.nuevoTipo">{es['dispositivos.nuevoTipo']}</button>
 
       <button id="open-device-dialog" class="button button-primary device-create-action" type="button"
-        data-roles="ADMINISTRADOR_SISTEMA,ADMINISTRADOR_ORGANIZACION">
-        + registrar activo
-      </button>
+        data-roles="ADMINISTRADOR_SISTEMA,ADMINISTRADOR_ORGANIZACION" data-i18n="dispositivos.registrarActivo">{es['dispositivos.registrarActivo']}</button>
     </div>
   </section>
 
@@ -53,8 +49,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <article class="panel device-inventory-panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Activos de red</span>
-          <h2>Inventario técnico</h2>
+          <span class="eyebrow" data-i18n="dispositivos.activosRed">{es['dispositivos.activosRed']}</span>
+          <h2 data-i18n="dispositivos.inventarioTecnico">{es['dispositivos.inventarioTecnico']}</h2>
         </div>
       </div>
 
@@ -62,12 +58,12 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         <table class="data-table device-table">
           <thead>
             <tr>
-              <th>Identificador</th>
-              <th>Nombre</th>
-              <th>Tipo</th>
-              <th>Ubicación</th>
-              <th>Criticidad</th>
-              <th>Estado</th>
+              <th data-i18n="dispositivos.identificador">{es['dispositivos.identificador']}</th>
+              <th data-i18n="dispositivos.nombre">{es['dispositivos.nombre']}</th>
+              <th data-i18n="dispositivos.colTipo">{es['dispositivos.colTipo']}</th>
+              <th data-i18n="dispositivos.ubicacion">{es['dispositivos.ubicacion']}</th>
+              <th data-i18n="dispositivos.criticidad">{es['dispositivos.criticidad']}</th>
+              <th data-i18n="dispositivos.estado">{es['dispositivos.estado']}</th>
             </tr>
           </thead>
           <tbody id="devices-body">
@@ -78,24 +74,24 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
       <div id="devices-empty" class="empty-state compact-empty is-hidden">
         <div>
-          <code>0 dispositivos</code>
-          <p>Todavía no hay dispositivos registrados con los filtros actuales.</p>
+          <code data-i18n="dispositivos.ceroDispositivos">{es['dispositivos.ceroDispositivos']}</code>
+          <p data-i18n="dispositivos.todaviaHayDispositivosRegistrados">{es['dispositivos.todaviaHayDispositivosRegistrados']}</p>
         </div>
       </div>
     </article>
 
-    <aside class="panel device-inspector" aria-label="Detalle del dispositivo">
+    <aside class="panel device-inspector" aria-label={es['dispositivos.detalleDispositivo']} data-i18n-aria-label="dispositivos.detalleDispositivo">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Dispositivo seleccionado</span>
-          <h2>Detalle del activo</h2>
+          <span class="eyebrow" data-i18n="dispositivos.dispositivoSeleccionado">{es['dispositivos.dispositivoSeleccionado']}</span>
+          <h2 data-i18n="dispositivos.detalleActivo">{es['dispositivos.detalleActivo']}</h2>
         </div>
         <span class="inspector-led"></span>
       </div>
 
       <div id="device-inspector-empty" class="inspector-empty">
-        <code>sin selección</code>
-        <p>Seleccioná un activo del inventario para consultar su detalle.</p>
+        <code data-i18n="general.sinSeleccion">{es['general.sinSeleccion']}</code>
+        <p data-i18n="dispositivos.seleccionaActivoInventarioConsultar">{es['dispositivos.seleccionaActivoInventarioConsultar']}</p>
       </div>
 
       <div id="device-inspector-content" class="inspector-content is-hidden">
@@ -106,22 +102,22 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         </div>
 
         <dl class="technical-definition-list">
-          <div><dt>tipo de dispositivo</dt><dd id="inspector-type">—</dd></div>
-          <div><dt>fabricante</dt><dd id="inspector-vendor">—</dd></div>
-          <div><dt>organización</dt><dd id="inspector-organization">—</dd></div>
-          <div><dt>sede</dt><dd id="inspector-site">—</dd></div>
-          <div><dt>criticidad</dt><dd id="inspector-criticality">—</dd></div>
-          <div><dt>identificador</dt><dd id="inspector-id">—</dd></div>
+          <div><dt data-i18n="dispositivos.tipoDispositivo">{es['dispositivos.tipoDispositivo']}</dt><dd id="inspector-type">—</dd></div>
+          <div><dt data-i18n="dispositivos.fabricante">{es['dispositivos.fabricante']}</dt><dd id="inspector-vendor">—</dd></div>
+          <div><dt data-i18n="general.organizacion">{es['general.organizacion']}</dt><dd id="inspector-organization">—</dd></div>
+          <div><dt data-i18n="general.sede">{es['general.sede']}</dt><dd id="inspector-site">—</dd></div>
+          <div><dt data-i18n="dispositivos.criticidadDetalle">{es['dispositivos.criticidadDetalle']}</dt><dd id="inspector-criticality">—</dd></div>
+          <div><dt data-i18n="general.identificador">{es['general.identificador']}</dt><dd id="inspector-id">—</dd></div>
         </dl>
 
         <div class="inspector-footnote">
           <code id="inspector-scope">scope = audit_ready</code>
-          <span id="inspector-scope-text">Disponible para futuras configuraciones, baselines y auditorías.</span>
+          <span id="inspector-scope-text" data-i18n="dispositivos.disponibleFuturasConfiguracionesBaselines">{es['dispositivos.disponibleFuturasConfiguracionesBaselines']}</span>
         </div>
 
         <div class="inspector-actions" data-roles="ADMINISTRADOR_SISTEMA,ADMINISTRADOR_ORGANIZACION">
-          <button id="edit-device" class="button button-ghost button-small" type="button">Editar</button>
-          <button id="toggle-device-status" class="button button-ghost button-small" type="button">Dar de baja</button>
+          <button id="edit-device" class="button button-ghost button-small" type="button" data-i18n="general.editar">{es['general.editar']}</button>
+          <button id="toggle-device-status" class="button button-ghost button-small" type="button" data-i18n="dispositivos.darBaja">{es['dispositivos.darBaja']}</button>
         </div>
       </div>
     </aside>
@@ -131,71 +127,71 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <form id="device-form" class="device-form">
       <div class="dialog-header">
         <div>
-          <span id="device-dialog-eyebrow" class="eyebrow">Nuevo dispositivo</span>
-          <h2 id="device-dialog-title">Registrar dispositivo</h2>
-          <p id="device-dialog-subtitle">Incorporá un activo de red al inventario auditable.</p>
+          <span id="device-dialog-eyebrow" class="eyebrow" data-i18n="dispositivos.nuevoDispositivo">{es['dispositivos.nuevoDispositivo']}</span>
+          <h2 id="device-dialog-title" data-i18n="dispositivos.registrarDispositivo">{es['dispositivos.registrarDispositivo']}</h2>
+          <p id="device-dialog-subtitle" data-i18n="dispositivos.incorporaActivoRedInventario">{es['dispositivos.incorporaActivoRedInventario']}</p>
         </div>
-        <button id="close-device-dialog" class="dialog-close" type="button" aria-label="Cerrar">×</button>
+        <button id="close-device-dialog" class="dialog-close" type="button" aria-label={es['general.cerrar']} data-i18n-aria-label="general.cerrar">×</button>
       </div>
 
       <div class="device-form-grid">
         <label class="field">
-          <span>identificador *</span>
+          <span data-i18n="dispositivos.identificadorObligatorio">{es['dispositivos.identificadorObligatorio']}</span>
           <input id="device-identifier" type="text" maxlength="100" placeholder="RTR-CORE-01" required />
         </label>
 
         <label class="field">
-          <span>nombre *</span>
+          <span data-i18n="general.nombreObligatorio">{es['general.nombreObligatorio']}</span>
           <input id="device-name" type="text" maxlength="120" placeholder="Router Core Central" required />
         </label>
 
         <label class="field">
-          <span>tipo de dispositivo *</span>
+          <span data-i18n="dispositivos.tipoDispositivoObligatorio">{es['dispositivos.tipoDispositivoObligatorio']}</span>
           <select id="device-type" class="form-select" required>
-            <option value="">Seleccionar tipo...</option>
+            <option value="" data-i18n="dispositivos.seleccionarTipo">{es['dispositivos.seleccionarTipo']}</option>
           </select>
         </label>
 
         <label class="field">
-          <span>fabricante</span>
-          <input id="device-vendor" type="text" readonly placeholder="Se completa según el tipo" />
+          <span data-i18n="dispositivos.fabricante">{es['dispositivos.fabricante']}</span>
+          <input id="device-vendor" type="text" readonly placeholder={es['dispositivos.completaSegunTipo']} data-i18n-placeholder="dispositivos.completaSegunTipo" />
         </label>
 
         <label class="field">
-          <span>organización *</span>
+          <span data-i18n="general.organizacionObligatorio">{es['general.organizacionObligatorio']}</span>
           <select id="device-organization" class="form-select" required>
-            <option value="">Seleccionar organización...</option>
+            <option value="" data-i18n="dispositivos.seleccionarOrganizacion">{es['dispositivos.seleccionarOrganizacion']}</option>
           </select>
         </label>
 
         <label class="field">
-          <span>sede</span>
+          <span data-i18n="general.sede">{es['general.sede']}</span>
           <select id="device-site" class="form-select" disabled>
-            <option value="">Sin sede específica</option>
+            <option value="" data-i18n="dispositivos.sinSedeEspecifica">{es['dispositivos.sinSedeEspecifica']}</option>
           </select>
         </label>
 
         <label class="field">
-          <span>criticidad *</span>
+          <span data-i18n="dispositivos.criticidadObligatorio">{es['dispositivos.criticidadObligatorio']}</span>
           <select id="device-criticality" class="form-select" required>
-            <option value="MEDIA">MEDIA</option>
-            <option value="BAJA">BAJA</option>
-            <option value="ALTA">ALTA</option>
-            <option value="CRITICA">CRITICA</option>
+            <option value="MEDIA" data-i18n="severidad.MEDIA">{es['severidad.MEDIA']}</option>
+            <option value="BAJA" data-i18n="severidad.BAJA">{es['severidad.BAJA']}</option>
+            <option value="ALTA" data-i18n="severidad.ALTA">{es['severidad.ALTA']}</option>
+            <option value="CRITICA" data-i18n="severidad.CRITICA">{es['severidad.CRITICA']}</option>
           </select>
         </label>
 
         <div class="device-form-context">
-          <code id="device-form-state">estado: ACTIVO</code>
-          <span id="device-form-state-text">El estado inicial se asigna automáticamente. El identificador es único dentro de la organización.</span>
+          <code id="device-form-state" data-i18n="dispositivos.estadoInicial">{es['dispositivos.estadoInicial']}</code>
+          <span id="device-form-state-text" data-i18n="dispositivos.estadoInicialAsignaAutomaticamente">{es['dispositivos.estadoInicialAsignaAutomaticamente']}</span>
         </div>
       </div>
 
       <div id="device-form-error" class="alert alert-error is-hidden"></div>
 
       <div class="dialog-actions">
-        <button id="cancel-device-dialog" class="button button-ghost" type="button">Cancelar</button>
-        <button id="save-device" class="button button-primary" type="submit">Registrar dispositivo</button>
+        <button id="cancel-device-dialog" class="button button-ghost" type="button" data-i18n="general.cancelar">{es['general.cancelar']}</button>
+        <button id="save-device" class="button button-primary" type="submit" data-i18n="dispositivos.registrarDispositivo">{es['dispositivos.registrarDispositivo']}</button>
       </div>
     </form>
   </dialog>
@@ -204,32 +200,32 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <form id="type-form" class="device-form">
       <div class="dialog-header">
         <div>
-          <span class="eyebrow">Nuevo tipo de dispositivo</span>
-          <h2>Registrar tipo de dispositivo</h2>
-          <p>Catálogo común a todas las organizaciones. Las baselines se definen por tipo.</p>
+          <span class="eyebrow" data-i18n="dispositivos.nuevoTipoDispositivo">{es['dispositivos.nuevoTipoDispositivo']}</span>
+          <h2 data-i18n="dispositivos.registrarTipoDispositivo">{es['dispositivos.registrarTipoDispositivo']}</h2>
+          <p data-i18n="dispositivos.catalogoComunTodasOrganizaciones">{es['dispositivos.catalogoComunTodasOrganizaciones']}</p>
         </div>
-        <button class="dialog-close" type="button" data-close-dialog aria-label="Cerrar">×</button>
+        <button class="dialog-close" type="button" data-close-dialog aria-label={es['general.cerrar']} data-i18n-aria-label="general.cerrar">×</button>
       </div>
 
       <div class="device-form-grid">
         <label class="field">
-          <span>nombre *</span>
+          <span data-i18n="general.nombreObligatorio">{es['general.nombreObligatorio']}</span>
           <input id="type-name" type="text" maxlength="100" placeholder="Router ISR 4000" required />
         </label>
         <label class="field">
-          <span>fabricante *</span>
+          <span data-i18n="dispositivos.fabricanteObligatorio">{es['dispositivos.fabricanteObligatorio']}</span>
           <input id="type-vendor" type="text" maxlength="100" placeholder="Cisco" required />
         </label>
         <label class="field field-span-2">
-          <span>familia / sistema operativo *</span>
+          <span data-i18n="dispositivos.familiaSistemaOperativoObligatorio">{es['dispositivos.familiaSistemaOperativoObligatorio']}</span>
           <input id="type-family" type="text" maxlength="100" placeholder="IOS-XE" required />
         </label>
       </div>
 
       <div id="type-form-error" class="alert alert-error is-hidden"></div>
       <div class="dialog-actions">
-        <button class="button button-ghost" type="button" data-close-dialog>Cancelar</button>
-        <button class="button button-primary" type="submit">Registrar tipo</button>
+        <button class="button button-ghost" type="button" data-close-dialog data-i18n="general.cancelar">{es['general.cancelar']}</button>
+        <button class="button button-primary" type="submit" data-i18n="dispositivos.registrarTipo">{es['dispositivos.registrarTipo']}</button>
       </div>
     </form>
   </dialog>
@@ -244,6 +240,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       type Organization,
       type Site,
     } from '../lib/api';
+    import { plural, recordStatusCode, severityCode } from '../lib/format';
+    import { t } from '../lib/i18n';
 
     const state = {
       devices: [] as NetworkDevice[],
@@ -352,21 +350,21 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
       const location = document.createElement('td');
       const locationStrong = document.createElement('strong');
-      locationStrong.textContent = site?.nombre ?? 'Sin sede específica';
+      locationStrong.textContent = site?.nombre ?? t('dispositivos.sinSedeEspecifica');
       const organizationSmall = document.createElement('small');
-      organizationSmall.textContent = organization?.razonSocial ?? `Organización #${device.organizacionId}`;
+      organizationSmall.textContent = organization?.razonSocial ?? t('dispositivos.organizacionNumero', { id: device.organizacionId });
       location.append(locationStrong, organizationSmall);
 
       const criticality = document.createElement('td');
       const criticalityBadge = document.createElement('span');
       criticalityBadge.className = `severity-badge ${criticalityClass(device.criticidad)}`;
-      criticalityBadge.textContent = device.criticidad;
+      criticalityBadge.textContent = severityCode(device.criticidad);
       criticality.appendChild(criticalityBadge);
 
       const status = document.createElement('td');
       const statusBadge = document.createElement('span');
       statusBadge.className = `status-badge ${statusClass(device.estado)}`;
-      statusBadge.textContent = device.estado;
+      statusBadge.textContent = recordStatusCode(device.estado);
       status.appendChild(statusBadge);
 
       row.append(identifier, name, typeCell, location, criticality, status);
@@ -382,7 +380,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
     function renderDevices(): void {
       const devices = filteredDevices();
-      if (count) count.textContent = `${state.devices.length} ${state.devices.length === 1 ? 'activo' : 'activos'}`;
+      if (count) count.textContent = plural(state.devices.length, 'dispositivos.activos');
       if (!body || !empty) return;
 
       body.replaceChildren(...devices.map(buildRow));
@@ -414,18 +412,16 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
       setText('#inspector-identifier', device.identificador);
       setText('#inspector-name', device.nombre);
-      setText('#inspector-status', device.estado);
+      setText('#inspector-status', recordStatusCode(device.estado));
       setText('#inspector-type', type ? `${type.nombre} / ${type.familia}` : `#${device.tipoDispositivoId}`);
       setText('#inspector-vendor', device.fabricante);
       setText('#inspector-organization', organization?.razonSocial ?? `#${device.organizacionId}`);
-      setText('#inspector-site', site?.nombre ?? 'Sin sede específica');
-      setText('#inspector-criticality', device.criticidad);
+      setText('#inspector-site', site?.nombre ?? t('dispositivos.sinSedeEspecifica'));
+      setText('#inspector-criticality', severityCode(device.criticidad));
       setText('#inspector-id', String(device.id));
       setText('#inspector-scope', active ? 'scope = audit_ready' : 'scope = baja_logica');
-      setText('#inspector-scope-text', active
-        ? 'Disponible para futuras configuraciones, baselines y auditorías.'
-        : 'Conserva su historial, pero no admite nuevas configuraciones ni auditorías.');
-      setText('#toggle-device-status', active ? 'Dar de baja' : 'Reactivar');
+      setText('#inspector-scope-text', t(active ? 'dispositivos.disponibleFuturasConfiguracionesBaselines' : 'dispositivos.conservaHistorial'));
+      setText('#toggle-device-status', t(active ? 'dispositivos.darBaja' : 'dispositivos.reactivar'));
 
       const status = document.querySelector('#inspector-status');
       if (status) status.className = `status-badge ${statusClass(device.estado)}`;
@@ -448,7 +444,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
     function fillTypeSelect(selected?: number): void {
       if (!typeSelect) return;
-      typeSelect.replaceChildren(new Option('Seleccionar tipo...', ''));
+      typeSelect.replaceChildren(new Option(t('dispositivos.seleccionarTipo'), ''));
       state.deviceTypes.forEach((type) => {
         typeSelect.add(new Option(`${type.nombre} · ${type.fabricante} · ${type.familia}`, String(type.id)));
       });
@@ -471,9 +467,10 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
       fillTypeSelect();
       if (organizationSelect) {
-        organizationSelect.replaceChildren(new Option('Seleccionar organización...', ''));
+        organizationSelect.replaceChildren(new Option(t('dispositivos.seleccionarOrganizacion'), ''));
         state.organizations.forEach((organization) => {
-          organizationSelect.add(new Option(`${organization.razonSocial}${organization.estado !== 'ACTIVO' ? ' (deshabilitada)' : ''}`, String(organization.id)));
+          const disabled = organization.estado !== 'ACTIVO' ? ` ${t('dispositivos.deshabilitada')}` : '';
+          organizationSelect.add(new Option(`${organization.razonSocial}${disabled}`, String(organization.id)));
         });
       }
     }
@@ -488,7 +485,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     async function updateSiteSelect(selected?: number | null): Promise<void> {
       if (!organizationSelect || !siteSelect) return;
       const organizationId = Number(organizationSelect.value);
-      siteSelect.replaceChildren(new Option('Sin sede específica', ''));
+      siteSelect.replaceChildren(new Option(t('dispositivos.sinSedeEspecifica'), ''));
 
       if (!organizationId) {
         siteSelect.disabled = true;
@@ -500,7 +497,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       sites.forEach((site) => {
         // Una sede deshabilitada no admite dispositivos nuevos; se muestra solo si el equipo ya estaba ahí.
         if (site.estado !== 'ACTIVO' && site.id !== selected) return;
-        const label = `${site.nombre} · ${site.ubicacion}${site.estado !== 'ACTIVO' ? ' (deshabilitada)' : ''}`;
+        const label = `${site.nombre} · ${site.ubicacion}${site.estado !== 'ACTIVO' ? ` ${t('dispositivos.deshabilitada')}` : ''}`;
         siteSelect.add(new Option(label, String(site.id)));
       });
       siteSelect.disabled = false;
@@ -511,16 +508,14 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     function setDialogMode(device: NetworkDevice | null): void {
       state.editing = device;
       const editing = device !== null;
-      setText('#device-dialog-eyebrow', editing ? 'Editar dispositivo' : 'Nuevo dispositivo');
-      setText('#device-dialog-title', editing ? `Editar ${device.identificador}` : 'Registrar dispositivo');
-      setText('#device-dialog-subtitle', editing
-        ? 'Los cambios quedan en la bitácora de transacciones con el valor anterior y el nuevo.'
-        : 'Incorporá un activo de red al inventario auditable.');
-      setText('#device-form-state', editing ? `estado: ${device.estado}` : 'estado: ACTIVO');
-      setText('#device-form-state-text', editing
-        ? 'La organización no se cambia. El estado se modifica con "Dar de baja" o "Reactivar".'
-        : 'El estado inicial se asigna automáticamente. El identificador es único dentro de la organización.');
-      if (saveButton) saveButton.textContent = editing ? 'Guardar cambios' : 'Registrar dispositivo';
+      setText('#device-dialog-eyebrow', t(editing ? 'dispositivos.editarDispositivo' : 'dispositivos.nuevoDispositivo'));
+      setText('#device-dialog-title', editing
+        ? t('dispositivos.editarIdentificador', { identificador: device.identificador })
+        : t('dispositivos.registrarDispositivo'));
+      setText('#device-dialog-subtitle', t(editing ? 'dispositivos.cambiosBitacora' : 'dispositivos.incorporaActivoRedInventario'));
+      setText('#device-form-state', t('dispositivos.estadoCodigo', { estado: recordStatusCode(editing ? device.estado : 'ACTIVO') }));
+      setText('#device-form-state-text', t(editing ? 'dispositivos.organizacionNoCambia' : 'dispositivos.estadoInicialAsignaAutomaticamente'));
+      if (saveButton) saveButton.textContent = t(editing ? 'general.guardarCambios' : 'dispositivos.registrarDispositivo');
       if (organizationSelect) organizationSelect.disabled = editing;
     }
 
@@ -538,7 +533,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         // Si el tipo del dispositivo quedó inactivo no figura en la lista: se agrega para no perderlo.
         if (typeSelect && !typeFor(device.tipoDispositivoId)
           && !typeSelect.querySelector(`option[value="${device.tipoDispositivoId}"]`)) {
-          typeSelect.add(new Option(`#${device.tipoDispositivoId} (inactivo)`, String(device.tipoDispositivoId)));
+          typeSelect.add(new Option(t('dispositivos.tipoInactivo', { id: device.tipoDispositivoId }), String(device.tipoDispositivoId)));
         }
         value('#device-identifier', device.identificador);
         value('#device-name', device.nombre);
@@ -550,7 +545,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       } else {
         if (vendorInput) vendorInput.value = '';
         if (siteSelect) {
-          siteSelect.replaceChildren(new Option('Sin sede específica', ''));
+          siteSelect.replaceChildren(new Option(t('dispositivos.sinSedeEspecifica'), ''));
           siteSelect.disabled = true;
         }
         // El administrador de una organización solo ve la suya: se elige sola.
@@ -601,7 +596,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
       if (saveButton) {
         saveButton.disabled = true;
-        saveButton.textContent = editing ? 'Guardando...' : 'Registrando...';
+        saveButton.textContent = t(editing ? 'general.guardando' : 'general.registrando');
       }
 
       try {
@@ -619,20 +614,18 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
         const saved = await response.json() as NetworkDevice;
         dialog?.close();
-        showMessage(editing
-          ? `Dispositivo ${saved.identificador} actualizado.`
-          : `Dispositivo ${saved.identificador} registrado correctamente.`);
+        showMessage(t(editing ? 'dispositivos.actualizado' : 'dispositivos.registrado', { identificador: saved.identificador }));
         await loadDevices();
         showDevice(saved);
       } catch (error) {
         if (formError) {
-          formError.textContent = error instanceof Error ? error.message : 'No se pudo guardar el dispositivo.';
+          formError.textContent = error instanceof Error ? error.message : t('dispositivos.errorGuardar');
           formError.classList.remove('is-hidden');
         }
       } finally {
         if (saveButton) {
           saveButton.disabled = false;
-          saveButton.textContent = state.editing ? 'Guardar cambios' : 'Registrar dispositivo';
+          saveButton.textContent = t(state.editing ? 'general.guardarCambios' : 'dispositivos.registrarDispositivo');
         }
       }
     });
@@ -642,9 +635,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const device = state.current;
       if (!device) return;
       const deactivate = device.estado === 'ACTIVO';
-      const question = deactivate
-        ? `¿Dar de baja ${device.identificador}? Conserva su historial, pero no admitirá nuevas configuraciones ni auditorías.`
-        : `¿Reactivar ${device.identificador}?`;
+      const question = t(deactivate ? 'dispositivos.confirmarBaja' : 'dispositivos.confirmarReactivar',
+        { identificador: device.identificador });
       if (!window.confirm(question)) return;
 
       const response = await auditFetch(`/api/devices/${device.id}/status`,
@@ -654,7 +646,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         return;
       }
       const updated = await response.json() as NetworkDevice;
-      showMessage(deactivate ? `${updated.identificador} dado de baja.` : `${updated.identificador} reactivado.`);
+      showMessage(t(deactivate ? 'dispositivos.dadoBaja' : 'dispositivos.reactivado', { identificador: updated.identificador }));
       await loadDevices();
       showDevice(updated);
     });
@@ -693,7 +685,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       await loadDeviceTypes();
       fillTypeSelect(Number(typeSelect?.value) || undefined);
       renderDevices();
-      showMessage(`Tipo ${created.nombre} (${created.fabricante}) registrado. Ya está disponible al registrar dispositivos y baselines.`);
+      showMessage(t('dispositivos.tipoRegistrado', { nombre: created.nombre, fabricante: created.fabricante }));
     });
 
     async function initializeDevices(): Promise<void> {
@@ -702,7 +694,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         await loadDevices();
       } catch (error) {
         if (body) body.replaceChildren();
-        showMessage(error instanceof Error ? error.message : 'No se pudo cargar el inventario.', 'error');
+        showMessage(error instanceof Error ? error.message : t('dispositivos.errorCargar'), 'error');
       }
     }
 

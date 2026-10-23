@@ -1,11 +1,11 @@
 ---
+import { es } from '../i18n';
 import MasterLayout from '../layouts/MasterLayout.astro';
 ---
 
 <MasterLayout
-  title="Hallazgos"
-  section="Resultados y trazabilidad"
-  description="Desvíos detectados en las auditorías, ordenados por prioridad. Revisá la evidencia y actualizá su seguimiento."
+  title={es['hallazgos.titulo']} section={es['hallazgos.seccion']} description={es['hallazgos.descripcion']}
+  i18n="hallazgos"
 >
   <div id="finding-error" class="alert alert-error is-hidden" role="alert"></div>
   <div id="finding-success" class="alert alert-success is-hidden" role="status"></div>
@@ -13,74 +13,74 @@ import MasterLayout from '../layouts/MasterLayout.astro';
   <form id="finding-filters" class="panel compact-panel log-filters" novalidate>
     <div class="log-filter-grid">
       <label class="log-filter">
-        <span>estado</span>
+        <span data-i18n="general.estado">{es['general.estado']}</span>
         <select name="estado" class="technical-select">
-          <option value="">todos</option>
-          <option value="PENDIENTES">pendientes (abierto / en revisión)</option>
-          <option value="VENCIDOS">vencidos (superaron su plazo)</option>
-          <option value="ABIERTO">abierto</option>
-          <option value="EN_REVISION">en revisión</option>
-          <option value="RESUELTO">resuelto</option>
-          <option value="ACEPTADO">riesgo aceptado</option>
+          <option value="" data-i18n="general.todos">{es['general.todos']}</option>
+          <option value="PENDIENTES" data-i18n="hallazgos.pendientesAbiertoRevision">{es['hallazgos.pendientesAbiertoRevision']}</option>
+          <option value="VENCIDOS" data-i18n="hallazgos.vencidosSuperaronPlazo">{es['hallazgos.vencidosSuperaronPlazo']}</option>
+          <option value="ABIERTO" data-i18n="hallazgoTexto.ABIERTO">{es['hallazgoTexto.ABIERTO']}</option>
+          <option value="EN_REVISION" data-i18n="hallazgoTexto.EN_REVISION">{es['hallazgoTexto.EN_REVISION']}</option>
+          <option value="RESUELTO" data-i18n="hallazgoTexto.RESUELTO">{es['hallazgoTexto.RESUELTO']}</option>
+          <option value="ACEPTADO" data-i18n="hallazgoTexto.ACEPTADO">{es['hallazgoTexto.ACEPTADO']}</option>
         </select>
       </label>
       <label class="log-filter">
-        <span>severidad</span>
+        <span data-i18n="general.severidad">{es['general.severidad']}</span>
         <select name="severidad" class="technical-select">
-          <option value="">todas</option>
-          <option value="CRITICA">crítica</option>
-          <option value="ALTA">alta</option>
-          <option value="MEDIA">media</option>
-          <option value="BAJA">baja</option>
+          <option value="" data-i18n="general.todas">{es['general.todas']}</option>
+          <option value="CRITICA" data-i18n="historial.critica">{es['historial.critica']}</option>
+          <option value="ALTA" data-i18n="historial.alta">{es['historial.alta']}</option>
+          <option value="MEDIA" data-i18n="historial.media">{es['historial.media']}</option>
+          <option value="BAJA" data-i18n="historial.baja">{es['historial.baja']}</option>
         </select>
       </label>
       <label class="log-filter">
-        <span>dispositivo</span>
-        <select name="dispositivoId" class="technical-select"><option value="">todos</option></select>
+        <span data-i18n="general.dispositivo">{es['general.dispositivo']}</span>
+        <select name="dispositivoId" class="technical-select"><option value="" data-i18n="general.todos">{es['general.todos']}</option></select>
       </label>
       <label class="log-filter">
-        <span>baseline</span>
-        <select name="baselineId" class="technical-select"><option value="">todas</option></select>
+        <span data-i18n="general.baseline">{es['general.baseline']}</span>
+        <select name="baselineId" class="technical-select"><option value="" data-i18n="general.todas">{es['general.todas']}</option></select>
       </label>
       <label class="log-filter">
-        <span>detectado desde</span>
+        <span data-i18n="hallazgos.detectadoDesde">{es['hallazgos.detectadoDesde']}</span>
         <input name="desde" class="technical-input" type="datetime-local" />
       </label>
       <label class="log-filter">
-        <span>hasta</span>
+        <span data-i18n="general.hasta">{es['general.hasta']}</span>
         <input name="hasta" class="technical-input" type="datetime-local" data-time="end" />
       </label>
     </div>
     <div class="log-filter-actions">
       <div class="terminal-search">
         <span>&gt;</span>
-        <input id="finding-search" type="search" autocomplete="off" placeholder="buscar regla, dispositivo o evidencia en los resultados..." />
+        <input id="finding-search" type="search" autocomplete="off" placeholder={es['hallazgos.buscarReglaDispositivoEvidencia']} data-i18n-placeholder="hallazgos.buscarReglaDispositivoEvidencia" />
       </div>
-      <button type="button" id="finding-clear" class="button button-ghost button-small">Limpiar</button>
-      <button type="submit" class="button button-primary button-small">Consultar</button>
+      <button type="button" id="finding-clear" class="button button-ghost button-small" data-i18n="general.limpiar">{es['general.limpiar']}</button>
+      <button type="submit" class="button button-primary button-small" data-i18n="general.consultar">{es['general.consultar']}</button>
     </div>
   </form>
 
   <section class="finding-summary-grid">
     <article class="metric-card">
-      <span class="metric-label">pendientes</span>
+      <span class="metric-label" data-i18n="hallazgos.pendientesTitulo">{es['hallazgos.pendientesTitulo']}</span>
       <strong id="metric-pending">0</strong>
-      <small id="metric-pending-note">Abiertos y en revisión</small>
+      <small id="metric-pending-note" data-i18n="hallazgos.abiertosRevision">{es['hallazgos.abiertosRevision']}</small>
     </article>
     <article class="metric-card">
-      <span class="metric-label">críticos / altos pendientes</span>
+      <span class="metric-label" data-i18n="tablero.criticosAltos">{es['tablero.criticosAltos']}</span>
       <strong id="metric-critical">0</strong>
-      <small>Requieren máxima prioridad</small>
+      <small data-i18n="hallazgos.requierenMaximaPrioridad">{es['hallazgos.requierenMaximaPrioridad']}</small>
     </article>
     <article class="metric-card">
-      <span class="metric-label">en revisión</span>
+      <span class="metric-label" data-i18n="hallazgoTexto.EN_REVISION">{es['hallazgoTexto.EN_REVISION']}</span>
       <strong id="metric-review">0</strong>
-      <small>Con alguien trabajando</small>
+      <small data-i18n="hallazgos.alguienTrabajando">{es['hallazgos.alguienTrabajando']}</small>
     </article>
     <article class="metric-card">
-      <span class="metric-label">cerrados</span>
+      <span class="metric-label" data-i18n="hallazgos.cerradosTitulo">{es['hallazgos.cerradosTitulo']}</span>
       <strong id="metric-closed">0</strong>
-      <small>Resueltos o con riesgo aceptado</small>
+      <small data-i18n="hallazgos.resueltosRiesgoAceptado">{es['hallazgos.resueltosRiesgoAceptado']}</small>
     </article>
   </section>
 
@@ -88,8 +88,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <article class="panel finding-list-panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Evidencia de auditoría</span>
-          <h2>Hallazgos priorizados</h2>
+          <span class="eyebrow" data-i18n="hallazgos.evidenciaAuditoria">{es['hallazgos.evidenciaAuditoria']}</span>
+          <h2 data-i18n="hallazgos.hallazgosPriorizados">{es['hallazgos.hallazgosPriorizados']}</h2>
         </div>
         <div class="log-heading-meta">
           <span id="finding-count" class="counter-chip">—</span>
@@ -100,38 +100,38 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         <table class="data-table finding-table log-table">
           <thead>
             <tr>
-              <th>HALLAZGO</th>
-              <th>REGLA</th>
-              <th>DISPOSITIVO</th>
-              <th>SEVERIDAD</th>
-              <th>ESTADO</th>
-              <th>DETECTADO</th>
+              <th data-i18n="hallazgos.colHallazgo">{es['hallazgos.colHallazgo']}</th>
+              <th data-i18n="general.colRegla">{es['general.colRegla']}</th>
+              <th data-i18n="general.colDispositivo">{es['general.colDispositivo']}</th>
+              <th data-i18n="general.colSeveridad">{es['general.colSeveridad']}</th>
+              <th data-i18n="general.colEstado">{es['general.colEstado']}</th>
+              <th data-i18n="hallazgos.colDetectado">{es['hallazgos.colDetectado']}</th>
             </tr>
           </thead>
           <tbody id="finding-table-body"></tbody>
         </table>
         <div id="finding-empty" class="empty-state compact-empty is-hidden">
           <div>
-            <code>0 hallazgos</code>
-            <p id="finding-empty-text">No hay hallazgos para los filtros actuales.</p>
+            <code data-i18n="hallazgos.ceroHallazgos">{es['hallazgos.ceroHallazgos']}</code>
+            <p id="finding-empty-text" data-i18n="hallazgos.hayHallazgosFiltrosActuales">{es['hallazgos.hayHallazgosFiltrosActuales']}</p>
           </div>
         </div>
       </div>
-      <nav id="finding-pager" class="pager is-hidden" aria-label="Páginas de hallazgos"></nav>
+      <nav id="finding-pager" class="pager is-hidden" aria-label={es['hallazgos.paginasHallazgos']} data-i18n-aria-label="hallazgos.paginasHallazgos"></nav>
     </article>
 
     <aside class="panel finding-inspector" aria-live="polite">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Hallazgo seleccionado</span>
-          <h2>Detalle y seguimiento</h2>
+          <span class="eyebrow" data-i18n="hallazgos.hallazgoSeleccionado">{es['hallazgos.hallazgoSeleccionado']}</span>
+          <h2 data-i18n="hallazgos.detalleSeguimiento">{es['hallazgos.detalleSeguimiento']}</h2>
         </div>
         <span class="inspector-led"></span>
       </div>
 
       <div id="finding-inspector-empty" class="inspector-empty">
-        <code>sin selección</code>
-        <p>Seleccioná un hallazgo para revisar la evidencia y actualizar su seguimiento.</p>
+        <code data-i18n="general.sinSeleccion">{es['general.sinSeleccion']}</code>
+        <p data-i18n="hallazgos.seleccionaHallazgoRevisarEvidencia">{es['hallazgos.seleccionaHallazgoRevisarEvidencia']}</p>
       </div>
 
       <div id="finding-inspector-content" class="inspector-content is-hidden"></div>
@@ -152,14 +152,17 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       type NetworkDevice,
     } from '../lib/api';
     import {
-      FINDING_STATUS_LABEL,
       code,
       escapeHtml,
       findingStatusBadge,
+      findingStatusLabel,
       formatDate,
       localToIso,
+      plural,
       severityClass,
+      severityCode,
     } from '../lib/format';
+    import { etiqueta, t } from '../lib/i18n';
     import { crearPaginador } from '../lib/paginador';
 
     let findings: AuditFinding[] = [];
@@ -209,7 +212,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         const hasta = localToIso(String(data.get('hasta') ?? ''), true);
         if (desde) params.set('desde', desde);
         if (hasta) params.set('hasta', hasta);
-        if (desde && hasta && desde > hasta) throw new Error("La fecha 'desde' no puede ser posterior a 'hasta'.");
+        if (desde && hasta && desde > hasta) throw new Error(t('bitacoras.rangoInvalido'));
       }
       if (auditFilter) params.set('auditoriaId', String(auditFilter));
       const query = params.toString();
@@ -225,7 +228,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       set('#metric-pending', pending.length);
       const overdue = pending.filter(isOverdue).length;
       const note = document.querySelector('#metric-pending-note');
-      if (note) note.textContent = overdue ? `Abiertos y en revisión · ${overdue} vencidos` : 'Abiertos y en revisión';
+      if (note) note.textContent = overdue ? t('hallazgos.abiertosVencidos', { n: overdue }) : t('hallazgos.abiertosRevision');
       set('#metric-critical', pending.filter((f) => f.severidad === 'CRITICA' || f.severidad === 'ALTA').length);
       set('#metric-review', findings.filter((f) => f.estado === 'EN_REVISION').length);
       set('#metric-closed', findings.filter((f) => f.estado === 'RESUELTO' || f.estado === 'ACEPTADO').length);
@@ -246,11 +249,11 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     // Plazo de corrección: lo calcula el servidor con la política de la organización.
     const isOverdue = (finding: AuditFinding) => Boolean(finding.venceEn) && Date.parse(finding.venceEn!) < Date.now();
     const overdueBadge = (finding: AuditFinding) =>
-      isOverdue(finding) ? '<span class="status-badge status-locked">vencido</span>' : '';
+      isOverdue(finding) ? `<span class="status-badge status-locked">${t('hallazgos.vencido')}</span>` : '';
     const dueText = (venceEn: string) => {
       const days = Math.round((Date.parse(venceEn) - Date.now()) / 86_400_000);
-      if (days < 0) return `${formatDate(venceEn)} · vencido hace ${-days} ${-days === 1 ? 'día' : 'días'}`;
-      return `${formatDate(venceEn)} · ${days === 0 ? 'vence hoy' : `faltan ${days} ${days === 1 ? 'día' : 'días'}`}`;
+      if (days < 0) return `${formatDate(venceEn)} · ${plural(-days, 'hallazgos.vencidoHace')}`;
+      return `${formatDate(venceEn)} · ${days === 0 ? t('hallazgos.venceHoy') : plural(days, 'hallazgos.faltan')}`;
     };
 
     const render = () => {
@@ -273,9 +276,9 @@ import MasterLayout from '../layouts/MasterLayout.astro';
             <td><strong>${escapeHtml(finding.codigoRegla)}</strong><small>${escapeHtml(finding.nombreRegla)}</small></td>
             <td>
               <strong>${escapeHtml(device?.identificador ?? `#${finding.dispositivoId}`)}</strong>
-              <small>criticidad ${escapeHtml(finding.criticidadDispositivo ?? '—')}</small>
+              <small>${escapeHtml(t('hallazgos.criticidad', { criticidad: severityCode(finding.criticidadDispositivo) }))}</small>
             </td>
-            <td><span class="severity-badge ${severityClass(finding.severidad)}">${escapeHtml(finding.severidad)}</span></td>
+            <td><span class="severity-badge ${severityClass(finding.severidad)}">${escapeHtml(severityCode(finding.severidad))}</span></td>
             <td><span class="badge-row">${findingStatusBadge(finding.estado)}${overdueBadge(finding)}</span></td>
             <td><span class="log-nowrap">${escapeHtml(formatDate(finding.fechaDeteccion))}</span></td>
           </tr>`;
@@ -286,8 +289,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const emptyText = document.querySelector<HTMLElement>('#finding-empty-text');
       if (emptyText) {
         emptyText.textContent = findings.length === 0 && !term
-          ? 'No hay desvíos registrados para los filtros actuales.'
-          : 'No se encontraron coincidencias.';
+          ? t('hallazgos.sinDesvios')
+          : t('hallazgos.sinCoincidencias');
       }
       document.querySelector('#finding-empty')?.classList.toggle('is-hidden', visible.length > 0);
 
@@ -304,34 +307,34 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     };
 
     const trackingHtml = (history: FindingTracking[]) => history.length === 0
-      ? '<p class="log-muted">Sin cambios de estado desde la detección.</p>'
+      ? `<p class="log-muted">${escapeHtml(t('hallazgos.sinCambiosEstado'))}</p>`
       : `<ol class="tracking-list">${history.map((item) => `
           <li>
-            <div><code>${escapeHtml(item.estadoAnterior)} → ${escapeHtml(item.estadoNuevo)}</code>
+            <div><code>${escapeHtml(etiqueta('hallazgo', item.estadoAnterior))} → ${escapeHtml(etiqueta('hallazgo', item.estadoNuevo))}</code>
             <small>${escapeHtml(item.usuario)} · ${escapeHtml(formatDate(item.fecha))}</small></div>
             ${item.comentario ? `<p>${escapeHtml(item.comentario)}</p>` : ''}
           </li>`).join('')}</ol>`;
 
     const trackingFormHtml = (finding: AuditFinding) => {
       if (!canTrack) {
-        return '<p class="log-muted">Tu perfil puede consultar el seguimiento, pero no modificarlo.</p>';
+        return `<p class="log-muted">${escapeHtml(t('hallazgos.soloConsulta'))}</p>`;
       }
       const options = FINDING_TRANSITIONS[finding.estado]
-        .map((status) => `<option value="${status}">${status} · ${FINDING_STATUS_LABEL[status]}</option>`)
+        .map((status) => `<option value="${status}">${escapeHtml(etiqueta('hallazgo', status))} · ${escapeHtml(findingStatusLabel(status))}</option>`)
         .join('');
       return `
         <form id="tracking-form" class="tracking-form" novalidate>
           <label class="log-filter">
-            <span>nuevo estado</span>
+            <span>${t('hallazgos.nuevoEstado')}</span>
             <select id="tracking-status" class="technical-select">${options}</select>
           </label>
           <label class="log-filter">
-            <span id="tracking-comment-label">comentario</span>
+            <span id="tracking-comment-label">${t('plan.comentario')}</span>
             <textarea id="tracking-comment" class="technical-input tracking-comment" rows="3" maxlength="1000"
-              placeholder="Qué se hizo o por qué se acepta el riesgo..."></textarea>
+              placeholder="${t('hallazgos.comentarioEjemplo')}"></textarea>
           </label>
           <div id="tracking-error" class="alert alert-error is-hidden"></div>
-          <button class="button button-primary button-small button-full" type="submit">Actualizar estado</button>
+          <button class="button button-primary button-small button-full" type="submit">${t('hallazgos.actualizarEstado')}</button>
         </form>`;
     };
 
@@ -361,48 +364,48 @@ import MasterLayout from '../layouts/MasterLayout.astro';
           <span class="inspector-code">${code('FND', finding.id)}</span>
           <h3>${escapeHtml(finding.nombreRegla)}</h3>
           <div class="badge-row">
-            <span class="severity-badge ${severityClass(finding.severidad)}">${escapeHtml(finding.severidad)}</span>
+            <span class="severity-badge ${severityClass(finding.severidad)}">${escapeHtml(severityCode(finding.severidad))}</span>
             ${findingStatusBadge(finding.estado)}
             ${overdueBadge(finding)}
           </div>
         </div>
 
         <dl class="technical-definition-list">
-          <div><dt>regla</dt><dd>${escapeHtml(finding.codigoRegla)}</dd></div>
-          <div><dt>condición</dt><dd>${escapeHtml(finding.tipoRegla)}</dd></div>
-          <div><dt>dispositivo</dt><dd>${escapeHtml(device?.identificador ?? `#${finding.dispositivoId}`)} · criticidad ${escapeHtml(finding.criticidadDispositivo ?? '—')}</dd></div>
-          <div><dt>baseline</dt><dd>${escapeHtml(baseline ? `${baseline.nombre} v${baseline.version}` : `#${finding.baselineId}`)}</dd></div>
-          <div><dt>auditoría</dt><dd><a class="inline-link" href="/history?auditoria=${finding.auditoriaId}">${code('AUD', finding.auditoriaId)} →</a></dd></div>
-          <div><dt>detectado</dt><dd>${escapeHtml(formatDate(finding.fechaDeteccion))}</dd></div>
-          ${finding.venceEn ? `<div><dt>plazo</dt><dd>${escapeHtml(dueText(finding.venceEn))}</dd></div>` : ''}
-          <div><dt>último cambio</dt><dd>${finding.fechaEstado
+          <div><dt>${t('hallazgos.regla')}</dt><dd>${escapeHtml(finding.codigoRegla)}</dd></div>
+          <div><dt>${t('reglas.condicionDetalle')}</dt><dd>${escapeHtml(etiqueta('condicion', finding.tipoRegla))}</dd></div>
+          <div><dt>${t('general.dispositivo')}</dt><dd>${escapeHtml(device?.identificador ?? `#${finding.dispositivoId}`)} · ${escapeHtml(t('hallazgos.criticidad', { criticidad: severityCode(finding.criticidadDispositivo) }))}</dd></div>
+          <div><dt>${t('general.baseline')}</dt><dd>${escapeHtml(baseline ? `${baseline.nombre} v${baseline.version}` : `#${finding.baselineId}`)}</dd></div>
+          <div><dt>${t('hallazgos.auditoria')}</dt><dd><a class="inline-link" href="/history?auditoria=${finding.auditoriaId}">${code('AUD', finding.auditoriaId)} →</a></dd></div>
+          <div><dt>${t('hallazgos.detectado')}</dt><dd>${escapeHtml(formatDate(finding.fechaDeteccion))}</dd></div>
+          ${finding.venceEn ? `<div><dt>${t('hallazgos.plazo')}</dt><dd>${escapeHtml(dueText(finding.venceEn))}</dd></div>` : ''}
+          <div><dt>${t('hallazgos.ultimoCambio')}</dt><dd>${finding.fechaEstado
             ? `${escapeHtml(formatDate(finding.fechaEstado))} · ${escapeHtml(finding.usuarioEstado)}`
-            : 'sin cambios'}</dd></div>
+            : escapeHtml(t('hallazgos.sinCambios'))}</dd></div>
         </dl>
 
         <div class="rule-expression-block">
-          <span>patrón buscado</span>
+          <span>${t('hallazgos.patronBuscado')}</span>
           <code>${escapeHtml(finding.patron)}</code>
         </div>
 
         <div class="finding-evidence-block">
-          <span>evidencia</span>
+          <span>${t('hallazgos.evidencia')}</span>
           <p>${escapeHtml(finding.evidencia)}</p>
         </div>
 
         ${finding.impacto ? `
         <div class="finding-evidence-block">
-          <span>impacto</span>
+          <span>${t('reglas.impacto')}</span>
           <p>${escapeHtml(finding.impacto)}</p>
         </div>` : ''}
 
         <div class="rule-recommendation">
-          <span>recomendación</span>
+          <span>${t('reglas.recomendacion')}</span>
           <p>${escapeHtml(finding.recomendacion)}</p>
         </div>
 
         <div class="baseline-versions">
-          <span>seguimiento</span>
+          <span>${t('hallazgos.seguimiento')}</span>
           ${trackingHtml(history)}
         </div>
 
@@ -421,7 +424,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const syncLabel = () => {
         const needs = findingStatusNeedsComment(status.value as FindingStatus);
         const label = document.querySelector('#tracking-comment-label');
-        if (label) label.textContent = needs ? 'comentario (obligatorio)' : 'comentario (opcional)';
+        if (label) label.textContent = t(needs ? 'hallazgos.comentarioObligatorio' : 'hallazgos.comentarioOpcional');
         comment.required = needs;
       };
       status.addEventListener('change', syncLabel);
@@ -432,7 +435,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         show('#tracking-error', null);
         const nuevoEstado = status.value as FindingStatus;
         if (findingStatusNeedsComment(nuevoEstado) && !comment.value.trim()) {
-          show('#tracking-error', `Para pasar a ${nuevoEstado} hay que indicar un comentario.`);
+          show('#tracking-error', t('hallazgos.faltaComentario', { estado: etiqueta('hallazgo', nuevoEstado) }));
           return;
         }
         const response = await auditFetch(`/api/findings/${finding.id}/status`, jsonRequest('PATCH', {
@@ -445,7 +448,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         }
         const updated = await response.json() as AuditFinding;
         findings = findings.map((item) => item.id === updated.id ? updated : item);
-        showSuccess(`${code('FND', updated.id)} ahora está ${updated.estado}.`);
+        showSuccess(t('hallazgos.ahoraEsta', { codigo: code('FND', updated.id), estado: etiqueta('hallazgo', updated.estado) }));
         renderMetrics();
         await selectFinding(updated.id);
       });
@@ -457,7 +460,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       try {
         query = buildQuery();
       } catch (error) {
-        showError(error instanceof Error ? error.message : 'Filtros inválidos.');
+        showError(error instanceof Error ? error.message : t('bitacoras.filtrosInvalidos'));
         return;
       }
       const seq = ++loadSeq;
@@ -522,13 +525,13 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     loadReferences()
       .then(loadFindings)
       .then(() => {
-        if (auditFilter) showSuccess(`Mostrando los hallazgos de ${code('AUD', auditFilter)}.`);
+        if (auditFilter) showSuccess(t('hallazgos.mostrandoAuditoria', { auditoria: code('AUD', auditFilter) }));
         if (initialFinding) {
           // Si el hallazgo pedido está en otra página, se muestra esa página.
           paginador.irAPosicion(visibleFindings().findIndex((finding) => finding.id === initialFinding));
           void selectFinding(initialFinding);
         }
       })
-      .catch((error) => showError(error instanceof Error ? error.message : 'No se pudieron cargar los hallazgos.'));
+      .catch((error) => showError(error instanceof Error ? error.message : t('hallazgos.errorCargar')));
   </script>
 </MasterLayout>

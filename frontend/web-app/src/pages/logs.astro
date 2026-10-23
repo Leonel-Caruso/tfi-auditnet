@@ -1,63 +1,63 @@
 ---
+import { es } from '../i18n';
 import MasterLayout from '../layouts/MasterLayout.astro';
 import { SYSTEM_EVENTS } from '../lib/api';
 ---
 
 <MasterLayout
-  title="Bitácoras"
-  section="Panel de administración"
-  description="Registros de accesos y seguridad, operaciones de negocio y errores de la plataforma. Solo lectura, para el administrador del sistema."
+  title={es['bitacoras.titulo']} section={es['bitacoras.seccion']} description={es['bitacoras.descripcion']}
+  i18n="bitacoras"
 >
   <div id="log-error" class="alert alert-error is-hidden" role="alert"></div>
 
-  <nav class="log-tabs" role="tablist" aria-label="Bitácoras">
+  <nav class="log-tabs" role="tablist" aria-label={es['bitacoras.bitacorasTitulo']} data-i18n-aria-label="bitacoras.bitacorasTitulo">
     <button type="button" class="log-tab" role="tab" id="tab-sistema" data-tab="sistema" aria-controls="log-panel" aria-selected="true">
       <code>SYS</code>
-      <span>Auditoría de sistema</span>
-      <small>accesos y seguridad · PostgreSQL</small>
+      <span data-i18n="bitacoras.auditoriaSistema">{es['bitacoras.auditoriaSistema']}</span>
+      <small data-i18n="bitacoras.accesosSeguridadPostgresql">{es['bitacoras.accesosSeguridadPostgresql']}</small>
     </button>
     <button type="button" class="log-tab" role="tab" id="tab-transacciones" data-tab="transacciones" aria-controls="log-panel" aria-selected="false" tabindex="-1">
       <code>TRX</code>
-      <span>Transacciones</span>
-      <small>operaciones de negocio · PostgreSQL</small>
+      <span data-i18n="bitacoras.transacciones">{es['bitacoras.transacciones']}</span>
+      <small data-i18n="bitacoras.operacionesNegocioPostgresql">{es['bitacoras.operacionesNegocioPostgresql']}</small>
     </button>
     <button type="button" class="log-tab" role="tab" id="tab-excepciones" data-tab="excepciones" aria-controls="log-panel" aria-selected="false" tabindex="-1">
       <code>EXC</code>
-      <span>Excepciones</span>
-      <small>errores inesperados · MongoDB</small>
+      <span data-i18n="bitacoras.excepciones">{es['bitacoras.excepciones']}</span>
+      <small data-i18n="bitacoras.erroresInesperadosMongodb">{es['bitacoras.erroresInesperadosMongodb']}</small>
     </button>
   </nav>
 
   <form id="log-filters" class="panel compact-panel log-filters" novalidate>
     <div class="log-filter-grid">
       <label class="log-filter" data-tabs="sistema">
-        <span>evento</span>
+        <span data-i18n="bitacoras.evento">{es['bitacoras.evento']}</span>
         <select name="evento" class="technical-select">
-          <option value="">todos</option>
+          <option value="" data-i18n="general.todos">{es['general.todos']}</option>
           {SYSTEM_EVENTS.map((event) => <option value={event}>{event}</option>)}
         </select>
       </label>
       <label class="log-filter" data-tabs="sistema">
-        <span>resultado</span>
+        <span data-i18n="bitacoras.resultado">{es['bitacoras.resultado']}</span>
         <select name="resultado" class="technical-select">
-          <option value="">todos</option>
+          <option value="" data-i18n="general.todos">{es['general.todos']}</option>
           <option value="EXITO">EXITO</option>
           <option value="FALLO">FALLO</option>
         </select>
       </label>
       <label class="log-filter" data-tabs="transacciones">
-        <span>entidad</span>
+        <span data-i18n="bitacoras.entidad">{es['bitacoras.entidad']}</span>
         <select name="entidad" class="technical-select">
-          <option value="">todas</option>
+          <option value="" data-i18n="general.todas">{es['general.todas']}</option>
           <option value="ORGANIZACION">ORGANIZACION</option>
-          <option value="SEDE">SEDE</option>
+          <option value="SEDE" data-i18n="general.colSede">{es['general.colSede']}</option>
           <option value="PLAN">PLAN</option>
           <option value="SOLICITUD_PLAN">SOLICITUD_PLAN</option>
           <option value="CATALOGO_PLAN">CATALOGO_PLAN</option>
           <option value="TIPO_DISPOSITIVO">TIPO_DISPOSITIVO</option>
-          <option value="DISPOSITIVO">DISPOSITIVO</option>
-          <option value="BASELINE">BASELINE</option>
-          <option value="REGLA">REGLA</option>
+          <option value="DISPOSITIVO" data-i18n="general.colDispositivo">{es['general.colDispositivo']}</option>
+          <option value="BASELINE" data-i18n="general.colBaseline">{es['general.colBaseline']}</option>
+          <option value="REGLA" data-i18n="general.colRegla">{es['general.colRegla']}</option>
           <option value="CONFIGURACION">CONFIGURACION</option>
           <option value="AUDITORIA">AUDITORIA</option>
           <option value="HALLAZGO">HALLAZGO</option>
@@ -68,14 +68,14 @@ import { SYSTEM_EVENTS } from '../lib/api';
         </select>
       </label>
       <label class="log-filter" data-tabs="transacciones">
-        <span>id entidad</span>
-        <input name="entidadId" class="technical-input" type="number" min="1" step="1" inputmode="numeric" placeholder="ej. 4" />
+        <span data-i18n="bitacoras.idEntidad">{es['bitacoras.idEntidad']}</span>
+        <input name="entidadId" class="technical-input" type="number" min="1" step="1" inputmode="numeric" placeholder={es['bitacoras.ej']} data-i18n-placeholder="bitacoras.ej" />
       </label>
       <label class="log-filter" data-tabs="transacciones">
-        <span>operación</span>
+        <span data-i18n="bitacoras.operacion">{es['bitacoras.operacion']}</span>
         <select name="operacion" class="technical-select">
-          <option value="">todas</option>
-          <option value="ALTA">ALTA</option>
+          <option value="" data-i18n="general.todas">{es['general.todas']}</option>
+          <option value="ALTA" data-i18n="severidad.ALTA">{es['severidad.ALTA']}</option>
           <option value="MODIFICACION">MODIFICACION</option>
           <option value="CAMBIO_ESTADO">CAMBIO_ESTADO</option>
           <option value="BAJA_LOGICA">BAJA_LOGICA</option>
@@ -85,35 +85,35 @@ import { SYSTEM_EVENTS } from '../lib/api';
         </select>
       </label>
       <label class="log-filter" data-tabs="sistema,transacciones">
-        <span>actor</span>
-        <input name="actor" class="technical-input" type="text" maxlength="160" autocomplete="off" placeholder="usuario" />
+        <span data-i18n="bitacoras.actor">{es['bitacoras.actor']}</span>
+        <input name="actor" class="technical-input" type="text" maxlength="160" autocomplete="off" placeholder={es['bitacoras.usuario']} data-i18n-placeholder="bitacoras.usuario" />
       </label>
       <label class="log-filter" data-tabs="excepciones">
-        <span>servicio</span>
+        <span data-i18n="bitacoras.servicio">{es['bitacoras.servicio']}</span>
         <select name="servicio" class="technical-select">
-          <option value="">todos</option>
+          <option value="" data-i18n="general.todos">{es['general.todos']}</option>
           <option value="management-service">management-service</option>
           <option value="audit-core-service">audit-core-service</option>
         </select>
       </label>
       <label class="log-filter" data-tabs="excepciones">
-        <span>nivel</span>
+        <span data-i18n="bitacoras.nivel">{es['bitacoras.nivel']}</span>
         <select name="nivel" class="technical-select">
-          <option value="">todos</option>
+          <option value="" data-i18n="general.todos">{es['general.todos']}</option>
           <option value="ERROR">ERROR</option>
           <option value="WARN">WARN</option>
         </select>
       </label>
       <label class="log-filter">
-        <span>desde</span>
+        <span data-i18n="general.desde">{es['general.desde']}</span>
         <input name="desde" class="technical-input" type="datetime-local" />
       </label>
       <label class="log-filter">
-        <span>hasta</span>
+        <span data-i18n="general.hasta">{es['general.hasta']}</span>
         <input name="hasta" class="technical-input" type="datetime-local" data-time="end" />
       </label>
       <label class="log-filter">
-        <span>límite</span>
+        <span data-i18n="bitacoras.limite">{es['bitacoras.limite']}</span>
         <select name="limite" class="technical-select">
           <option value="50">50</option>
           <option value="100" selected>100</option>
@@ -125,10 +125,10 @@ import { SYSTEM_EVENTS } from '../lib/api';
     <div class="log-filter-actions">
       <div class="terminal-search">
         <span>&gt;</span>
-        <input id="log-search" type="search" autocomplete="off" placeholder="filtrar lo cargado: código de seguimiento, actor, detalle..." aria-label="Filtrar registros cargados" />
+        <input id="log-search" type="search" autocomplete="off" placeholder={es['bitacoras.filtrarCargadoCodigoSeguimiento']} data-i18n-placeholder="bitacoras.filtrarCargadoCodigoSeguimiento" aria-label={es['bitacoras.filtrarRegistrosCargados']} data-i18n-aria-label="bitacoras.filtrarRegistrosCargados" />
       </div>
-      <button type="button" id="log-clear" class="button button-ghost button-small">Limpiar</button>
-      <button type="submit" id="log-submit" class="button button-primary button-small">Consultar</button>
+      <button type="button" id="log-clear" class="button button-ghost button-small" data-i18n="general.limpiar">{es['general.limpiar']}</button>
+      <button type="submit" id="log-submit" class="button button-primary button-small" data-i18n="general.consultar">{es['general.consultar']}</button>
     </div>
   </form>
 
@@ -136,8 +136,8 @@ import { SYSTEM_EVENTS } from '../lib/api';
     <article id="log-panel" class="panel finding-list-panel" role="tabpanel" aria-labelledby="tab-sistema">
       <div class="panel-heading">
         <div>
-          <span id="log-eyebrow" class="eyebrow">Bitácora de sistema</span>
-          <h2 id="log-title">Auditoría de sistema</h2>
+          <span id="log-eyebrow" class="eyebrow" data-i18n="bitacoras.bitacoraSistema">{es['bitacoras.bitacoraSistema']}</span>
+          <h2 id="log-title" data-i18n="bitacoras.auditoriaSistema">{es['bitacoras.auditoriaSistema']}</h2>
         </div>
         <div class="log-heading-meta">
           <span id="log-count" class="counter-chip">—</span>
@@ -152,26 +152,26 @@ import { SYSTEM_EVENTS } from '../lib/api';
         <div id="log-loading" class="log-loading is-hidden"><div class="skeleton-row"></div><div class="skeleton-row"></div></div>
         <div id="log-empty" class="empty-state compact-empty is-hidden">
           <div>
-            <code>0 registros</code>
-            <p>No hay registros para los filtros actuales.</p>
+            <code data-i18n="bitacoras.ceroRegistros">{es['bitacoras.ceroRegistros']}</code>
+            <p data-i18n="bitacoras.hayRegistrosFiltrosActuales">{es['bitacoras.hayRegistrosFiltrosActuales']}</p>
           </div>
         </div>
       </div>
-      <nav id="log-pager" class="pager is-hidden" aria-label="Páginas de la bitácora"></nav>
+      <nav id="log-pager" class="pager is-hidden" aria-label={es['bitacoras.paginasBitacora']} data-i18n-aria-label="bitacoras.paginasBitacora"></nav>
     </article>
 
     <aside class="panel finding-inspector" aria-live="polite">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Registro seleccionado</span>
-          <h2>Detalle del registro</h2>
+          <span class="eyebrow" data-i18n="bitacoras.registroSeleccionado">{es['bitacoras.registroSeleccionado']}</span>
+          <h2 data-i18n="bitacoras.detalleRegistro">{es['bitacoras.detalleRegistro']}</h2>
         </div>
         <span class="inspector-led"></span>
       </div>
 
       <div id="log-inspector-empty" class="inspector-empty">
-        <code>sin selección</code>
-        <p>Seleccioná un registro para ver todos sus campos.</p>
+        <code data-i18n="general.sinSeleccion">{es['general.sinSeleccion']}</code>
+        <p data-i18n="bitacoras.seleccionaRegistroVerTodos">{es['bitacoras.seleccionaRegistroVerTodos']}</p>
       </div>
 
       <div id="log-inspector-content" class="inspector-content is-hidden"></div>
@@ -181,6 +181,7 @@ import { SYSTEM_EVENTS } from '../lib/api';
   <script>
     import { authFetch } from '../lib/auth';
     import { readApiError } from '../lib/api';
+    import { localeActual, t, type Clave } from '../lib/i18n';
     import { crearPaginador } from '../lib/paginador';
     import type {
       ExceptionLogRecord,
@@ -193,34 +194,37 @@ import { SYSTEM_EVENTS } from '../lib/api';
     type LogRecord = SystemLogRecord | TransactionLogRecord | ExceptionLogRecord;
 
     type TabConfig = {
-      title: string;
-      eyebrow: string;
+      title: Clave;
+      eyebrow: Clave;
       endpoint: string; // ruta de la API (no se muestra en pantalla)
       params: string[];
-      columns: string[];
+      columns: Clave[];
     };
 
     const TABS: Record<Tab, TabConfig> = {
       sistema: {
-        title: 'Auditoría de sistema',
-        eyebrow: 'Bitácora de sistema',
+        title: 'bitacoras.auditoriaSistema',
+        eyebrow: 'bitacoras.bitacoraSistema',
         endpoint: '/api/admin/bitacoras/sistema',
         params: ['evento', 'resultado', 'actor', 'desde', 'hasta', 'limite'],
-        columns: ['ID', 'FECHA', 'EVENTO', 'RESULTADO', 'ACTOR', 'ORIGEN', 'SEGUIMIENTO'],
+        columns: ['bitacoras.colId', 'general.colFecha', 'bitacoras.colEvento', 'general.colResultado', 'bitacoras.colActor',
+          'bitacoras.colOrigen', 'bitacoras.colSeguimiento'],
       },
       transacciones: {
-        title: 'Transacciones',
-        eyebrow: 'Bitácora de transacciones',
+        title: 'bitacoras.transacciones',
+        eyebrow: 'bitacoras.bitacoraTransacciones',
         endpoint: '/api/admin/bitacoras/transacciones',
         params: ['entidad', 'entidadId', 'operacion', 'actor', 'desde', 'hasta', 'limite'],
-        columns: ['ID', 'FECHA', 'ENTIDAD', 'OPERACIÓN', 'ACTOR', 'SERVICIO', 'SEGUIMIENTO'],
+        columns: ['bitacoras.colId', 'general.colFecha', 'bitacoras.colEntidad', 'bitacoras.colOperacion', 'bitacoras.colActor',
+          'bitacoras.colServicio', 'bitacoras.colSeguimiento'],
       },
       excepciones: {
-        title: 'Excepciones',
-        eyebrow: 'Bitácora de excepciones',
+        title: 'bitacoras.excepciones',
+        eyebrow: 'bitacoras.bitacoraExcepciones',
         endpoint: '/api/admin/bitacoras/excepciones',
         params: ['servicio', 'nivel', 'desde', 'hasta', 'limite'],
-        columns: ['FECHA', 'NIVEL', 'EXCEPCIÓN', 'SOLICITUD', 'HTTP', 'SERVICIO', 'SEGUIMIENTO'],
+        columns: ['general.colFecha', 'bitacoras.colNivel', 'bitacoras.colExcepcion', 'bitacoras.colSolicitud', 'bitacoras.colHttp',
+          'bitacoras.colServicio', 'bitacoras.colSeguimiento'],
       },
     };
 
@@ -253,7 +257,7 @@ import { SYSTEM_EVENTS } from '../lib/api';
 
     const formatDate = (value: string) => {
       try {
-        return new Intl.DateTimeFormat('es-AR', { dateStyle: 'short', timeStyle: 'medium' }).format(new Date(value));
+        return new Intl.DateTimeFormat(localeActual(), { dateStyle: 'short', timeStyle: 'medium' }).format(new Date(value));
       } catch {
         return value;
       }
@@ -267,7 +271,7 @@ import { SYSTEM_EVENTS } from '../lib/api';
     const shortType = (value: string) => value.split('.').pop() ?? value;
 
     const orgLabel = (id: number | null) =>
-      id == null ? '—' : `${organizations.get(id) ?? 'organización'} (#${id})`;
+      id == null ? '—' : `${organizations.get(id) ?? t('general.organizacion')} (#${id})`;
 
     const prettyJson = (value: string | null) => {
       if (value == null) return null;
@@ -305,10 +309,10 @@ import { SYSTEM_EVENTS } from '../lib/api';
 
         if (name === 'desde' || name === 'hasta') {
           const date = new Date(raw);
-          if (Number.isNaN(date.getTime())) throw new Error(`La fecha '${name}' no es válida.`);
+          if (Number.isNaN(date.getTime())) throw new Error(t('bitacoras.fechaInvalida', { campo: t(`general.${name}` as Clave) }));
           params.set(name, date.toISOString());
         } else if (name === 'entidadId') {
-          if (!/^[1-9]\d*$/.test(raw)) throw new Error('El id de entidad debe ser un número entero positivo.');
+          if (!/^[1-9]\d*$/.test(raw)) throw new Error(t('bitacoras.idInvalido'));
           params.set(name, raw);
         } else {
           params.set(name, raw);
@@ -318,7 +322,7 @@ import { SYSTEM_EVENTS } from '../lib/api';
       const desde = params.get('desde');
       const hasta = params.get('hasta');
       if (desde && hasta && desde > hasta) {
-        throw new Error("La fecha 'desde' no puede ser posterior a 'hasta'.");
+        throw new Error(t('bitacoras.rangoInvalido'));
       }
 
       const query = params.toString();
@@ -381,7 +385,7 @@ import { SYSTEM_EVENTS } from '../lib/api';
       if (!head || !body) return;
 
       const config = TABS[activeTab];
-      head.innerHTML = `<tr>${config.columns.map((column) => `<th>${escapeHtml(column)}</th>`).join('')}</tr>`;
+      head.innerHTML = `<tr>${config.columns.map((column) => `<th>${escapeHtml(t(column))}</th>`).join('')}</tr>`;
 
       const term = search?.value.trim().toLowerCase() ?? '';
       const records = state[activeTab].records;
@@ -425,11 +429,11 @@ import { SYSTEM_EVENTS } from '../lib/api';
 
     const correlationAction = (value: string | null) => value ? `
       <div class="rule-expression-block">
-        <span>código de seguimiento</span>
+        <span>${t('bitacoras.codigoSeguimiento')}</span>
         <code>${escapeHtml(value)}</code>
       </div>
       <button type="button" class="button button-ghost button-small button-full" data-follow="${escapeHtml(value)}">
-        Filtrar por este código en las 3 bitácoras
+        ${t('bitacoras.filtrarCodigo')}
       </button>` : '';
 
     const inspectorHtml = (record: LogRecord): string => {
@@ -442,14 +446,14 @@ import { SYSTEM_EVENTS } from '../lib/api';
             ${resultBadge(r.resultado)}
           </div>
           <dl class="technical-definition-list">
-            ${definition('fecha', formatDate(r.fecha))}
-            ${definition('actor', r.actor)}
-            ${definition('usuario afectado', r.usuarioAfectadoId == null ? null : `#${r.usuarioAfectadoId}`)}
-            ${definition('organización', orgLabel(r.organizacionId))}
-            ${definition('IP de origen', r.origenIp)}
-            ${definition('navegador', r.userAgent)}
+            ${definition(t('bitacoras.fecha'), formatDate(r.fecha))}
+            ${definition(t('bitacoras.actor'), r.actor)}
+            ${definition(t('bitacoras.usuarioAfectado'), r.usuarioAfectadoId == null ? null : `#${r.usuarioAfectadoId}`)}
+            ${definition(t('general.organizacion'), orgLabel(r.organizacionId))}
+            ${definition(t('bitacoras.ipOrigen'), r.origenIp)}
+            ${definition(t('bitacoras.navegador'), r.userAgent)}
           </dl>
-          ${block('detalle', r.detalle, 'sin detalle')}
+          ${block(t('bitacoras.detalle'), r.detalle, t('bitacoras.sinDetalle'))}
           ${correlationAction(r.correlacion)}`;
       }
       if (activeTab === 'transacciones') {
@@ -461,14 +465,15 @@ import { SYSTEM_EVENTS } from '../lib/api';
             <span class="status-badge status-strong">${escapeHtml(r.operacion)}</span>
           </div>
           <dl class="technical-definition-list">
-            ${definition('fecha', formatDate(r.fecha))}
-            ${definition('servicio', r.servicio)}
-            ${definition('actor', r.actor)}
-            ${definition('organización', orgLabel(r.organizacionId))}
+            ${definition(t('bitacoras.fecha'), formatDate(r.fecha))}
+            ${definition(t('bitacoras.servicio'), r.servicio)}
+            ${definition(t('bitacoras.actor'), r.actor)}
+            ${definition(t('general.organizacion'), orgLabel(r.organizacionId))}
           </dl>
-          ${r.detalle ? block('detalle', r.detalle, '') : ''}
-          ${block('valor anterior', prettyJson(r.valorAnterior), r.operacion === 'ALTA' ? 'alta: no existía un valor anterior' : 'sin valor anterior')}
-          ${block('valor nuevo', prettyJson(r.valorNuevo), 'sin valor nuevo')}
+          ${r.detalle ? block(t('bitacoras.detalle'), r.detalle, '') : ''}
+          ${block(t('bitacoras.valorAnterior'), prettyJson(r.valorAnterior),
+            t(r.operacion === 'ALTA' ? 'bitacoras.altaSinAnterior' : 'bitacoras.sinValorAnterior'))}
+          ${block(t('bitacoras.valorNuevo'), prettyJson(r.valorNuevo), t('bitacoras.sinValorNuevo'))}
           ${correlationAction(r.correlacion)}`;
       }
       const r = record as ExceptionLogRecord;
@@ -479,17 +484,17 @@ import { SYSTEM_EVENTS } from '../lib/api';
           ${levelBadge(r.nivel)}
         </div>
         <dl class="technical-definition-list">
-          ${definition('fecha', formatDate(r.fecha))}
-          ${definition('tipo', r.tipo)}
-          ${definition('solicitud', [r.metodoHttp, r.ruta].filter(Boolean).join(' ') || null)}
-          ${definition('código HTTP', r.estadoHttp)}
-          ${definition('usuario', r.usuario)}
+          ${definition(t('bitacoras.fecha'), formatDate(r.fecha))}
+          ${definition(t('bitacoras.tipo'), r.tipo)}
+          ${definition(t('bitacoras.solicitud'), [r.metodoHttp, r.ruta].filter(Boolean).join(' ') || null)}
+          ${definition(t('bitacoras.codigoHttp'), r.estadoHttp)}
+          ${definition(t('bitacoras.usuario'), r.usuario)}
         </dl>
         <div class="finding-evidence-block">
-          <span>mensaje</span>
-          <p>${escapeHtml(r.mensaje ?? 'sin mensaje')}</p>
+          <span>${t('bitacoras.mensaje')}</span>
+          <p>${escapeHtml(r.mensaje ?? t('bitacoras.sinMensaje'))}</p>
         </div>
-        ${block('traza', r.traza, 'sin traza')}
+        ${block(t('bitacoras.traza'), r.traza, t('bitacoras.sinTraza'))}
         ${correlationAction(r.correlacion)}`;
     };
 
@@ -536,7 +541,7 @@ import { SYSTEM_EVENTS } from '../lib/api';
       try {
         query = buildQuery(tab);
       } catch (error) {
-        showError(error instanceof Error ? error.message : 'Filtros inválidos.');
+        showError(error instanceof Error ? error.message : t('bitacoras.filtrosInvalidos'));
         return;
       }
 
@@ -548,7 +553,7 @@ import { SYSTEM_EVENTS } from '../lib/api';
         if (sequence !== requestSequence) return;
         if (!response.ok) {
           showError(response.status === 403
-            ? 'Solo el administrador del sistema puede consultar las bitácoras.'
+            ? t('bitacoras.soloAdministrador')
             : await readApiError(response));
           return;
         }
@@ -557,7 +562,7 @@ import { SYSTEM_EVENTS } from '../lib/api';
         if (tab === activeTab) paginador.reiniciar();
       } catch (error) {
         if (sequence === requestSequence) {
-          showError(error instanceof Error ? error.message : 'No se pudo consultar la bitácora.');
+          showError(error instanceof Error ? error.message : t('bitacoras.errorConsultar'));
         }
       } finally {
         if (sequence === requestSequence) {
@@ -599,8 +604,8 @@ import { SYSTEM_EVENTS } from '../lib/api';
       document.querySelector('#log-panel')?.setAttribute('aria-labelledby', `tab-${tab}`);
       const title = document.querySelector('#log-title');
       const eyebrow = document.querySelector('#log-eyebrow');
-      if (title) title.textContent = config.title;
-      if (eyebrow) eyebrow.textContent = config.eyebrow;
+      if (title) title.textContent = t(config.title);
+      if (eyebrow) eyebrow.textContent = t(config.eyebrow);
 
       history.replaceState(null, '', `#${tab}`);
       syncFilterVisibility();

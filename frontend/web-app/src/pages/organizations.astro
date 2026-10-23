@@ -1,11 +1,11 @@
 ---
+import { es } from '../i18n';
 import MasterLayout from '../layouts/MasterLayout.astro';
 ---
 
 <MasterLayout
-  title="Organizaciones y sedes"
-  section="Control de acceso"
-  description="Registrá clientes y sus sedes. Al deshabilitarlos se conserva su historial."
+  title={es['organizaciones.titulo']} section={es['organizaciones.seccion']} description={es['organizaciones.descripcion']}
+  i18n="organizaciones"
 >
   <section id="organization-access-error" class="alert alert-error is-hidden"></section>
   <section id="organization-message" class="alert is-hidden" role="status"></section>
@@ -14,14 +14,12 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <article class="panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Organizaciones</span>
-          <h2>Clientes registrados</h2>
+          <span class="eyebrow" data-i18n="organizaciones.organizaciones">{es['organizaciones.organizaciones']}</span>
+          <h2 data-i18n="organizaciones.clientesRegistrados">{es['organizaciones.clientesRegistrados']}</h2>
         </div>
         <div class="panel-heading-actions">
           <span id="organization-count" class="counter-chip">—</span>
-          <button id="open-organization-dialog" class="button button-primary button-small" type="button" data-admin-only="true">
-            + organización
-          </button>
+          <button id="open-organization-dialog" class="button button-primary button-small" type="button" data-admin-only="true" data-i18n="organizaciones.nuevaOrganizacion">{es['organizaciones.nuevaOrganizacion']}</button>
         </div>
       </div>
       <div id="organization-list" class="select-list">
@@ -33,23 +31,19 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <article class="panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Sedes asociadas</span>
-          <h2 id="site-title">Seleccioná una organización</h2>
+          <span class="eyebrow" data-i18n="organizaciones.sedesAsociadas">{es['organizaciones.sedesAsociadas']}</span>
+          <h2 id="site-title" data-i18n="organizaciones.seleccionaOrganizacion">{es['organizaciones.seleccionaOrganizacion']}</h2>
         </div>
         <div class="panel-heading-actions">
-          <button id="edit-organization" class="button button-ghost button-small" type="button" disabled data-admin-only="true">Editar</button>
-          <button id="toggle-organization" class="button button-ghost button-small" type="button" disabled data-admin-only="true">Deshabilitar</button>
+          <button id="edit-organization" class="button button-ghost button-small" type="button" disabled data-admin-only="true" data-i18n="general.editar">{es['general.editar']}</button>
+          <button id="toggle-organization" class="button button-ghost button-small" type="button" disabled data-admin-only="true" data-i18n="organizaciones.deshabilitar">{es['organizaciones.deshabilitar']}</button>
           <button id="open-site-dialog" class="button button-primary button-small" type="button" disabled
-            data-roles="ADMINISTRADOR_SISTEMA,ADMINISTRADOR_ORGANIZACION">
-            + sede
-          </button>
+            data-roles="ADMINISTRADOR_SISTEMA,ADMINISTRADOR_ORGANIZACION" data-i18n="organizaciones.nuevaSede">{es['organizaciones.nuevaSede']}</button>
         </div>
       </div>
-      <p id="organization-disabled-note" class="alert alert-error is-hidden" style="margin-bottom: 14px;">
-        Organización deshabilitada: sus usuarios no pueden ingresar ni operar y no se le agregan sedes. Sus datos e historial se conservan.
-      </p>
+      <p id="organization-disabled-note" class="alert alert-error is-hidden" style="margin-bottom: 14px;" data-i18n="organizaciones.organizacionDeshabilitadaUsuariosPueden">{es['organizaciones.organizacionDeshabilitadaUsuariosPueden']}</p>
       <div id="site-list" class="data-list empty-state">
-        <p>Elegí una organización para consultar sus sedes.</p>
+        <p data-i18n="organizaciones.elegiOrganizacionConsultarSedes">{es['organizaciones.elegiOrganizacionConsultarSedes']}</p>
       </div>
     </article>
   </section>
@@ -57,14 +51,12 @@ import MasterLayout from '../layouts/MasterLayout.astro';
   <section class="panel" id="plan-panel">
     <div class="panel-heading">
       <div>
-        <span class="eyebrow">Plan</span>
-        <h2>Plan y uso</h2>
+        <span class="eyebrow" data-i18n="organizaciones.plan">{es['organizaciones.plan']}</span>
+        <h2 data-i18n="organizaciones.planUso">{es['organizaciones.planUso']}</h2>
       </div>
       <div class="panel-heading-actions">
-        <a class="inline-link" href="/plan" data-roles="ADMINISTRADOR_ORGANIZACION">ver Mi plan →</a>
-        <button id="change-plan" class="button button-ghost button-small" type="button" disabled data-admin-only="true">
-          Cambiar plan
-        </button>
+        <a class="inline-link" href="/plan" data-roles="ADMINISTRADOR_ORGANIZACION" data-i18n="organizaciones.verMiPlan">{es['organizaciones.verMiPlan']}</a>
+        <button id="change-plan" class="button button-ghost button-small" type="button" disabled data-admin-only="true" data-i18n="organizaciones.cambiarPlan">{es['organizaciones.cambiarPlan']}</button>
       </div>
     </div>
     <div id="plan-summary" class="plan-summary"><div class="skeleton-row"></div></div>
@@ -73,35 +65,32 @@ import MasterLayout from '../layouts/MasterLayout.astro';
   <section class="panel" id="review-panel">
     <div class="panel-heading">
       <div>
-        <span class="eyebrow">Revisión periódica</span>
-        <h2>Plazos de revisión</h2>
+        <span class="eyebrow" data-i18n="organizaciones.revisionPeriodica">{es['organizaciones.revisionPeriodica']}</span>
+        <h2 data-i18n="organizaciones.plazosRevision">{es['organizaciones.plazosRevision']}</h2>
       </div>
       <span id="review-updated" class="counter-chip">—</span>
     </div>
     <form id="review-form" novalidate>
       <fieldset id="review-fields" class="plain-fieldset">
         <div class="review-grid">
-          <label class="field"><span>crítica · días</span><input id="review-critica" type="number" min="1" max="365" required /></label>
-          <label class="field"><span>alta · días</span><input id="review-alta" type="number" min="1" max="365" required /></label>
-          <label class="field"><span>media · días</span><input id="review-media" type="number" min="1" max="365" required /></label>
-          <label class="field"><span>baja · días</span><input id="review-baja" type="number" min="1" max="365" required /></label>
-          <label class="field"><span>re-auditar cada · días</span><input id="review-reaudit" type="number" min="1" max="365" required /></label>
-          <label class="field"><span>configuración vieja a los · días</span><input id="review-config" type="number" min="1" max="365" required /></label>
+          <label class="field"><span data-i18n="organizaciones.criticaDias">{es['organizaciones.criticaDias']}</span><input id="review-critica" type="number" min="1" max="365" required /></label>
+          <label class="field"><span data-i18n="organizaciones.altaDias">{es['organizaciones.altaDias']}</span><input id="review-alta" type="number" min="1" max="365" required /></label>
+          <label class="field"><span data-i18n="organizaciones.mediaDias">{es['organizaciones.mediaDias']}</span><input id="review-media" type="number" min="1" max="365" required /></label>
+          <label class="field"><span data-i18n="organizaciones.bajaDias">{es['organizaciones.bajaDias']}</span><input id="review-baja" type="number" min="1" max="365" required /></label>
+          <label class="field"><span data-i18n="organizaciones.reAuditarCadaDias">{es['organizaciones.reAuditarCadaDias']}</span><input id="review-reaudit" type="number" min="1" max="365" required /></label>
+          <label class="field"><span data-i18n="organizaciones.configuracionViejaDias">{es['organizaciones.configuracionViejaDias']}</span><input id="review-config" type="number" min="1" max="365" required /></label>
         </div>
-        <p class="technical-hint">
-          Un hallazgo pendiente vence cuando pasan los días de su severidad desde que se detectó. La revisión diaria
-          avisa por correo los vencidos y los equipos sin configuración nueva, una sola vez cada uno.
-        </p>
+        <p class="technical-hint" data-i18n="organizaciones.hallazgoPendienteVenceCuando">{es['organizaciones.hallazgoPendienteVenceCuando']}</p>
         <label class="role-check review-auto">
           <input id="review-auto" type="checkbox" />
-          <strong>Re-auditar automáticamente</strong>
-          <small>Vuelve a auditar la última configuración de los equipos cuya última auditoría superó el plazo.</small>
+          <strong data-i18n="organizaciones.reAuditarAutomaticamente">{es['organizaciones.reAuditarAutomaticamente']}</strong>
+          <small data-i18n="organizaciones.vuelveAuditarUltimaConfiguracion">{es['organizaciones.vuelveAuditarUltimaConfiguracion']}</small>
         </label>
       </fieldset>
       <div id="review-error" class="alert alert-error is-hidden"></div>
       <div class="review-actions">
         <button id="review-submit" class="button button-primary button-small" type="submit" disabled
-          data-roles="ADMINISTRADOR_SISTEMA,ADMINISTRADOR_ORGANIZACION">Guardar plazos</button>
+          data-roles="ADMINISTRADOR_SISTEMA,ADMINISTRADOR_ORGANIZACION" data-i18n="organizaciones.guardarPlazos">{es['organizaciones.guardarPlazos']}</button>
       </div>
     </form>
   </section>
@@ -110,48 +99,48 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <form id="organization-form" class="device-form">
       <div class="dialog-header">
         <div>
-          <span class="eyebrow" id="organization-dialog-eyebrow">Alta de organización</span>
-          <h2 id="organization-dialog-title">Registrar organización</h2>
-          <p id="organization-dialog-help">Incorporá un cliente a la plataforma.</p>
+          <span class="eyebrow" id="organization-dialog-eyebrow" data-i18n="organizaciones.altaOrganizacion">{es['organizaciones.altaOrganizacion']}</span>
+          <h2 id="organization-dialog-title" data-i18n="organizaciones.registrarOrganizacion">{es['organizaciones.registrarOrganizacion']}</h2>
+          <p id="organization-dialog-help" data-i18n="organizaciones.incorporaClientePlataforma">{es['organizaciones.incorporaClientePlataforma']}</p>
         </div>
-        <button class="dialog-close" type="button" data-close-dialog aria-label="Cerrar">×</button>
+        <button class="dialog-close" type="button" data-close-dialog aria-label={es['general.cerrar']} data-i18n-aria-label="general.cerrar">×</button>
       </div>
 
       <div class="device-form-grid">
         <label class="field">
-          <span>identificador *</span>
-          <input id="organization-identifier" type="text" maxlength="80" placeholder="CLIENTE-NORTE" required />
+          <span data-i18n="organizaciones.identificadorObligatorio">{es['organizaciones.identificadorObligatorio']}</span>
+          <input id="organization-identifier" type="text" maxlength="80" placeholder={es['organizaciones.colClienteNorte']} data-i18n-placeholder="organizaciones.colClienteNorte" required />
         </label>
         <label class="field">
-          <span>razón social *</span>
-          <input id="organization-name" type="text" maxlength="160" placeholder="Cliente Norte SA" required />
+          <span data-i18n="organizaciones.razonSocialObligatorio">{es['organizaciones.razonSocialObligatorio']}</span>
+          <input id="organization-name" type="text" maxlength="160" placeholder={es['organizaciones.clienteNorteSa']} data-i18n-placeholder="organizaciones.clienteNorteSa" required />
         </label>
         <label class="field" data-plan-choice>
-          <span>plan inicial *</span>
+          <span data-i18n="organizaciones.planInicialObligatorio">{es['organizaciones.planInicialObligatorio']}</span>
           <select id="organization-plan" class="form-select" data-plan-select></select>
         </label>
         <label class="field" data-plan-trial>
-          <span>días de prueba (60 a 90)</span>
+          <span data-i18n="organizaciones.diasPrueba">{es['organizaciones.diasPrueba']}</span>
           <input id="organization-trial-days" type="number" min="60" max="90" value="90" data-plan-days />
         </label>
         <label class="field" data-plan-custom>
-          <span>dispositivos acordados *</span>
+          <span data-i18n="organizaciones.dispositivosAcordadosObligatorio">{es['organizaciones.dispositivosAcordadosObligatorio']}</span>
           <input id="organization-limit-devices" type="number" min="1" data-plan-devices />
         </label>
         <label class="field" data-plan-custom>
-          <span>usuarios acordados *</span>
+          <span data-i18n="organizaciones.usuariosAcordadosObligatorio">{es['organizaciones.usuariosAcordadosObligatorio']}</span>
           <input id="organization-limit-users" type="number" min="1" data-plan-users />
         </label>
         <div class="device-form-context field-span-2">
-          <code id="organization-dialog-state">estado = ACTIVO</code>
-          <span>El identificador se guarda en mayúsculas y debe ser único, igual que la razón social.</span>
+          <code id="organization-dialog-state" data-i18n="organizaciones.estadoInicial">{es['organizaciones.estadoInicial']}</code>
+          <span data-i18n="organizaciones.identificadorGuardaMayusculasDebe">{es['organizaciones.identificadorGuardaMayusculasDebe']}</span>
         </div>
       </div>
 
       <div id="organization-form-error" class="alert alert-error is-hidden"></div>
       <div class="dialog-actions">
-        <button class="button button-ghost" type="button" data-close-dialog>Cancelar</button>
-        <button id="organization-submit" class="button button-primary" type="submit">Registrar organización</button>
+        <button class="button button-ghost" type="button" data-close-dialog data-i18n="general.cancelar">{es['general.cancelar']}</button>
+        <button id="organization-submit" class="button button-primary" type="submit" data-i18n="organizaciones.registrarOrganizacion">{es['organizaciones.registrarOrganizacion']}</button>
       </div>
     </form>
   </dialog>
@@ -160,34 +149,34 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <form id="plan-form" class="device-form" novalidate>
       <div class="dialog-header">
         <div>
-          <span class="eyebrow">Plan</span>
-          <h2 id="plan-dialog-title">Cambiar plan</h2>
-          <p>Se aplica en el acto. Si la organización usa más dispositivos o usuarios que el plan nuevo, el cambio se rechaza.</p>
+          <span class="eyebrow" data-i18n="organizaciones.plan">{es['organizaciones.plan']}</span>
+          <h2 id="plan-dialog-title" data-i18n="organizaciones.cambiarPlan">{es['organizaciones.cambiarPlan']}</h2>
+          <p data-i18n="organizaciones.aplicaActoSiOrganizacion">{es['organizaciones.aplicaActoSiOrganizacion']}</p>
         </div>
-        <button class="dialog-close" type="button" data-close-dialog aria-label="Cerrar">×</button>
+        <button class="dialog-close" type="button" data-close-dialog aria-label={es['general.cerrar']} data-i18n-aria-label="general.cerrar">×</button>
       </div>
       <div class="device-form-grid">
         <label class="field field-span-2">
-          <span>plan *</span>
+          <span data-i18n="organizaciones.planObligatorio">{es['organizaciones.planObligatorio']}</span>
           <select id="plan-code" class="form-select" data-plan-select></select>
         </label>
         <label class="field" data-plan-trial>
-          <span>días de prueba (60 a 90)</span>
+          <span data-i18n="organizaciones.diasPrueba">{es['organizaciones.diasPrueba']}</span>
           <input id="plan-trial-days" type="number" min="60" max="90" value="90" data-plan-days />
         </label>
         <label class="field" data-plan-custom>
-          <span>dispositivos acordados *</span>
+          <span data-i18n="organizaciones.dispositivosAcordadosObligatorio">{es['organizaciones.dispositivosAcordadosObligatorio']}</span>
           <input id="plan-limit-devices" type="number" min="1" data-plan-devices />
         </label>
         <label class="field" data-plan-custom>
-          <span>usuarios acordados *</span>
+          <span data-i18n="organizaciones.usuariosAcordadosObligatorio">{es['organizaciones.usuariosAcordadosObligatorio']}</span>
           <input id="plan-limit-users" type="number" min="1" data-plan-users />
         </label>
       </div>
       <div id="plan-form-error" class="alert alert-error is-hidden"></div>
       <div class="dialog-actions">
-        <button class="button button-ghost" type="button" data-close-dialog>Cancelar</button>
-        <button class="button button-primary" type="submit">Aplicar plan</button>
+        <button class="button button-ghost" type="button" data-close-dialog data-i18n="general.cancelar">{es['general.cancelar']}</button>
+        <button class="button button-primary" type="submit" data-i18n="organizaciones.aplicarPlan">{es['organizaciones.aplicarPlan']}</button>
       </div>
     </form>
   </dialog>
@@ -196,28 +185,28 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <form id="site-form" class="device-form">
       <div class="dialog-header">
         <div>
-          <span class="eyebrow" id="site-dialog-eyebrow">Alta de sede</span>
-          <h2 id="site-dialog-title">Registrar sede</h2>
-          <p id="site-dialog-context">Sede de la organización seleccionada.</p>
+          <span class="eyebrow" id="site-dialog-eyebrow" data-i18n="organizaciones.altaSede">{es['organizaciones.altaSede']}</span>
+          <h2 id="site-dialog-title" data-i18n="organizaciones.registrarSede">{es['organizaciones.registrarSede']}</h2>
+          <p id="site-dialog-context" data-i18n="organizaciones.sedeOrganizacionSeleccionada">{es['organizaciones.sedeOrganizacionSeleccionada']}</p>
         </div>
-        <button class="dialog-close" type="button" data-close-dialog aria-label="Cerrar">×</button>
+        <button class="dialog-close" type="button" data-close-dialog aria-label={es['general.cerrar']} data-i18n-aria-label="general.cerrar">×</button>
       </div>
 
       <div class="device-form-grid">
         <label class="field">
-          <span>nombre *</span>
-          <input id="site-name" type="text" maxlength="120" placeholder="Sede Central" required />
+          <span data-i18n="general.nombreObligatorio">{es['general.nombreObligatorio']}</span>
+          <input id="site-name" type="text" maxlength="120" placeholder={es['organizaciones.sedeCentral']} data-i18n-placeholder="organizaciones.sedeCentral" required />
         </label>
         <label class="field">
-          <span>ubicación *</span>
-          <input id="site-location" type="text" maxlength="200" placeholder="Av. Siempre Viva 123, CABA" required />
+          <span data-i18n="organizaciones.ubicacionObligatorio">{es['organizaciones.ubicacionObligatorio']}</span>
+          <input id="site-location" type="text" maxlength="200" placeholder={es['organizaciones.avSiempreVivaCaba']} data-i18n-placeholder="organizaciones.avSiempreVivaCaba" required />
         </label>
       </div>
 
       <div id="site-form-error" class="alert alert-error is-hidden"></div>
       <div class="dialog-actions">
-        <button class="button button-ghost" type="button" data-close-dialog>Cancelar</button>
-        <button id="site-submit" class="button button-primary" type="submit">Registrar sede</button>
+        <button class="button button-ghost" type="button" data-close-dialog data-i18n="general.cancelar">{es['general.cancelar']}</button>
+        <button id="site-submit" class="button button-primary" type="submit" data-i18n="organizaciones.registrarSede">{es['organizaciones.registrarSede']}</button>
       </div>
     </form>
   </dialog>
@@ -226,14 +215,14 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <form method="dialog" class="device-form">
       <div class="dialog-header">
         <div>
-          <span class="eyebrow">Confirmar</span>
-          <h2 id="org-confirm-title">¿Confirmás la operación?</h2>
+          <span class="eyebrow" data-i18n="general.confirmar">{es['general.confirmar']}</span>
+          <h2 id="org-confirm-title" data-i18n="general.confirmasOperacion">{es['general.confirmasOperacion']}</h2>
           <p id="org-confirm-text"></p>
         </div>
       </div>
       <div class="dialog-actions">
-        <button class="button button-ghost" value="cancel">Cancelar</button>
-        <button id="org-confirm-accept" class="button button-primary" value="ok">Confirmar</button>
+        <button class="button button-ghost" value="cancel" data-i18n="general.cancelar">{es['general.cancelar']}</button>
+        <button id="org-confirm-accept" class="button button-primary" value="ok" data-i18n="general.confirmar">{es['general.confirmar']}</button>
       </div>
     </form>
   </dialog>
@@ -241,7 +230,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
   <script>
     import { auditFetch, authFetch, hasRole } from '../lib/auth';
     import { jsonRequest, readApiError, type Organization, type OrganizationPlan, type Plan, type ReviewPolicy, type Site } from '../lib/api';
-    import { escapeHtml, formatDate } from '../lib/format';
+    import { escapeHtml, formatDate, recordStatusCode } from '../lib/format';
+    import { t } from '../lib/i18n';
     import { formatDay, formatPrice, isCustomPlan, limitsText, isTrialPlan, requestStatusBadge, usageRow, validityText } from '../lib/plans';
 
     const orgList = document.querySelector<HTMLDivElement>('#organization-list');
@@ -313,7 +303,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
       const status = document.createElement('span');
       status.className = `status-badge ${statusClass(site.estado)}`;
-      status.textContent = site.estado.toLowerCase();
+      status.textContent = recordStatusCode(site.estado).toLowerCase();
 
       const side = document.createElement('div');
       side.className = 'inline-actions';
@@ -322,12 +312,12 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         const edit = document.createElement('button');
         edit.type = 'button';
         edit.className = 'button button-ghost button-small';
-        edit.textContent = 'Editar';
+        edit.textContent = t('general.editar');
         edit.addEventListener('click', () => openSiteDialog(site));
         const toggle = document.createElement('button');
         toggle.type = 'button';
         toggle.className = 'button button-ghost button-small';
-        toggle.textContent = site.estado === 'ACTIVO' ? 'Deshabilitar' : 'Habilitar';
+        toggle.textContent = t(site.estado === 'ACTIVO' ? 'organizaciones.deshabilitar' : 'organizaciones.habilitar');
         toggle.addEventListener('click', () => void toggleSite(site));
         side.append(edit, toggle);
       }
@@ -344,7 +334,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       if (edit) edit.disabled = false;
       if (toggle) {
         toggle.disabled = false;
-        toggle.textContent = active ? 'Deshabilitar' : 'Habilitar';
+        toggle.textContent = t(active ? 'organizaciones.deshabilitar' : 'organizaciones.habilitar');
       }
       document.querySelector('#organization-disabled-note')?.classList.toggle('is-hidden', active);
     }
@@ -400,12 +390,16 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       summary.innerHTML = `
         <div class="plan-summary-head">
           <h3>${escapeHtml(currentPlan.plan.nombre)}</h3>
-          <code>${escapeHtml(formatPrice(currentPlan.plan))} · desde ${escapeHtml(formatDay(currentPlan.desde))}</code>
+          <code>${escapeHtml(formatPrice(currentPlan.plan))} · ${escapeHtml(t('organizaciones.planDesde', { fecha: formatDay(currentPlan.desde) }))}</code>
         </div>
         <p class="plan-validity ${currentPlan.vencido ? 'is-expired' : ''}">${escapeHtml(validityText(currentPlan))}</p>
-        ${usageRow('Dispositivos activos', currentPlan.dispositivosActivos, currentPlan.maxDispositivos)}
-        ${usageRow('Usuarios activos', currentPlan.usuariosActivos, currentPlan.maxUsuarios)}
-        ${pending ? `<p class="log-muted">Solicitud ${requestStatusBadge(pending.estado)} de cambio a <strong>${escapeHtml(catalog.find((plan) => plan.codigo === pending.planSolicitado)?.nombre ?? pending.planSolicitado)}</strong> (${escapeHtml(pending.solicitadoPor)}).${isAdmin ? ' <a class="inline-link" href="/plans">resolver →</a>' : ''}</p>` : ''}`;
+        ${usageRow(t('planes.dispositivosActivos'), currentPlan.dispositivosActivos, currentPlan.maxDispositivos)}
+        ${usageRow(t('planes.usuariosActivos'), currentPlan.usuariosActivos, currentPlan.maxUsuarios)}
+        ${pending ? `<p class="log-muted">${t('organizaciones.solicitudPendiente', {
+          estado: requestStatusBadge(pending.estado),
+          plan: `<strong>${escapeHtml(catalog.find((plan) => plan.codigo === pending.planSolicitado)?.nombre ?? pending.planSolicitado)}</strong>`,
+          usuario: escapeHtml(pending.solicitadoPor),
+        })}${isAdmin ? ` <a class="inline-link" href="/plans">${escapeHtml(t('organizaciones.resolver'))}</a>` : ''}</p>` : ''}`;
       if (changeButton) changeButton.disabled = false;
     }
 
@@ -431,7 +425,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       if (updated) {
         updated.textContent = policy.modificadaEn
           ? `${formatDate(policy.modificadaEn)} · ${policy.modificadaPor ?? ''}`
-          : 'valores por defecto';
+          : t('organizaciones.valoresDefecto');
       }
     }
 
@@ -458,7 +452,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       for (const [key, selector] of Object.entries(reviewInputs)) {
         const value = Number(document.querySelector<HTMLInputElement>(selector)!.value);
         if (!Number.isInteger(value) || value < 1 || value > 365) {
-          return showFormError('#review-error', 'Cada plazo debe ser un número de días entre 1 y 365.');
+          return showFormError('#review-error', t('organizaciones.plazoInvalido'));
         }
         payload[key] = value;
       }
@@ -466,7 +460,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         jsonRequest('PUT', payload));
       if (!response.ok) return showFormError('#review-error', await readApiError(response));
       renderReview(await response.json() as ReviewPolicy);
-      showMessage(`Plazos de revisión de ${organization.razonSocial} guardados.`);
+      showMessage(t('organizaciones.plazosGuardados', { organizacion: organization.razonSocial }));
     });
 
     async function loadSites(organization: Organization): Promise<void> {
@@ -501,7 +495,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       if (sites.length === 0) {
         siteList.className = 'data-list empty-state';
         const empty = document.createElement('p');
-        empty.textContent = 'Esta organización todavía no tiene sedes registradas.';
+        empty.textContent = t('organizaciones.sinSedes');
         siteList.appendChild(empty);
         return;
       }
@@ -526,7 +520,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
       const status = document.createElement('span');
       status.className = `status-badge ${statusClass(organization.estado)}`;
-      status.textContent = organization.estado.toLowerCase();
+      status.textContent = recordStatusCode(organization.estado).toLowerCase();
       button.append(copy, status);
 
       button.addEventListener('click', () => {
@@ -569,13 +563,11 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         const node = document.querySelector(selector);
         if (node) node.textContent = value;
       };
-      text('#organization-dialog-eyebrow', organization ? 'Modificar organización' : 'Alta de organización');
-      text('#organization-dialog-title', organization ? organization.razonSocial : 'Registrar organización');
-      text('#organization-dialog-help', organization
-        ? 'El identificador y la razón social siguen siendo únicos en la plataforma.'
-        : 'Incorporá un cliente a la plataforma.');
-      text('#organization-dialog-state', `estado = ${organization?.estado ?? 'ACTIVO'}`);
-      text('#organization-submit', organization ? 'Guardar cambios' : 'Registrar organización');
+      text('#organization-dialog-eyebrow', t(organization ? 'organizaciones.modificarOrganizacion' : 'organizaciones.altaOrganizacion'));
+      text('#organization-dialog-title', organization ? organization.razonSocial : t('organizaciones.registrarOrganizacion'));
+      text('#organization-dialog-help', t(organization ? 'organizaciones.siguenUnicos' : 'organizaciones.incorporaClientePlataforma'));
+      text('#organization-dialog-state', t('organizaciones.estadoCodigo', { estado: recordStatusCode(organization?.estado ?? 'ACTIVO') }));
+      text('#organization-submit', t(organization ? 'general.guardarCambios' : 'organizaciones.registrarOrganizacion'));
       if (organization) {
         document.querySelector<HTMLInputElement>('#organization-identifier')!.value = organization.identificador;
         document.querySelector<HTMLInputElement>('#organization-name')!.value = organization.razonSocial;
@@ -595,12 +587,11 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         const node = document.querySelector(selector);
         if (node) node.textContent = value;
       };
-      text('#site-dialog-eyebrow', site ? 'Modificar sede' : 'Alta de sede');
-      text('#site-dialog-title', site ? site.nombre : 'Registrar sede');
-      text('#site-dialog-context', site
-        ? `Sede de ${selectedOrganization.razonSocial}. El nombre sigue siendo único dentro de la organización.`
-        : `Nueva sede de ${selectedOrganization.razonSocial}.`);
-      text('#site-submit', site ? 'Guardar cambios' : 'Registrar sede');
+      text('#site-dialog-eyebrow', t(site ? 'organizaciones.modificarSede' : 'organizaciones.altaSede'));
+      text('#site-dialog-title', site ? site.nombre : t('organizaciones.registrarSede'));
+      text('#site-dialog-context', t(site ? 'organizaciones.sedeDe' : 'organizaciones.nuevaSedeDe',
+        { organizacion: selectedOrganization.razonSocial }));
+      text('#site-submit', t(site ? 'general.guardarCambios' : 'organizaciones.registrarSede'));
       if (site) {
         document.querySelector<HTMLInputElement>('#site-name')!.value = site.nombre;
         document.querySelector<HTMLInputElement>('#site-location')!.value = site.ubicacion;
@@ -612,15 +603,13 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       if (!selectedOrganization) return;
       const disable = site.estado === 'ACTIVO';
       const accepted = await confirmAction(
-        disable ? `Deshabilitar la sede ${site.nombre}` : `Habilitar la sede ${site.nombre}`,
-        disable
-          ? 'No se le podrán asignar dispositivos nuevos. Los dispositivos que ya tiene conservan su historial.'
-          : 'Vuelve a estar disponible para asignar dispositivos.',
-        disable ? 'Deshabilitar' : 'Habilitar');
+        t(disable ? 'organizaciones.deshabilitarSede' : 'organizaciones.habilitarSede', { sede: site.nombre }),
+        t(disable ? 'organizaciones.deshabilitarSedeAyuda' : 'organizaciones.habilitarSedeAyuda'),
+        t(disable ? 'organizaciones.deshabilitar' : 'organizaciones.habilitar'));
       if (!accepted) return;
       const response = await authFetch(`/api/sites/${site.id}/status`, jsonRequest('PATCH', { estado: disable ? 'DESHABILITADO' : 'ACTIVO' }));
       if (!response.ok) return showError(await readApiError(response));
-      showMessage(`Sede ${site.nombre} ${disable ? 'deshabilitada' : 'habilitada'}.`);
+      showMessage(t(disable ? 'organizaciones.sedeDeshabilitada' : 'organizaciones.sedeHabilitada', { sede: site.nombre }));
       await loadSites(selectedOrganization);
     }
 
@@ -635,16 +624,18 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       if (!organization) return;
       const disable = organization.estado === 'ACTIVO';
       const accepted = await confirmAction(
-        disable ? `Deshabilitar ${organization.razonSocial}` : `Habilitar ${organization.razonSocial}`,
+        t(disable ? 'organizaciones.deshabilitarOrganizacion' : 'organizaciones.habilitarOrganizacion',
+          { organizacion: organization.razonSocial }),
         disable
-          ? `Sus usuarios no van a poder ingresar y las sesiones abiertas se cierran en el acto. Sus ${currentSites.length} sedes, dispositivos, auditorías y reportes se conservan.`
-          : 'Sus usuarios activos vuelven a poder ingresar.',
-        disable ? 'Deshabilitar' : 'Habilitar');
+          ? t('organizaciones.deshabilitarOrganizacionAyuda', { sedes: currentSites.length })
+          : t('organizaciones.habilitarOrganizacionAyuda'),
+        t(disable ? 'organizaciones.deshabilitar' : 'organizaciones.habilitar'));
       if (!accepted) return;
       const response = await authFetch(`/api/client-organizations/${organization.id}/status`,
         jsonRequest('PATCH', { estado: disable ? 'DESHABILITADO' : 'ACTIVO' }));
       if (!response.ok) return showError(await readApiError(response));
-      showMessage(`Organización ${organization.razonSocial} ${disable ? 'deshabilitada' : 'habilitada'}.`);
+      showMessage(t(disable ? 'organizaciones.organizacionDeshabilitada' : 'organizaciones.organizacionHabilitada',
+        { organizacion: organization.razonSocial }));
       await loadOrganizations(organization.id);
     });
 
@@ -666,8 +657,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const saved = await response.json() as Organization;
       organizationDialog?.close();
       showMessage(editingOrganization
-        ? `Organización ${saved.razonSocial} actualizada.`
-        : `Organización ${saved.razonSocial} registrada correctamente.`);
+        ? t('organizaciones.organizacionActualizada', { organizacion: saved.razonSocial })
+        : t('organizaciones.organizacionRegistrada', { organizacion: saved.razonSocial }));
       await loadOrganizations(saved.id);
     });
 
@@ -690,8 +681,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const saved = await response.json() as Site;
       siteDialog?.close();
       showMessage(editingSite
-        ? `Sede ${saved.nombre} actualizada.`
-        : `Sede ${saved.nombre} registrada en ${organization.razonSocial}.`);
+        ? t('organizaciones.sedeActualizada', { sede: saved.nombre })
+        : t('organizaciones.sedeRegistrada', { sede: saved.nombre, organizacion: organization.razonSocial }));
       await loadSites(organization);
     });
 
@@ -706,7 +697,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const form = document.querySelector<HTMLFormElement>('#plan-form')!;
       form.reset();
       showFormError('#plan-form-error', null);
-      document.querySelector('#plan-dialog-title')!.textContent = `Plan de ${selectedOrganization.razonSocial}`;
+      document.querySelector('#plan-dialog-title')!.textContent = t('organizaciones.planDe', { organizacion: selectedOrganization.razonSocial });
       fillPlanSelect(document.querySelector('#plan-code'), currentPlan.plan.codigo);
       if (isCustomPlan(currentPlan.plan)) {
         document.querySelector<HTMLInputElement>('#plan-limit-devices')!.value = String(currentPlan.maxDispositivos ?? '');
@@ -726,7 +717,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       if (!response.ok) return showFormError('#plan-form-error', await readApiError(response));
       planDialog?.close();
       const updated = await response.json() as OrganizationPlan;
-      showMessage(`${organization.razonSocial} pasó al plan ${updated.plan.nombre}.`);
+      showMessage(t('organizaciones.planAplicado', { organizacion: organization.razonSocial, plan: updated.plan.nombre }));
       await loadPlan(organization);
     });
 
@@ -737,6 +728,6 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
     loadCatalog()
       .then(() => loadOrganizations())
-      .catch(() => showError('No se pudo cargar la información de organizaciones y sedes.'));
+      .catch(() => showError(t('organizaciones.errorCargar')));
   </script>
 </MasterLayout>

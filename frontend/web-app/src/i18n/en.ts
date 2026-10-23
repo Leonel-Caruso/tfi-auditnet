@@ -1,7 +1,8 @@
-// Console texts in English (same keys as es.ts).
-import type { Clave } from './es';
+// Common console texts in English (same keys as es.ts).
+import type es from './es';
+import type { Textos } from './tipos';
 
-const en: Record<Clave, string> = {
+const en: Textos<typeof es> = {
   'idioma.es': 'Español',
   'idioma.en': 'English',
   'idioma.pt': 'Português',
@@ -20,6 +21,8 @@ const en: Record<Clave, string> = {
   'error.http': 'HTTP error {estado}.',
   'error.conexionAcceso': 'Could not connect to the access service. Check management-service on port 8081.',
   'error.conexionApi': 'Could not connect to the API. Check that the backend services are running.',
+  'error.sinSesion': 'There is no active session.',
+  'error.sesionVencida': 'The session expired.',
 
   'contrasena.largo': 'between 10 and 72 characters',
   'contrasena.mezcla': 'combines letters and numbers',

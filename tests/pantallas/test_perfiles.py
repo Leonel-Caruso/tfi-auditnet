@@ -63,6 +63,8 @@ def test_cancelar_y_pedir_un_plan(abrir, entorno):
     pagina.wait_for_selector("#plan-message:not(.is-hidden)")
     assert _pedidos(entorno, "POST", "/api/client-organizations/2/plan-requests/2/cancel")
 
+    # La simulación sigue informando la solicitud pendiente: se espera a que la pantalla termine de recargar.
+    pagina.wait_for_load_state("networkidle")
     pagina.evaluate("document.querySelector('#request-open').disabled = false")
     pagina.click("#request-open")
     opciones = pagina.locator("#request-plan option").evaluate_all("(nodos) => nodos.map((n) => n.value)")

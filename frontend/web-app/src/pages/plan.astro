@@ -1,11 +1,11 @@
 ---
+import { es } from '../i18n';
 import MasterLayout from '../layouts/MasterLayout.astro';
 ---
 
 <MasterLayout
-  title="Mi plan"
-  section="Organización"
-  description="Plan contratado, cuánto se usa y pedidos de cambio. El administrador del sistema aprueba los cambios."
+  title={es['plan.titulo']} section={es['plan.seccion']} description={es['plan.descripcion']}
+  i18n="plan"
 >
   <div id="plan-error" class="alert alert-error is-hidden" role="alert"></div>
   <div id="plan-message" class="alert alert-success is-hidden" role="status"></div>
@@ -15,7 +15,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <article class="panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Plan actual</span>
+          <span class="eyebrow" data-i18n="plan.planActual">{es['plan.planActual']}</span>
           <h2 id="plan-name">—</h2>
         </div>
         <code id="plan-price" class="counter-chip">—</code>
@@ -26,11 +26,11 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <article class="panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Cambio de plan</span>
-          <h2>Solicitud</h2>
+          <span class="eyebrow" data-i18n="plan.cambioPlan">{es['plan.cambioPlan']}</span>
+          <h2 data-i18n="plan.solicitud">{es['plan.solicitud']}</h2>
         </div>
         <button id="request-open" class="button button-primary button-small" type="button" disabled
-          data-roles="ADMINISTRADOR_ORGANIZACION">Solicitar cambio</button>
+          data-roles="ADMINISTRADOR_ORGANIZACION" data-i18n="plan.solicitarCambio">{es['plan.solicitarCambio']}</button>
       </div>
       <div id="plan-pending"><div class="skeleton-row"></div></div>
     </article>
@@ -39,26 +39,24 @@ import MasterLayout from '../layouts/MasterLayout.astro';
   <section class="panel">
     <div class="panel-heading">
       <div>
-        <span class="eyebrow">Catálogo</span>
-        <h2>Planes disponibles</h2>
+        <span class="eyebrow" data-i18n="plan.catalogo">{es['plan.catalogo']}</span>
+        <h2 data-i18n="plan.planesDisponibles">{es['plan.planesDisponibles']}</h2>
       </div>
     </div>
     <div id="plan-catalog" class="plan-catalog"><div class="skeleton-row"></div></div>
-    <p class="log-muted" style="margin-top: 12px;">
-      Precios de referencia por mes. La plataforma no cobra: el equipo comercial confirma las condiciones al aprobar.
-    </p>
+    <p class="log-muted" style="margin-top: 12px;" data-i18n="plan.preciosReferenciaMesPlataforma">{es['plan.preciosReferenciaMesPlataforma']}</p>
   </section>
 
   <section class="panel">
     <div class="panel-heading">
       <div>
-        <span class="eyebrow">Historial</span>
-        <h2>Solicitudes anteriores</h2>
+        <span class="eyebrow" data-i18n="plan.historial">{es['plan.historial']}</span>
+        <h2 data-i18n="plan.solicitudesAnteriores">{es['plan.solicitudesAnteriores']}</h2>
       </div>
     </div>
     <ul id="plan-history" class="request-list"></ul>
     <div id="plan-history-empty" class="empty-state compact-empty is-hidden">
-      <div><code>0 solicitudes</code><p>Todavía no se pidió ningún cambio de plan.</p></div>
+      <div><code data-i18n="plan.ceroSolicitudes">{es['plan.ceroSolicitudes']}</code><p data-i18n="plan.todaviaPidioNingunCambio">{es['plan.todaviaPidioNingunCambio']}</p></div>
     </div>
   </section>
 
@@ -66,30 +64,30 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <form id="request-form" class="device-form" novalidate>
       <div class="dialog-header">
         <div>
-          <span class="eyebrow">Cambio de plan</span>
-          <h2>Solicitar otro plan</h2>
-          <p>El administrador del sistema la revisa y te responde. Hasta entonces sigue vigente el plan actual.</p>
+          <span class="eyebrow" data-i18n="plan.cambioPlan">{es['plan.cambioPlan']}</span>
+          <h2 data-i18n="plan.solicitarOtroPlan">{es['plan.solicitarOtroPlan']}</h2>
+          <p data-i18n="plan.administradorSistemaRevisaTe">{es['plan.administradorSistemaRevisaTe']}</p>
         </div>
-        <button class="dialog-close" type="button" data-close-dialog aria-label="Cerrar">×</button>
+        <button class="dialog-close" type="button" data-close-dialog aria-label={es['general.cerrar']} data-i18n-aria-label="general.cerrar">×</button>
       </div>
       <label class="field">
-        <span>plan *</span>
+        <span data-i18n="plan.planPedido">{es['plan.planPedido']}</span>
         <select id="request-plan" class="form-select"></select>
       </label>
       <p id="request-conditions" class="log-muted" style="margin: -6px 0 14px;"></p>
       <fieldset class="radio-row">
-        <legend class="log-muted">modalidad</legend>
-        <label><input type="radio" name="modalidad" value="MENSUAL" checked /> mensual</label>
-        <label><input type="radio" name="modalidad" value="ANUAL" /> anual</label>
+        <legend class="log-muted" data-i18n="plan.modalidad">{es['plan.modalidad']}</legend>
+        <label><input type="radio" name="modalidad" value="MENSUAL" checked /> <span data-i18n="modalidad.MENSUAL">{es['modalidad.MENSUAL']}</span></label>
+        <label><input type="radio" name="modalidad" value="ANUAL" /> <span data-i18n="modalidad.ANUAL">{es['modalidad.ANUAL']}</span></label>
       </fieldset>
       <label class="field">
-        <span>comentario</span>
-        <textarea id="request-comment" rows="3" maxlength="500" placeholder="Ej.: sumamos dos sedes el mes próximo"></textarea>
+        <span data-i18n="plan.comentario">{es['plan.comentario']}</span>
+        <textarea id="request-comment" rows="3" maxlength="500" placeholder={es['plan.ejSumamosDosSedes']} data-i18n-placeholder="plan.ejSumamosDosSedes"></textarea>
       </label>
       <div id="request-form-error" class="alert alert-error is-hidden"></div>
       <div class="dialog-actions">
-        <button class="button button-ghost" type="button" data-close-dialog>Cancelar</button>
-        <button class="button button-primary" type="submit">Enviar solicitud</button>
+        <button class="button button-ghost" type="button" data-close-dialog data-i18n="general.cancelar">{es['general.cancelar']}</button>
+        <button class="button button-primary" type="submit" data-i18n="plan.enviarSolicitud">{es['plan.enviarSolicitud']}</button>
       </div>
     </form>
   </dialog>
@@ -97,9 +95,10 @@ import MasterLayout from '../layouts/MasterLayout.astro';
   <script>
     import { authFetch, getStoredUser, hasRole } from '../lib/auth';
     import { jsonRequest, readApiError, type OrganizationPlan, type Plan, type PlanRequest } from '../lib/api';
-    import { escapeHtml, formatDate } from '../lib/format';
+    import { escapeHtml } from '../lib/format';
+    import { t } from '../lib/i18n';
     import {
-      formatDay, formatPrice, isCustomPlan, isTrialPlan, limitsText, MODALITY_LABEL, planCard, requestStatusBadge,
+      formatDay, formatPrice, isCustomPlan, isTrialPlan, limitsText, planCard, requestDetail, requestStatusBadge,
       usageRow, validityText,
     } from '../lib/plans';
 
@@ -133,9 +132,9 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       $('#plan-price')!.textContent = formatPrice(current.plan);
       $('#plan-current')!.innerHTML = `
         <p class="plan-validity ${current.vencido ? 'is-expired' : ''}">${escapeHtml(validityText(current))}</p>
-        ${usageRow('Dispositivos activos', current.dispositivosActivos, current.maxDispositivos)}
-        ${usageRow('Usuarios activos', current.usuariosActivos, current.maxUsuarios)}
-        <p class="log-muted">Desde el ${escapeHtml(formatDay(current.desde))}.
+        ${usageRow(t('planes.dispositivosActivos'), current.dispositivosActivos, current.maxDispositivos)}
+        ${usageRow(t('planes.usuariosActivos'), current.usuariosActivos, current.maxUsuarios)}
+        <p class="log-muted">${escapeHtml(t('plan.desdeEl', { fecha: formatDay(current.desde) }))}
           ${current.plan.condiciones ? escapeHtml(current.plan.condiciones) : ''}</p>`;
 
       const expiry = $('#plan-expiry');
@@ -143,8 +142,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         const soon = current.vence && !current.vencido && (current.diasRestantes ?? 0) <= 15;
         expiry.className = `alert ${current.vencido ? 'alert-error' : 'alert-warning'}`;
         expiry.textContent = current.vencido
-          ? 'El período de prueba venció: se pueden consultar los datos, pero no sumar dispositivos ni usuarios, importar configuraciones ni ejecutar auditorías hasta que se apruebe un plan.'
-          : `El período de prueba termina en ${current.diasRestantes} días. Pedí un plan para seguir operando sin interrupciones.`;
+          ? t('plan.pruebaVencida')
+          : t('plan.pruebaPorVencer', { dias: current.diasRestantes ?? 0 });
         expiry.classList.toggle('is-hidden', !current.vencido && !soon);
       }
 
@@ -152,11 +151,11 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       $('#plan-pending')!.innerHTML = pending
         ? `<ul class="request-list"><li>
             <div><strong>${escapeHtml(planName(pending.planActual))} → ${escapeHtml(planName(pending.planSolicitado))}</strong>${requestStatusBadge(pending.estado)}</div>
-            <small>${escapeHtml(MODALITY_LABEL[pending.modalidad])} · pedida por ${escapeHtml(pending.solicitadoPor)} el ${escapeHtml(formatDate(pending.fechaSolicitud))}</small>
+            <small>${escapeHtml(requestDetail(pending))}</small>
             ${pending.comentario ? `<p>${escapeHtml(pending.comentario)}</p>` : ''}
-            ${canRequest ? `<div><button class="button button-ghost button-small" type="button" data-cancel="${pending.id}">Cancelar solicitud</button></div>` : ''}
+            ${canRequest ? `<div><button class="button button-ghost button-small" type="button" data-cancel="${pending.id}">${escapeHtml(t('plan.cancelarSolicitud'))}</button></div>` : ''}
           </li></ul>`
-        : `<p class="log-muted">No hay solicitudes pendientes.${canRequest ? ' Si necesitás más dispositivos o usuarios, pedí otro plan.' : ''}</p>`;
+        : `<p class="log-muted">${escapeHtml(t('plan.sinPendientes'))}${canRequest ? ` ${escapeHtml(t('plan.pediOtroPlan'))}` : ''}</p>`;
       const open = $<HTMLButtonElement>('#request-open');
       if (open) open.disabled = Boolean(pending) || requestable().length === 0;
     };
@@ -170,14 +169,14 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       $('#plan-history')!.innerHTML = done.map((request) => `
         <li>
           <div><strong>${escapeHtml(planName(request.planActual))} → ${escapeHtml(planName(request.planSolicitado))}</strong>${requestStatusBadge(request.estado)}</div>
-          <small>${escapeHtml(MODALITY_LABEL[request.modalidad])} · pedida por ${escapeHtml(request.solicitadoPor)} el ${escapeHtml(formatDate(request.fechaSolicitud))}${request.resueltoPor ? ` · resuelta por ${escapeHtml(request.resueltoPor)} el ${escapeHtml(formatDate(request.fechaResolucion))}` : ''}</small>
+          <small>${escapeHtml(requestDetail(request))}</small>
           ${request.respuesta ? `<p>${escapeHtml(request.respuesta)}</p>` : ''}
         </li>`).join('');
       $('#plan-history-empty')?.classList.toggle('is-hidden', done.length > 0);
     };
 
     const load = async () => {
-      if (!organizationId) return show('#plan-error', 'Tu usuario no tiene una organización asociada.');
+      if (!organizationId) return show('#plan-error', t('tablero.sinOrganizacion'));
       const [catalogResponse, planResponse] = await Promise.all([
         authFetch('/api/plans'),
         authFetch(`/api/client-organizations/${organizationId}/plan`),
@@ -219,7 +218,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const response = await authFetch(`/api/client-organizations/${organizationId}/plan-requests`, jsonRequest('POST', payload));
       if (!response.ok) return show('#request-form-error', await readApiError(response));
       requestDialog?.close();
-      show('#plan-message', 'Solicitud enviada: el administrador del sistema la va a revisar.');
+      show('#plan-message', t('plan.solicitudEnviada'));
       await load();
     });
 
@@ -229,7 +228,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const response = await authFetch(`/api/client-organizations/${organizationId}/plan-requests/${button.dataset.cancel}/cancel`,
         { method: 'POST' });
       if (!response.ok) return show('#plan-error', await readApiError(response));
-      show('#plan-message', 'Solicitud cancelada.');
+      show('#plan-message', t('plan.solicitudCancelada'));
       await load();
     });
 
@@ -237,6 +236,6 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       button.addEventListener('click', () => button.closest('dialog')?.close());
     });
 
-    load().catch((error) => show('#plan-error', error instanceof Error ? error.message : 'No se pudo cargar el plan.'));
+    load().catch((error) => show('#plan-error', error instanceof Error ? error.message : t('plan.errorCargar')));
   </script>
 </MasterLayout>

@@ -1,11 +1,11 @@
 ---
+import { es } from '../i18n';
 import MasterLayout from '../layouts/MasterLayout.astro';
 ---
 
 <MasterLayout
-  title="Alertas críticas"
-  section="Resultados y trazabilidad"
-  description="Alertas por hallazgos de severidad crítica o alta, ordenadas por prioridad. Seleccioná una para ver el hallazgo y derivarla a un perfil técnico."
+  title={es['alertas.titulo']} section={es['alertas.seccion']} description={es['alertas.descripcion']}
+  i18n="alertas"
 >
   <div id="alert-error" class="alert alert-error is-hidden" role="alert"></div>
   <div id="alert-success" class="alert alert-success is-hidden" role="status"></div>
@@ -13,69 +13,69 @@ import MasterLayout from '../layouts/MasterLayout.astro';
   <form id="alert-filters" class="panel compact-panel log-filters" novalidate>
     <div class="log-filter-grid">
       <label class="log-filter">
-        <span>estado</span>
+        <span data-i18n="general.estado">{es['general.estado']}</span>
         <select name="estado" class="technical-select">
-          <option value="VIGENTES">vigentes</option>
-          <option value="ACTIVA">ACTIVA</option>
-          <option value="EN_ATENCION">EN_ATENCION</option>
-          <option value="CERRADA">CERRADA</option>
-          <option value="TODAS">todas</option>
+          <option value="VIGENTES" data-i18n="alertas.vigentes">{es['alertas.vigentes']}</option>
+          <option value="ACTIVA" data-i18n="alerta.ACTIVA">{es['alerta.ACTIVA']}</option>
+          <option value="EN_ATENCION" data-i18n="alerta.EN_ATENCION">{es['alerta.EN_ATENCION']}</option>
+          <option value="CERRADA" data-i18n="alerta.CERRADA">{es['alerta.CERRADA']}</option>
+          <option value="TODAS" data-i18n="general.todas">{es['general.todas']}</option>
         </select>
       </label>
       <label class="log-filter">
-        <span>severidad</span>
+        <span data-i18n="general.severidad">{es['general.severidad']}</span>
         <select name="severidad" class="technical-select">
-          <option value="">todas</option>
-          <option value="CRITICA">CRITICA</option>
-          <option value="ALTA">ALTA</option>
+          <option value="" data-i18n="general.todas">{es['general.todas']}</option>
+          <option value="CRITICA" data-i18n="severidad.CRITICA">{es['severidad.CRITICA']}</option>
+          <option value="ALTA" data-i18n="severidad.ALTA">{es['severidad.ALTA']}</option>
         </select>
       </label>
       <label class="log-filter">
-        <span>criticidad del equipo</span>
+        <span data-i18n="alertas.criticidadEquipo">{es['alertas.criticidadEquipo']}</span>
         <select name="criticidad" class="technical-select">
-          <option value="">todas</option>
-          <option value="CRITICA">CRITICA</option>
-          <option value="ALTA">ALTA</option>
-          <option value="MEDIA">MEDIA</option>
-          <option value="BAJA">BAJA</option>
+          <option value="" data-i18n="general.todas">{es['general.todas']}</option>
+          <option value="CRITICA" data-i18n="severidad.CRITICA">{es['severidad.CRITICA']}</option>
+          <option value="ALTA" data-i18n="severidad.ALTA">{es['severidad.ALTA']}</option>
+          <option value="MEDIA" data-i18n="severidad.MEDIA">{es['severidad.MEDIA']}</option>
+          <option value="BAJA" data-i18n="severidad.BAJA">{es['severidad.BAJA']}</option>
         </select>
       </label>
       <label class="log-filter">
-        <span>dispositivo</span>
-        <select name="dispositivoId" class="technical-select"><option value="">todos</option></select>
+        <span data-i18n="general.dispositivo">{es['general.dispositivo']}</span>
+        <select name="dispositivoId" class="technical-select"><option value="" data-i18n="general.todos">{es['general.todos']}</option></select>
       </label>
       <label class="log-filter">
-        <span>sede</span>
-        <select name="sedeId" class="technical-select"><option value="">todas</option></select>
+        <span data-i18n="general.sede">{es['general.sede']}</span>
+        <select name="sedeId" class="technical-select"><option value="" data-i18n="general.todas">{es['general.todas']}</option></select>
       </label>
     </div>
     <div class="log-filter-actions">
-      <p class="technical-hint alert-hint">Solo alertas internas: no se envían mails ni notificaciones externas.</p>
-      <button type="button" id="alert-clear" class="button button-ghost button-small">Limpiar</button>
-      <button type="submit" class="button button-primary button-small">Consultar</button>
+      <p class="technical-hint alert-hint" data-i18n="alertas.avisoCorreo">{es['alertas.avisoCorreo']}</p>
+      <button type="button" id="alert-clear" class="button button-ghost button-small" data-i18n="general.limpiar">{es['general.limpiar']}</button>
+      <button type="submit" class="button button-primary button-small" data-i18n="general.consultar">{es['general.consultar']}</button>
     </div>
   </form>
 
   <section class="finding-summary-grid">
     <article class="metric-card">
-      <span class="metric-label">vigentes</span>
+      <span class="metric-label" data-i18n="alertas.vigentes">{es['alertas.vigentes']}</span>
       <strong id="metric-alert-open">0</strong>
-      <small>Activas y en atención</small>
+      <small data-i18n="alertas.activasAtencion">{es['alertas.activasAtencion']}</small>
     </article>
     <article class="metric-card">
-      <span class="metric-label">sin atender</span>
+      <span class="metric-label" data-i18n="alertas.sinAtender">{es['alertas.sinAtender']}</span>
       <strong id="metric-alert-active">0</strong>
-      <small>Nadie las tomó todavía</small>
+      <small data-i18n="alertas.nadieTomoTodavia">{es['alertas.nadieTomoTodavia']}</small>
     </article>
     <article class="metric-card">
-      <span class="metric-label">en atención</span>
+      <span class="metric-label" data-i18n="alertaTexto.EN_ATENCION">{es['alertaTexto.EN_ATENCION']}</span>
       <strong id="metric-alert-progress">0</strong>
-      <small>Derivadas a un perfil técnico</small>
+      <small data-i18n="alertas.derivadasPerfilTecnico">{es['alertas.derivadasPerfilTecnico']}</small>
     </article>
     <article class="metric-card">
-      <span class="metric-label">críticas vigentes</span>
+      <span class="metric-label" data-i18n="alertas.criticasVigentes">{es['alertas.criticasVigentes']}</span>
       <strong id="metric-alert-critical">0</strong>
-      <small>Severidad CRITICA</small>
+      <small data-i18n="alertas.severidadCritica">{es['alertas.severidadCritica']}</small>
     </article>
   </section>
 
@@ -83,8 +83,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <article class="panel finding-list-panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Alertas críticas</span>
-          <h2>Alertas priorizadas</h2>
+          <span class="eyebrow" data-i18n="alertas.alertasCriticasTitulo">{es['alertas.alertasCriticasTitulo']}</span>
+          <h2 data-i18n="alertas.alertasPriorizadas">{es['alertas.alertasPriorizadas']}</h2>
         </div>
         <div class="log-heading-meta">
           <span id="alert-count" class="counter-chip">—</span>
@@ -95,20 +95,20 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         <table class="data-table finding-table log-table">
           <thead>
             <tr>
-              <th>ALERTA</th>
-              <th>REGLA</th>
-              <th>DISPOSITIVO</th>
-              <th>SEVERIDAD</th>
-              <th>ESTADO</th>
-              <th>GENERADA</th>
+              <th data-i18n="alertas.colAlerta">{es['alertas.colAlerta']}</th>
+              <th data-i18n="general.colRegla">{es['general.colRegla']}</th>
+              <th data-i18n="general.colDispositivo">{es['general.colDispositivo']}</th>
+              <th data-i18n="general.colSeveridad">{es['general.colSeveridad']}</th>
+              <th data-i18n="general.colEstado">{es['general.colEstado']}</th>
+              <th data-i18n="alertas.colGenerada">{es['alertas.colGenerada']}</th>
             </tr>
           </thead>
           <tbody id="alert-table-body"></tbody>
         </table>
         <div id="alert-empty" class="empty-state compact-empty is-hidden">
           <div>
-            <code>0 alertas</code>
-            <p id="alert-empty-text">No hay alertas críticas pendientes.</p>
+            <code data-i18n="alertas.ceroAlertas">{es['alertas.ceroAlertas']}</code>
+            <p id="alert-empty-text" data-i18n="alertas.hayAlertasCriticasPendientes">{es['alertas.hayAlertasCriticasPendientes']}</p>
           </div>
         </div>
       </div>
@@ -117,15 +117,15 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <aside class="panel finding-inspector" aria-live="polite">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Alerta seleccionada</span>
-          <h2>Detalle y derivación</h2>
+          <span class="eyebrow" data-i18n="alertas.alertaSeleccionada">{es['alertas.alertaSeleccionada']}</span>
+          <h2 data-i18n="alertas.detalleDerivacion">{es['alertas.detalleDerivacion']}</h2>
         </div>
         <span class="inspector-led"></span>
       </div>
 
       <div id="alert-inspector-empty" class="inspector-empty">
-        <code>sin selección</code>
-        <p>Seleccioná una alerta para ver el hallazgo que la originó y derivarla a un perfil técnico.</p>
+        <code data-i18n="general.sinSeleccion">{es['general.sinSeleccion']}</code>
+        <p data-i18n="alertas.seleccionaAlertaVerHallazgo">{es['alertas.seleccionaAlertaVerHallazgo']}</p>
       </div>
 
       <div id="alert-inspector-content" class="inspector-content is-hidden"></div>
@@ -142,7 +142,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       type NetworkDevice,
       type Site,
     } from '../lib/api';
-    import { alertStatusBadge, code, escapeHtml, findingStatusBadge, formatDate, severityClass } from '../lib/format';
+    import { alertStatusBadge, code, escapeHtml, findingStatusBadge, formatDate, severityClass, severityCode } from '../lib/format';
+    import { etiqueta, t } from '../lib/i18n';
     import { loadVisibleSites } from '../lib/sites';
 
     let alerts: CriticalAlert[] = [];
@@ -159,7 +160,10 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     const canManage = hasRole('ADMINISTRADOR_SISTEMA') || hasRole('RESPONSABLE_GESTION_IT') || hasRole('ANALISTA_RED');
 
     const form = document.querySelector<HTMLFormElement>('#alert-filters');
-    const siteName = (id: number | null) => id == null ? 'sin sede' : sites.find((site) => site.id === id)?.nombre ?? `sede #${id}`;
+    const siteName = (id: number | null) => id == null
+      ? t('tablero.sinSede')
+      : sites.find((site) => site.id === id)?.nombre ?? t('tablero.sedeNumero', { id });
+    const profileName = (profile: string | null) => (profile ? etiqueta('perfil', profile) : t('alertas.sinDerivar'));
 
     const show = (selector: string, message: string | null) => {
       const node = document.querySelector<HTMLElement>(selector);
@@ -209,13 +213,13 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         return `
           <tr class="${classes.join(' ')}" data-alert-id="${alert.id}" tabindex="0">
             <td><code>${code('ALR', alert.id)}</code></td>
-            <td><strong>${escapeHtml(alert.codigoRegla ?? `hallazgo #${alert.hallazgoId}`)}</strong><small>${escapeHtml(alert.nombreRegla ?? '')}</small></td>
+            <td><strong>${escapeHtml(alert.codigoRegla ?? t('alertas.hallazgoNumero', { id: alert.hallazgoId }))}</strong><small>${escapeHtml(alert.nombreRegla ?? '')}</small></td>
             <td>
               <strong>${escapeHtml(alert.dispositivoIdentificador ?? `#${alert.dispositivoId}`)}</strong>
-              <small>criticidad ${escapeHtml(alert.criticidadDispositivo ?? '—')} · ${escapeHtml(siteName(alert.sedeId))}</small>
+              <small>${escapeHtml(t('hallazgos.criticidad', { criticidad: severityCode(alert.criticidadDispositivo) }))} · ${escapeHtml(siteName(alert.sedeId))}</small>
             </td>
-            <td><span class="severity-badge ${severityClass(alert.severidad)}">${escapeHtml(alert.severidad)}</span></td>
-            <td>${alertStatusBadge(alert.estado)}${alert.perfilAsignado ? `<small>${escapeHtml(alert.perfilAsignado)}</small>` : ''}</td>
+            <td><span class="severity-badge ${severityClass(alert.severidad)}">${escapeHtml(severityCode(alert.severidad))}</span></td>
+            <td>${alertStatusBadge(alert.estado)}${alert.perfilAsignado ? `<small>${escapeHtml(profileName(alert.perfilAsignado))}</small>` : ''}</td>
             <td><span class="log-nowrap">${escapeHtml(formatDate(alert.fechaGeneracion))}</span></td>
           </tr>`;
       }).join('');
@@ -228,8 +232,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const emptyText = document.querySelector('#alert-empty-text');
       if (emptyText) {
         emptyText.textContent = onlyDefault
-          ? 'No hay alertas críticas pendientes.'
-          : 'No se encontraron alertas con esos criterios.';
+          ? t('alertas.hayAlertasCriticasPendientes')
+          : t('alertas.sinCoincidencias');
       }
       document.querySelector('#alert-empty')?.classList.toggle('is-hidden', alerts.length > 0);
 
@@ -247,31 +251,31 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
     const manageFormHtml = (alert: CriticalAlert) => {
       if (alert.estado === 'CERRADA') {
-        return '<p class="log-muted">La alerta está cerrada porque su hallazgo se resolvió o se aceptó el riesgo. Para reactivarla, reabrí el hallazgo.</p>';
+        return `<p class="log-muted">${escapeHtml(t('alertas.cerradaAyuda'))}</p>`;
       }
       if (!canManage) {
-        return '<p class="log-muted">Tu perfil puede consultar la alerta, pero no derivarla.</p>';
+        return `<p class="log-muted">${escapeHtml(t('alertas.soloConsulta'))}</p>`;
       }
       const giveBack = alert.estado === 'EN_ATENCION'
-        ? '<option value="ACTIVA">devolver a ACTIVA (sin asignar)</option>'
+        ? `<option value="ACTIVA">${escapeHtml(t('alertas.devolver'))}</option>`
         : '';
       return `
         <form id="alert-form" class="tracking-form" novalidate>
           <label class="log-filter">
-            <span>acción</span>
+            <span>${t('alertas.accion')}</span>
             <select id="alert-action" class="technical-select">
-              <option value="ANALISTA_RED">derivar a ANALISTA_RED</option>
-              <option value="AUDITOR_TECNICO">derivar a AUDITOR_TECNICO</option>
+              <option value="ANALISTA_RED">${escapeHtml(t('alertas.derivarA', { perfil: etiqueta('perfil', 'ANALISTA_RED') }))}</option>
+              <option value="AUDITOR_TECNICO">${escapeHtml(t('alertas.derivarA', { perfil: etiqueta('perfil', 'AUDITOR_TECNICO') }))}</option>
               ${giveBack}
             </select>
           </label>
           <label class="log-filter">
-            <span id="alert-comment-label">comentario (opcional)</span>
+            <span id="alert-comment-label">${t('hallazgos.comentarioOpcional')}</span>
             <textarea id="alert-comment" class="technical-input tracking-comment" rows="3" maxlength="1000"
-              placeholder="Qué hay que revisar o por qué se devuelve..."></textarea>
+              placeholder="${t('alertas.comentarioEjemplo')}"></textarea>
           </label>
           <div id="alert-form-error" class="alert alert-error is-hidden"></div>
-          <button class="button button-primary button-small button-full" type="submit">Actualizar alerta</button>
+          <button class="button button-primary button-small button-full" type="submit">${t('alertas.actualizar')}</button>
         </form>`;
     };
 
@@ -291,32 +295,32 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       content.innerHTML = `
         <div class="inspector-identity">
           <span class="inspector-code">${code('ALR', alert.id)} · ${escapeHtml(formatDate(alert.fechaGeneracion))}</span>
-          <h3>${escapeHtml(finding?.nombreRegla ?? alert.nombreRegla ?? 'Hallazgo no disponible')}</h3>
+          <h3>${escapeHtml(finding?.nombreRegla ?? alert.nombreRegla ?? t('alertas.hallazgoNoDisponible'))}</h3>
           <div class="badge-row">
-            <span class="severity-badge ${severityClass(alert.severidad)}">${escapeHtml(alert.severidad)}</span>
+            <span class="severity-badge ${severityClass(alert.severidad)}">${escapeHtml(severityCode(alert.severidad))}</span>
             ${alertStatusBadge(alert.estado)}
           </div>
         </div>
-        ${finding ? '' : '<div class="alert alert-error">No se pudo obtener el hallazgo asociado; se muestra la información disponible.</div>'}
+        ${finding ? '' : `<div class="alert alert-error">${escapeHtml(t('alertas.errorHallazgo'))}</div>`}
         <dl class="technical-definition-list">
-          <div><dt>dispositivo</dt><dd>${escapeHtml(alert.dispositivoIdentificador ?? `#${alert.dispositivoId}`)} · criticidad ${escapeHtml(alert.criticidadDispositivo ?? '—')}</dd></div>
-          <div><dt>sede</dt><dd>${escapeHtml(siteName(alert.sedeId))}</dd></div>
-          <div><dt>hallazgo</dt><dd><a class="inline-link" href="/results?hallazgo=${alert.hallazgoId}">${code('FND', alert.hallazgoId)} →</a> ${finding ? findingStatusBadge(finding.estado) : ''}</dd></div>
-          <div><dt>auditoría</dt><dd><a class="inline-link" href="/history?auditoria=${alert.auditoriaId}">${code('AUD', alert.auditoriaId)} →</a></dd></div>
-          <div><dt>derivada a</dt><dd>${escapeHtml(alert.perfilAsignado ?? 'sin derivar')}</dd></div>
-          <div><dt>último cambio</dt><dd>${alert.fechaEstado
+          <div><dt>${t('general.dispositivo')}</dt><dd>${escapeHtml(alert.dispositivoIdentificador ?? `#${alert.dispositivoId}`)} · ${escapeHtml(t('hallazgos.criticidad', { criticidad: severityCode(alert.criticidadDispositivo) }))}</dd></div>
+          <div><dt>${t('general.sede')}</dt><dd>${escapeHtml(siteName(alert.sedeId))}</dd></div>
+          <div><dt>${t('alertas.hallazgo')}</dt><dd><a class="inline-link" href="/results?hallazgo=${alert.hallazgoId}">${code('FND', alert.hallazgoId)} →</a> ${finding ? findingStatusBadge(finding.estado) : ''}</dd></div>
+          <div><dt>${t('hallazgos.auditoria')}</dt><dd><a class="inline-link" href="/history?auditoria=${alert.auditoriaId}">${code('AUD', alert.auditoriaId)} →</a></dd></div>
+          <div><dt>${t('alertas.derivadaA')}</dt><dd>${escapeHtml(profileName(alert.perfilAsignado))}</dd></div>
+          <div><dt>${t('hallazgos.ultimoCambio')}</dt><dd>${alert.fechaEstado
             ? `${escapeHtml(formatDate(alert.fechaEstado))} · ${escapeHtml(alert.usuarioEstado)}`
-            : 'sin cambios'}</dd></div>
+            : escapeHtml(t('hallazgos.sinCambios'))}</dd></div>
         </dl>
-        ${alert.comentario ? `<div class="rule-recommendation"><span>último comentario</span><p>${escapeHtml(alert.comentario)}</p></div>` : ''}
+        ${alert.comentario ? `<div class="rule-recommendation"><span>${t('alertas.ultimoComentario')}</span><p>${escapeHtml(alert.comentario)}</p></div>` : ''}
         ${finding ? `
         <div class="finding-evidence-block">
-          <span>evidencia</span>
+          <span>${t('hallazgos.evidencia')}</span>
           <p>${escapeHtml(finding.evidencia)}</p>
         </div>
-        ${finding.impacto ? `<div class="finding-evidence-block"><span>impacto</span><p>${escapeHtml(finding.impacto)}</p></div>` : ''}
+        ${finding.impacto ? `<div class="finding-evidence-block"><span>${t('reglas.impacto')}</span><p>${escapeHtml(finding.impacto)}</p></div>` : ''}
         <div class="rule-recommendation">
-          <span>recomendación</span>
+          <span>${t('reglas.recomendacion')}</span>
           <p>${escapeHtml(finding.recomendacion)}</p>
         </div>` : ''}
         ${manageFormHtml(alert)}
@@ -333,7 +337,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 
       const syncLabel = () => {
         const label = document.querySelector('#alert-comment-label');
-        if (label) label.textContent = action.value === 'ACTIVA' ? 'motivo (obligatorio)' : 'comentario (opcional)';
+        if (label) label.textContent = t(action.value === 'ACTIVA' ? 'alertas.motivoObligatorio' : 'hallazgos.comentarioOpcional');
       };
       action.addEventListener('change', syncLabel);
       syncLabel();
@@ -343,7 +347,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         show('#alert-form-error', null);
         const giveBack = action.value === 'ACTIVA';
         if (giveBack && !comment.value.trim()) {
-          show('#alert-form-error', 'Para devolver la alerta hay que indicar el motivo.');
+          show('#alert-form-error', t('alertas.faltaMotivo'));
           return;
         }
         const response = await auditFetch(`/api/alerts/${alert.id}/status`, jsonRequest('PATCH', {
@@ -357,8 +361,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         }
         const updated = await response.json() as CriticalAlertDetail;
         showSuccess(giveBack
-          ? `${code('ALR', updated.alerta.id)} volvió a ACTIVA.`
-          : `${code('ALR', updated.alerta.id)} derivada a ${updated.alerta.perfilAsignado}.`);
+          ? t('alertas.devuelta', { codigo: code('ALR', updated.alerta.id) })
+          : t('alertas.derivada', { codigo: code('ALR', updated.alerta.id), perfil: profileName(updated.alerta.perfilAsignado) }));
         await loadAlerts();
         await selectAlert(updated.alerta.id);
       });
@@ -426,6 +430,6 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       .then(() => {
         if (initialAlert) void selectAlert(initialAlert);
       })
-      .catch((error) => showError(error instanceof Error ? error.message : 'No se pudieron cargar las alertas.'));
+      .catch((error) => showError(error instanceof Error ? error.message : t('alertas.errorCargar')));
   </script>
 </MasterLayout>

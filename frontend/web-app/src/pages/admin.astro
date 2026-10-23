@@ -1,31 +1,31 @@
 ---
+import { es } from '../i18n';
 import MasterLayout from '../layouts/MasterLayout.astro';
 ---
 
 <MasterLayout
-  title="Panel de administración"
-  section="Panel de administración"
-  description="Estado de los servicios, archivos, respaldos y seguridad de las cuentas. Solo para el administrador del sistema."
+  title={es['admin.titulo']} section={es['admin.seccion']} description={es['admin.descripcion']}
+  i18n="admin"
 >
   <div id="admin-error" class="alert alert-error is-hidden" role="alert"></div>
 
   <section class="panel compact-panel dashboard-scope">
     <div>
-      <span class="eyebrow">Estado de la plataforma</span>
-      <h2 id="admin-overall">Verificando servicios…</h2>
+      <span class="eyebrow" data-i18n="admin.estadoPlataforma">{es['admin.estadoPlataforma']}</span>
+      <h2 id="admin-overall" data-i18n="admin.verificandoServicios">{es['admin.verificandoServicios']}</h2>
     </div>
     <div class="dashboard-scope-actions">
       <span id="admin-checked" class="technical-hint"></span>
-      <button id="admin-refresh" class="button button-ghost button-small" type="button">Actualizar</button>
+      <button id="admin-refresh" class="button button-ghost button-small" type="button" data-i18n="admin.actualizar">{es['admin.actualizar']}</button>
     </div>
   </section>
 
   <section class="panel compact-panel dashboard-scope">
     <div>
-      <span class="eyebrow">Planes</span>
-      <h2 id="admin-plan-requests">Solicitudes de cambio de plan…</h2>
+      <span class="eyebrow" data-i18n="admin.planes">{es['admin.planes']}</span>
+      <h2 id="admin-plan-requests" data-i18n="admin.solicitudesCambioPlan">{es['admin.solicitudesCambioPlan']}</h2>
     </div>
-    <a class="inline-link" href="/plans">resolver →</a>
+    <a class="inline-link" href="/plans" data-i18n="organizaciones.resolver">{es['organizaciones.resolver']}</a>
   </section>
 
   <section class="health-grid" id="admin-health">
@@ -36,20 +36,20 @@ import MasterLayout from '../layouts/MasterLayout.astro';
   <section class="panel">
     <div class="panel-heading">
       <div>
-        <span class="eyebrow">Infraestructura</span>
-        <h2>Gateway y mensajería</h2>
+        <span class="eyebrow" data-i18n="admin.infraestructura">{es['admin.infraestructura']}</span>
+        <h2 data-i18n="admin.gatewayMensajeria">{es['admin.gatewayMensajeria']}</h2>
       </div>
     </div>
     <div class="health-components" style="margin-top: 0;">
       <div class="health-component">
         <span class="health-dot"></span>
-        <div><strong>Gateway web (nginx)</strong><small>Sirve la consola y deriva /api a cada servicio</small></div>
-        <code>en línea</code>
+        <div><strong data-i18n="admin.gatewayWebNginx">{es['admin.gatewayWebNginx']}</strong><small data-i18n="admin.sirveConsolaDerivaApi">{es['admin.sirveConsolaDerivaApi']}</small></div>
+        <code data-i18n="consola.enLinea">{es['consola.enLinea']}</code>
       </div>
       <div class="health-component">
         <span class="health-dot is-na"></span>
-        <div><strong>Colas de mensajería</strong><small>No aplica: los servicios se comunican por REST y comparten la base PostgreSQL; el correo sale de una bandeja de salida en esa base</small></div>
-        <code>no aplica</code>
+        <div><strong data-i18n="admin.colasMensajeria">{es['admin.colasMensajeria']}</strong><small data-i18n="admin.colasNoAplica">{es['admin.colasNoAplica']}</small></div>
+        <code data-i18n="admin.noAplica">{es['admin.noAplica']}</code>
       </div>
     </div>
   </section>
@@ -58,23 +58,23 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <article class="panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Correo</span>
-          <h2>Bandeja de salida</h2>
+          <span class="eyebrow" data-i18n="admin.correo">{es['admin.correo']}</span>
+          <h2 data-i18n="admin.bandejaSalida">{es['admin.bandejaSalida']}</h2>
         </div>
         <span id="mail-provider" class="status-badge status-next">—</span>
       </div>
       <div id="mail-totals" class="storage-totals"></div>
       <div class="storage-pending">
-        <p id="mail-note" class="log-muted">Los avisos se envían solos al guardarse; los fallidos se reintentan con esperas crecientes.</p>
-        <button id="mail-dispatch" class="button button-ghost button-small" type="button" disabled>Enviar pendientes</button>
+        <p id="mail-note" class="log-muted" data-i18n="admin.avisosEnvianSolosGuardarse">{es['admin.avisosEnvianSolosGuardarse']}</p>
+        <button id="mail-dispatch" class="button button-ghost button-small" type="button" disabled data-i18n="admin.enviarPendientes">{es['admin.enviarPendientes']}</button>
       </div>
       <div class="table-wrap">
         <table class="data-table log-table">
-          <thead><tr><th>FECHA</th><th>AVISO</th><th>DESTINATARIO</th><th>ESTADO</th></tr></thead>
+          <thead><tr><th data-i18n="general.colFecha">{es['general.colFecha']}</th><th data-i18n="admin.colAviso">{es['admin.colAviso']}</th><th data-i18n="admin.colDestinatario">{es['admin.colDestinatario']}</th><th data-i18n="general.colEstado">{es['general.colEstado']}</th></tr></thead>
           <tbody id="mail-list"></tbody>
         </table>
         <div id="mail-empty" class="empty-state compact-empty is-hidden">
-          <div><code>0 correos</code><p>Todavía no se generó ningún aviso por correo.</p></div>
+          <div><code data-i18n="admin.ceroCorreos">{es['admin.ceroCorreos']}</code><p data-i18n="admin.todaviaGeneroNingunAviso">{es['admin.todaviaGeneroNingunAviso']}</p></div>
         </div>
       </div>
     </article>
@@ -82,16 +82,12 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <article class="panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Revisión periódica</span>
-          <h2>Vencimientos y re-auditorías</h2>
+          <span class="eyebrow" data-i18n="admin.revisionPeriodica">{es['admin.revisionPeriodica']}</span>
+          <h2 data-i18n="admin.vencimientosReAuditorias">{es['admin.vencimientosReAuditorias']}</h2>
         </div>
-        <button id="review-run" class="button button-primary button-small" type="button">Ejecutar revisión ahora</button>
+        <button id="review-run" class="button button-primary button-small" type="button" data-i18n="admin.ejecutarRevisionAhora">{es['admin.ejecutarRevisionAhora']}</button>
       </div>
-      <p class="log-muted">
-        Un trabajo programado la ejecuta todos los días a las 6:00 (hora de Argentina). Vuelve a auditar los equipos
-        según los plazos de cada organización y avisa por correo los hallazgos vencidos, las configuraciones
-        desactualizadas y el resumen del mes anterior. Ejecutarla de nuevo el mismo día no repite auditorías ni avisos.
-      </p>
+      <p class="log-muted" data-i18n="admin.trabajoProgramadoEjecutaTodos">{es['admin.trabajoProgramadoEjecutaTodos']}</p>
       <div id="review-result" class="review-result is-hidden"></div>
     </article>
   </section>
@@ -100,40 +96,37 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <article class="panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Almacenamiento</span>
-          <h2>Repositorio de archivos</h2>
+          <span class="eyebrow" data-i18n="admin.almacenamiento">{es['admin.almacenamiento']}</span>
+          <h2 data-i18n="admin.repositorioArchivos">{es['admin.repositorioArchivos']}</h2>
         </div>
         <span id="storage-state" class="status-badge status-next">—</span>
       </div>
-      <p id="storage-summary" class="log-muted">Configuraciones importadas y reportes generados, con su hash SHA-256.</p>
+      <p id="storage-summary" class="log-muted" data-i18n="admin.configuracionesImportadasReportesGenerados">{es['admin.configuracionesImportadasReportesGenerados']}</p>
       <div id="storage-totals" class="storage-totals"></div>
       <div class="storage-pending">
         <p id="storage-pending" class="log-muted"></p>
-        <button id="storage-sync" class="button button-ghost button-small" type="button" disabled>Subir pendientes</button>
+        <button id="storage-sync" class="button button-ghost button-small" type="button" disabled data-i18n="admin.subirPendientes">{es['admin.subirPendientes']}</button>
       </div>
     </article>
 
     <article class="panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Respaldos</span>
-          <h2>Copias de la base de datos</h2>
+          <span class="eyebrow" data-i18n="admin.respaldos">{es['admin.respaldos']}</span>
+          <h2 data-i18n="admin.copiasBaseDatos">{es['admin.copiasBaseDatos']}</h2>
         </div>
-        <button id="backup-create" class="button button-primary button-small" type="button">Generar respaldo</button>
+        <button id="backup-create" class="button button-primary button-small" type="button" data-i18n="admin.generarRespaldo">{es['admin.generarRespaldo']}</button>
       </div>
       <div class="table-wrap">
         <table class="data-table log-table">
-          <thead><tr><th>RESPALDO</th><th>TAMAÑO</th><th aria-label="Descargar"></th></tr></thead>
+          <thead><tr><th data-i18n="admin.colRespaldo">{es['admin.colRespaldo']}</th><th data-i18n="admin.colTamano">{es['admin.colTamano']}</th><th aria-label={es['admin.descargar']} data-i18n-aria-label="admin.descargar"></th></tr></thead>
           <tbody id="backup-list"></tbody>
         </table>
         <div id="backup-empty" class="empty-state compact-empty is-hidden">
-          <div><code>0 respaldos</code><p>Todavía no se generó ningún respaldo.</p></div>
+          <div><code data-i18n="admin.ceroRespaldos">{es['admin.ceroRespaldos']}</code><p data-i18n="admin.todaviaGeneroNingunRespaldo">{es['admin.todaviaGeneroNingunRespaldo']}</p></div>
         </div>
       </div>
-      <p class="log-muted" style="margin-top: 12px;">
-        Cada respaldo trae los datos de todas las tablas, la versión del esquema y el guion de restauración.
-        Azure conserva además copias automáticas: PostgreSQL 7 días y Cosmos DB cada 4 horas.
-      </p>
+      <p class="log-muted" style="margin-top: 12px;" data-i18n="admin.cadaRespaldoTraeDatos">{es['admin.cadaRespaldoTraeDatos']}</p>
     </article>
   </section>
 
@@ -141,30 +134,30 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <form method="dialog" class="device-form">
       <div class="dialog-header">
         <div>
-          <span class="eyebrow">Respaldo</span>
-          <h2>Generar un respaldo ahora</h2>
-          <p>Se copian los datos de todas las tablas en un ZIP que queda en el repositorio de archivos. Incluye datos personales y hashes de contraseñas: descargalo solo a un lugar autorizado.</p>
+          <span class="eyebrow" data-i18n="admin.respaldoTitulo">{es['admin.respaldoTitulo']}</span>
+          <h2 data-i18n="admin.generarRespaldoAhora">{es['admin.generarRespaldoAhora']}</h2>
+          <p data-i18n="admin.copianDatosTodasTablas">{es['admin.copianDatosTodasTablas']}</p>
         </div>
       </div>
       <div class="dialog-actions">
-        <button class="button button-ghost" value="cancel">Cancelar</button>
-        <button class="button button-primary" value="ok">Generar</button>
+        <button class="button button-ghost" value="cancel" data-i18n="general.cancelar">{es['general.cancelar']}</button>
+        <button class="button button-primary" value="ok" data-i18n="admin.generar">{es['admin.generar']}</button>
       </div>
     </form>
   </dialog>
 
   <section class="metric-grid" id="admin-security-kpis">
-    <article class="metric-card"><span class="metric-label">cargando</span><strong>—</strong><small>consultando…</small></article>
+    <article class="metric-card"><span class="metric-label" data-i18n="general.cargando">{es['general.cargando']}</span><strong>—</strong><small data-i18n="general.consultando">{es['general.consultando']}</small></article>
   </section>
 
   <section class="two-column dashboard-row">
     <article class="panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Seguridad</span>
-          <h2>Eventos de las últimas 24 horas</h2>
+          <span class="eyebrow" data-i18n="admin.seguridad">{es['admin.seguridad']}</span>
+          <h2 data-i18n="admin.eventosUltimasHoras">{es['admin.eventosUltimasHoras']}</h2>
         </div>
-        <a class="inline-link" href="/logs#sistema">bitácora de sistema →</a>
+        <a class="inline-link" href="/logs#sistema" data-i18n="admin.bitacoraSistema">{es['admin.bitacoraSistema']}</a>
       </div>
       <div id="admin-events" class="event-counts"></div>
     </article>
@@ -172,18 +165,18 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     <article class="panel">
       <div class="panel-heading">
         <div>
-          <span class="eyebrow">Rechazos</span>
-          <h2>Últimos accesos y operaciones rechazadas</h2>
+          <span class="eyebrow" data-i18n="admin.rechazos">{es['admin.rechazos']}</span>
+          <h2 data-i18n="admin.ultimosAccesosOperacionesRechazadas">{es['admin.ultimosAccesosOperacionesRechazadas']}</h2>
         </div>
-        <a class="inline-link" href="/logs?resultado=FALLO#sistema">ver todos →</a>
+        <a class="inline-link" href="/logs?resultado=FALLO#sistema" data-i18n="admin.verTodos">{es['admin.verTodos']}</a>
       </div>
       <div class="table-wrap">
         <table class="data-table log-table">
-          <thead><tr><th>FECHA</th><th>EVENTO</th><th>ACTOR</th><th>DETALLE</th></tr></thead>
+          <thead><tr><th data-i18n="general.colFecha">{es['general.colFecha']}</th><th data-i18n="bitacoras.colEvento">{es['bitacoras.colEvento']}</th><th data-i18n="bitacoras.colActor">{es['bitacoras.colActor']}</th><th data-i18n="general.colDetalle">{es['general.colDetalle']}</th></tr></thead>
           <tbody id="admin-rejections"></tbody>
         </table>
         <div id="admin-rejections-empty" class="empty-state compact-empty is-hidden">
-          <div><code>fallos.24h = 0</code><p>No hubo rechazos en las últimas 24 horas.</p></div>
+          <div><code>fallos.24h = 0</code><p data-i18n="admin.huboRechazosUltimasHoras">{es['admin.huboRechazosUltimasHoras']}</p></div>
         </div>
       </div>
     </article>
@@ -192,14 +185,14 @@ import MasterLayout from '../layouts/MasterLayout.astro';
   <section class="panel">
     <div class="panel-heading">
       <div>
-        <span class="eyebrow">Bitácoras</span>
-        <h2>Registros de la plataforma</h2>
+        <span class="eyebrow" data-i18n="admin.bitacoras">{es['admin.bitacoras']}</span>
+        <h2 data-i18n="admin.registrosPlataforma">{es['admin.registrosPlataforma']}</h2>
       </div>
     </div>
-    <nav class="log-tabs" aria-label="Bitácoras" style="margin-bottom: 0;">
-      <a class="log-tab" href="/logs#sistema"><code>SYS</code><span>Sistema</span><small>accesos y seguridad · PostgreSQL</small></a>
-      <a class="log-tab" href="/logs#transacciones"><code>TRX</code><span>Transacciones</span><small>operaciones de negocio · PostgreSQL</small></a>
-      <a class="log-tab" href="/logs#excepciones"><code>EXC</code><span>Excepciones</span><small>errores inesperados · MongoDB</small></a>
+    <nav class="log-tabs" aria-label={es['admin.bitacoras']} data-i18n-aria-label="admin.bitacoras" style="margin-bottom: 0;">
+      <a class="log-tab" href="/logs#sistema"><code>SYS</code><span data-i18n="admin.sistema">{es['admin.sistema']}</span><small data-i18n="bitacoras.accesosSeguridadPostgresql">{es['bitacoras.accesosSeguridadPostgresql']}</small></a>
+      <a class="log-tab" href="/logs#transacciones"><code>TRX</code><span data-i18n="bitacoras.transacciones">{es['bitacoras.transacciones']}</span><small data-i18n="bitacoras.operacionesNegocioPostgresql">{es['bitacoras.operacionesNegocioPostgresql']}</small></a>
+      <a class="log-tab" href="/logs#excepciones"><code>EXC</code><span data-i18n="bitacoras.excepciones">{es['bitacoras.excepciones']}</span><small data-i18n="bitacoras.erroresInesperadosMongodb">{es['bitacoras.erroresInesperadosMongodb']}</small></a>
     </nav>
   </section>
 
@@ -207,7 +200,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     import { auditFetch, authFetch } from '../lib/auth';
     import { readApiError, type MailDispatchResult, type MailOutbox, type PlanRequest, type ReviewRunResult, type SecuritySummary, type ServiceHealth, type StorageStatus, type StorageSyncResult, type StoredFile } from '../lib/api';
     import { formatBytes, saveResponse } from '../lib/download';
-    import { escapeHtml, formatDate } from '../lib/format';
+    import { escapeHtml, formatDate, plural } from '../lib/format';
+    import { etiqueta, localeActual, t } from '../lib/i18n';
 
     const LABELS: Record<string, string> = {
       management: 'management-service',
@@ -241,28 +235,28 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       if (!health) {
         return `
           <div class="panel-heading">
-            <div><span class="eyebrow">Servicio</span><h2>${name}</h2></div>
-            <span class="status-badge status-locked">no responde</span>
+            <div><span class="eyebrow">${t('admin.servicio')}</span><h2>${name}</h2></div>
+            <span class="status-badge status-locked">${t('admin.noResponde')}</span>
           </div>
-          <p class="log-muted">${escapeHtml(error ?? 'No se obtuvo respuesta del servicio.')}</p>`;
+          <p class="log-muted">${escapeHtml(error ?? t('admin.sinRespuestaServicio'))}</p>`;
       }
       const ok = health.estado === 'UP';
       return `
         <div class="panel-heading">
-          <div><span class="eyebrow">Servicio</span><h2>${escapeHtml(health.servicio)}</h2></div>
-          <span class="status-badge ${ok ? 'status-ready' : 'status-next'}">${ok ? 'operativo' : 'degradado'}</span>
+          <div><span class="eyebrow">${t('admin.servicio')}</span><h2>${escapeHtml(health.servicio)}</h2></div>
+          <span class="status-badge ${ok ? 'status-ready' : 'status-next'}">${t(ok ? 'admin.operativo' : 'admin.degradado')}</span>
         </div>
         <dl class="health-meta">
-          <div><dt>versión</dt><dd>${escapeHtml(health.version)}</dd></div>
-          <div><dt>en línea</dt><dd title="desde ${escapeHtml(formatDate(health.inicio))}">${uptime(health.segundosEnLinea)}</dd></div>
-          <div><dt>memoria</dt><dd>${health.memoriaUsadaMb} / ${health.memoriaMaximaMb} MB</dd></div>
+          <div><dt>${t('admin.version')}</dt><dd>${escapeHtml(health.version)}</dd></div>
+          <div><dt>${t('consola.enLinea')}</dt><dd title="${escapeHtml(t('organizaciones.planDesde', { fecha: formatDate(health.inicio) }))}">${uptime(health.segundosEnLinea)}</dd></div>
+          <div><dt>${t('admin.memoria')}</dt><dd>${health.memoriaUsadaMb} / ${health.memoriaMaximaMb} MB</dd></div>
         </dl>
         <div class="health-components">
           ${health.componentes.map((component) => `
             <div class="health-component">
               <span class="health-dot ${component.estado === 'UP' ? '' : 'is-down'}"></span>
               <div><strong>${escapeHtml(component.nombre)}</strong><small>${escapeHtml(component.detalle)}</small></div>
-              <code>${component.estado === 'UP' ? `${component.latenciaMs} ms` : 'caído'}</code>
+              <code>${component.estado === 'UP' ? `${component.latenciaMs} ms` : t('admin.caido')}</code>
             </div>`).join('')}
         </div>`;
     };
@@ -273,7 +267,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         if (!response.ok) return { key, health: null, error: await readApiError(response) };
         return { key, health: await response.json() as ServiceHealth, error: null };
       } catch (error) {
-        return { key, health: null, error: error instanceof Error ? error.message : 'Sin respuesta.' };
+        return { key, health: null, error: error instanceof Error ? error.message : t('admin.sinRespuesta') };
       }
     };
 
@@ -288,11 +282,13 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const overall = document.querySelector('#admin-overall');
       if (overall) {
         overall.textContent = down > 0
-          ? `${down} servicio${down > 1 ? 's' : ''} sin respuesta`
-          : degraded > 0 ? 'Servicios en línea con componentes degradados' : 'Todos los servicios operativos';
+          ? plural(down, 'admin.serviciosSinRespuesta')
+          : t(degraded > 0 ? 'admin.componentesDegradados' : 'admin.todosOperativos');
       }
       const checked = document.querySelector('#admin-checked');
-      if (checked) checked.textContent = `verificado ${new Intl.DateTimeFormat('es-AR', { timeStyle: 'medium' }).format(new Date())}`;
+      if (checked) {
+        checked.textContent = t('admin.verificado', { hora: new Intl.DateTimeFormat(localeActual(), { timeStyle: 'medium' }).format(new Date()) });
+      }
     };
 
     const loadSecurity = async () => {
@@ -303,10 +299,10 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const kpis = document.querySelector('#admin-security-kpis');
       if (kpis) {
         kpis.innerHTML = `
-          <a class="metric-card metric-link" href="/users"><span class="metric-label">usuarios activos</span><strong>${summary.usuariosActivos}</strong><small>${summary.usuariosDeshabilitados} deshabilitados</small></a>
-          <a class="metric-card metric-link ${summary.cuentasBloqueadas > 0 ? 'is-alert' : ''}" href="/users"><span class="metric-label">cuentas bloqueadas</span><strong>${summary.cuentasBloqueadas}</strong><small>por intentos fallidos</small></a>
-          <a class="metric-card metric-link" href="${logLink('evento=LOGIN_EXITOSO')}"><span class="metric-label">ingresos 24 h</span><strong>${events.LOGIN_EXITOSO ?? 0}</strong><small>inicios de sesión exitosos</small></a>
-          <a class="metric-card metric-link ${(events.LOGIN_RECHAZADO ?? 0) > 0 ? 'is-alert' : ''}" href="${logLink('evento=LOGIN_RECHAZADO')}"><span class="metric-label">rechazos 24 h</span><strong>${events.LOGIN_RECHAZADO ?? 0}</strong><small>${events.CUENTA_BLOQUEADA ?? 0} bloqueos de cuenta</small></a>`;
+          <a class="metric-card metric-link" href="/users"><span class="metric-label">${t('admin.usuariosActivos')}</span><strong>${summary.usuariosActivos}</strong><small>${t('admin.deshabilitados', { n: summary.usuariosDeshabilitados })}</small></a>
+          <a class="metric-card metric-link ${summary.cuentasBloqueadas > 0 ? 'is-alert' : ''}" href="/users"><span class="metric-label">${t('admin.cuentasBloqueadas')}</span><strong>${summary.cuentasBloqueadas}</strong><small>${t('admin.porIntentos')}</small></a>
+          <a class="metric-card metric-link" href="${logLink('evento=LOGIN_EXITOSO')}"><span class="metric-label">${t('admin.ingresos24')}</span><strong>${events.LOGIN_EXITOSO ?? 0}</strong><small>${t('admin.iniciosExitosos')}</small></a>
+          <a class="metric-card metric-link ${(events.LOGIN_RECHAZADO ?? 0) > 0 ? 'is-alert' : ''}" href="${logLink('evento=LOGIN_RECHAZADO')}"><span class="metric-label">${t('admin.rechazos24')}</span><strong>${events.LOGIN_RECHAZADO ?? 0}</strong><small>${t('admin.bloqueosCuenta', { n: events.CUENTA_BLOQUEADA ?? 0 })}</small></a>`;
       }
       const eventsNode = document.querySelector('#admin-events');
       if (eventsNode) {
@@ -337,7 +333,6 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     const logLink = (params: string) => `/logs?${params}&desde=${encodeURIComponent(last24h())}#sistema`;
 
     // Repositorio de archivos y respaldos
-    const STORAGE_LABEL: Record<string, string> = { CONFIGURACION: 'Configuraciones', REPORTE: 'Reportes', RESPALDO: 'Respaldos' };
 
     const loadStorage = async () => {
       const response = await auditFetch('/api/system/storage');
@@ -345,26 +340,26 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const storage = await response.json() as StorageStatus;
       const state = document.querySelector<HTMLElement>('#storage-state');
       if (state) {
-        state.textContent = storage.configurado ? 'configurado' : 'no configurado';
+        state.textContent = t(storage.configurado ? 'admin.configurado' : 'admin.noConfigurado');
         state.className = `status-badge ${storage.configurado ? 'status-ready' : 'status-locked'}`;
       }
       const summary = document.querySelector('#storage-summary');
       if (summary) {
         summary.textContent = storage.configurado
-          ? `Contenedor privado ${storage.contenedor}. Cada archivo se verifica contra su SHA-256 al descargarlo.`
-          : 'Falta configurar el almacenamiento (AZURE_STORAGE_CONNECTION_STRING): los archivos quedan pendientes.';
+          ? t('admin.contenedor', { contenedor: storage.contenedor })
+          : t('admin.faltaAlmacenamiento');
       }
       const totals = document.querySelector('#storage-totals');
       if (totals) {
         totals.innerHTML = Object.entries(storage.archivos).map(([tipo, total]) => `
-          <div><span>${escapeHtml(STORAGE_LABEL[tipo] ?? tipo)}</span><strong>${total.cantidad}</strong><small>${formatBytes(total.bytes)}</small></div>`).join('');
+          <div><span>${escapeHtml(etiqueta('archivo', tipo))}</span><strong>${total.cantidad}</strong><small>${formatBytes(total.bytes)}</small></div>`).join('');
       }
       const pending = storage.configuracionesPendientes + storage.reportesPendientes;
       const pendingNode = document.querySelector('#storage-pending');
       if (pendingNode) {
         pendingNode.textContent = pending === 0
-          ? 'No hay archivos pendientes de subir.'
-          : `${storage.configuracionesPendientes} configuraciones y ${storage.reportesPendientes} reportes todavía no tienen su archivo en el repositorio.`;
+          ? t('admin.sinPendientesSubir')
+          : t('admin.pendientesSubir', { configuraciones: storage.configuracionesPendientes, reportes: storage.reportesPendientes });
       }
       const sync = document.querySelector<HTMLButtonElement>('#storage-sync');
       if (sync) sync.disabled = pending === 0 || !storage.configurado;
@@ -386,7 +381,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
               <small title="SHA-256 ${escapeHtml(backup.sha256)}">${escapeHtml(backup.detalle ?? '')}</small>
             </td>
             <td class="log-nowrap">${formatBytes(backup.tamanioBytes)}</td>
-            <td><button class="button button-ghost button-small" type="button" data-backup-id="${backup.id}">Descargar</button></td>
+            <td><button class="button button-ghost button-small" type="button" data-backup-id="${backup.id}">${t('admin.descargar')}</button></td>
           </tr>`).join('');
       }
       document.querySelector('#backup-empty')?.classList.toggle('is-hidden', backups.length > 0);
@@ -408,7 +403,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       try {
         await action();
       } catch (error) {
-        showError(error instanceof Error ? error.message : 'La operación no pudo completarse.');
+        showError(error instanceof Error ? error.message : t('admin.operacionFallida'));
       } finally {
         button.textContent = original;
         button.disabled = false;
@@ -418,7 +413,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     document.querySelector('#backup-create')?.addEventListener('click', async (event) => {
       const button = event.currentTarget as HTMLButtonElement;
       if (!await confirmBackup()) return;
-      await busy(button, 'Generando…', async () => {
+      await busy(button, t('admin.generando'), async () => {
         showError(null);
         const response = await auditFetch('/api/system/backups', { method: 'POST' });
         if (!response.ok) throw new Error(await readApiError(response));
@@ -427,7 +422,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     });
 
     document.querySelector('#storage-sync')?.addEventListener('click', async (event) => {
-      await busy(event.currentTarget as HTMLButtonElement, 'Subiendo…', async () => {
+      await busy(event.currentTarget as HTMLButtonElement, t('admin.subiendo'), async () => {
         showError(null);
         const response = await auditFetch('/api/system/storage/sync', { method: 'POST' });
         if (!response.ok) throw new Error(await readApiError(response));
@@ -435,8 +430,8 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         await loadStorage();
         const pendingNode = document.querySelector('#storage-pending');
         if (pendingNode) {
-          pendingNode.textContent = `Se subieron ${result.configuraciones} configuraciones y ${result.reportes} reportes.`
-            + (result.pendientes > 0 ? ` Quedan ${result.pendientes}: volvé a tocar el botón.` : '');
+          pendingNode.textContent = t('admin.subidos', { configuraciones: result.configuraciones, reportes: result.reportes })
+            + (result.pendientes > 0 ? ` ${t('admin.quedanSubir', { n: result.pendientes })}` : '');
         }
       });
     });
@@ -444,7 +439,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     document.querySelector('#backup-list')?.addEventListener('click', async (event) => {
       const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-backup-id]');
       if (!button) return;
-      await busy(button, 'Verificando…', async () => {
+      await busy(button, t('admin.verificando'), async () => {
         const response = await auditFetch(`/api/system/backups/${button.dataset.backupId}/download`);
         if (!response.ok) throw new Error(await readApiError(response));
         await saveResponse(response, 'auditnet-respaldo.zip');
@@ -452,15 +447,6 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     });
 
     // Correo y revisión periódica
-    const MAIL_LABEL: Record<string, string> = {
-      RECUPERACION_CONTRASENA: 'recuperación de contraseña',
-      ALTA_USUARIO: 'alta de usuario',
-      SOLICITUD_PLAN: 'solicitud de plan',
-      SOLICITUD_PLAN_RESUELTA: 'solicitud de plan resuelta',
-      ALERTAS_CRITICAS: 'alertas críticas',
-      VENCIMIENTOS: 'vencimientos',
-      RESUMEN_MENSUAL: 'resumen mensual',
-    };
     const MAIL_STATUS: Record<string, string> = { PENDIENTE: 'status-next', ENVIADO: 'status-ready', FALLIDO: 'status-locked' };
 
     const loadMail = async () => {
@@ -469,19 +455,19 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const outbox = await response.json() as MailOutbox;
       const provider = document.querySelector<HTMLElement>('#mail-provider');
       if (provider) {
-        provider.textContent = outbox.proveedor ?? 'sin proveedor';
+        provider.textContent = outbox.proveedor ?? t('admin.sinProveedor');
         provider.className = `status-badge ${outbox.proveedor ? 'status-ready' : 'status-locked'}`;
       }
       const totals = document.querySelector('#mail-totals');
       if (totals) {
         totals.innerHTML = `
-          <div><span>Pendientes</span><strong>${outbox.pendientes}</strong><small>esperando envío</small></div>
-          <div><span>Enviados</span><strong>${outbox.enviados24h}</strong><small>últimas 24 h</small></div>
-          <div><span>Fallidos</span><strong>${outbox.fallidos24h}</strong><small>últimas 24 h</small></div>`;
+          <div><span>${t('admin.pendientes')}</span><strong>${outbox.pendientes}</strong><small>${t('admin.esperandoEnvio')}</small></div>
+          <div><span>${t('admin.enviados')}</span><strong>${outbox.enviados24h}</strong><small>${t('admin.ultimas24')}</small></div>
+          <div><span>${t('admin.fallidos')}</span><strong>${outbox.fallidos24h}</strong><small>${t('admin.ultimas24')}</small></div>`;
       }
       if (!outbox.proveedor) {
         const note = document.querySelector('#mail-note');
-        if (note) note.textContent = 'El envío no está configurado: los avisos quedan pendientes hasta configurarlo.';
+        if (note) note.textContent = t('admin.envioNoConfigurado');
       }
       const dispatch = document.querySelector<HTMLButtonElement>('#mail-dispatch');
       if (dispatch) dispatch.disabled = !outbox.proveedor || outbox.pendientes === 0;
@@ -490,11 +476,11 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         body.innerHTML = outbox.ultimos.map((mail) => `
           <tr>
             <td><span class="log-nowrap">${escapeHtml(formatDate(mail.creadoEn))}</span></td>
-            <td><strong>${escapeHtml(MAIL_LABEL[mail.tipo] ?? mail.tipo)}</strong><small>${escapeHtml(mail.origen)}</small></td>
+            <td><strong>${escapeHtml(etiqueta('correo', mail.tipo))}</strong><small>${escapeHtml(mail.origen)}</small></td>
             <td><small>${escapeHtml(mail.destinatario)}</small></td>
             <td>
-              <span class="status-badge ${MAIL_STATUS[mail.estado] ?? 'status-next'}">${escapeHtml(mail.estado.toLowerCase())}</span>
-              ${mail.ultimoError ? `<small title="${escapeHtml(mail.ultimoError)}">${mail.intentos} ${mail.intentos === 1 ? 'intento' : 'intentos'} · ${escapeHtml(mail.ultimoError)}</small>` : ''}
+              <span class="status-badge ${MAIL_STATUS[mail.estado] ?? 'status-next'}">${escapeHtml(etiqueta('estadoCorreo', mail.estado))}</span>
+              ${mail.ultimoError ? `<small title="${escapeHtml(mail.ultimoError)}">${escapeHtml(plural(mail.intentos, 'admin.intentos'))} · ${escapeHtml(mail.ultimoError)}</small>` : ''}
             </td>
           </tr>`).join('');
       }
@@ -502,7 +488,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
     };
 
     document.querySelector('#mail-dispatch')?.addEventListener('click', async (event) => {
-      await busy(event.currentTarget as HTMLButtonElement, 'Enviando…', async () => {
+      await busy(event.currentTarget as HTMLButtonElement, t('admin.enviando'), async () => {
         showError(null);
         const response = await authFetch('/api/admin/mail/dispatch', { method: 'POST' });
         if (!response.ok) throw new Error(await readApiError(response));
@@ -510,14 +496,14 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         await loadMail();
         const note = document.querySelector('#mail-note');
         if (note) {
-          note.textContent = `Enviados: ${result.enviados} · para reintentar: ${result.reintentos} · fallidos: ${result.fallidos}.`
-            + (result.pendientes > 0 ? ` Quedan ${result.pendientes} pendientes.` : '');
+          note.textContent = t('admin.resultadoEnvio', { enviados: result.enviados, reintentos: result.reintentos, fallidos: result.fallidos })
+            + (result.pendientes > 0 ? ` ${t('admin.quedanPendientes', { n: result.pendientes })}` : '');
         }
       });
     });
 
     document.querySelector('#review-run')?.addEventListener('click', async (event) => {
-      await busy(event.currentTarget as HTMLButtonElement, 'Revisando…', async () => {
+      await busy(event.currentTarget as HTMLButtonElement, t('admin.revisando'), async () => {
         showError(null);
         const response = await auditFetch('/api/review/run', { method: 'POST' });
         if (!response.ok) throw new Error(await readApiError(response));
@@ -526,16 +512,16 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         if (node) {
           node.innerHTML = `
             <dl class="health-meta">
-              <div><dt>organizaciones</dt><dd>${result.organizaciones}</dd></div>
-              <div><dt>re-auditorías</dt><dd>${result.reauditorias}</dd></div>
-              <div><dt>hallazgos vencidos</dt><dd>${result.hallazgosVencidos}</dd></div>
-              <div><dt>config. desactualizadas</dt><dd>${result.dispositivosDesactualizados}</dd></div>
-              <div><dt>correos</dt><dd>${result.correos}</dd></div>
-              <div><dt>resúmenes</dt><dd>${result.resumenes}</dd></div>
+              <div><dt>${t('tablero.organizaciones')}</dt><dd>${result.organizaciones}</dd></div>
+              <div><dt>${t('admin.reauditorias')}</dt><dd>${result.reauditorias}</dd></div>
+              <div><dt>${t('tablero.vencidos')}</dt><dd>${result.hallazgosVencidos}</dd></div>
+              <div><dt>${t('admin.desactualizadas')}</dt><dd>${result.dispositivosDesactualizados}</dd></div>
+              <div><dt>${t('admin.correosEnviados')}</dt><dd>${result.correos}</dd></div>
+              <div><dt>${t('admin.resumenes')}</dt><dd>${result.resumenes}</dd></div>
             </dl>
-            ${result.omitidas.length ? `<p class="log-muted">No se pudo:</p><ul class="review-skipped">${result.omitidas
+            ${result.omitidas.length ? `<p class="log-muted">${t('admin.noSePudo')}</p><ul class="review-skipped">${result.omitidas
               .map((item) => `<li>${escapeHtml(item)}</li>`).join('')}</ul>` : ''}
-            <p class="technical-hint">ejecutada ${escapeHtml(formatDate(result.ejecutada))}</p>`;
+            <p class="technical-hint">${escapeHtml(t('admin.ejecutada', { fecha: formatDate(result.ejecutada) }))}</p>`;
           node.classList.remove('is-hidden');
         }
         await loadMail();
@@ -547,13 +533,11 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       const title = document.querySelector('#admin-plan-requests');
       if (!title) return;
       if (!response.ok) {
-        title.textContent = 'No se pudieron consultar las solicitudes de plan.';
+        title.textContent = t('admin.errorSolicitudes');
         return;
       }
       const pending = (await response.json() as PlanRequest[]).length;
-      title.textContent = pending === 0
-        ? 'Sin solicitudes de cambio de plan pendientes'
-        : `${pending} ${pending === 1 ? 'solicitud' : 'solicitudes'} de cambio de plan por resolver`;
+      title.textContent = pending === 0 ? t('admin.sinSolicitudes') : plural(pending, 'admin.solicitudesPorResolver');
     };
 
     const refresh = async () => {
@@ -563,7 +547,7 @@ import MasterLayout from '../layouts/MasterLayout.astro';
       try {
         await Promise.all([loadHealth(), loadSecurity(), loadStorage(), loadBackups(), loadPlanRequests(), loadMail()]);
       } catch (error) {
-        showError(error instanceof Error ? error.message : 'No se pudo obtener el estado de la plataforma.');
+        showError(error instanceof Error ? error.message : t('admin.errorEstado'));
       } finally {
         if (button) button.disabled = false;
       }

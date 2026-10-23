@@ -1,5 +1,5 @@
-// Textos de la consola en español. en.ts y pt.ts deben tener exactamente las mismas claves (lo controla el tipo).
-// {nombre} se reemplaza por el dato al mostrarlo.
+// Textos comunes de la consola (acceso, menú, barra superior y Mi cuenta) en español. en.ts y pt.ts tienen las
+// mismas claves (lo controla el tipo). {nombre} se reemplaza por el dato al mostrarlo.
 const es = {
   'idioma.es': 'Español',
   'idioma.en': 'English',
@@ -19,6 +19,8 @@ const es = {
   'error.http': 'Error HTTP {estado}.',
   'error.conexionAcceso': 'No se pudo conectar con el servicio de acceso. Verificá management-service en el puerto 8081.',
   'error.conexionApi': 'No se pudo conectar con la API. Verificá que los servicios backend estén iniciados.',
+  'error.sinSesion': 'No hay una sesión iniciada.',
+  'error.sesionVencida': 'La sesión venció.',
 
   'contrasena.largo': 'entre 10 y 72 caracteres',
   'contrasena.mezcla': 'combina letras y números',
@@ -161,4 +163,3 @@ const es = {
 };
 
 export default es;
-export type Clave = keyof typeof es;

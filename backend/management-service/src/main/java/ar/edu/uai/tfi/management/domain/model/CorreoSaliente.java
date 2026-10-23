@@ -30,6 +30,8 @@ public record CorreoSaliente(
 
     /** Datos que no se conservan después del envío (el token de recuperación solo viaja en el correo). */
     public static final String DATO_SENSIBLE = "token";
+    /** Idioma elegido en la pantalla desde donde se pidió el correo; si no está, se usa el de la cuenta. */
+    public static final String DATO_IDIOMA = "idioma";
 
     public CorreoSaliente enviado(Instant fecha, String id) {
         return new CorreoSaliente(this.id, origen, tipo, organizacionId, destinatario, nombreDestinatario,
