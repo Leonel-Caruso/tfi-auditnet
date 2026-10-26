@@ -18,6 +18,8 @@ export type LoginResponse = {
   roles: string[];
   /** Idioma guardado del usuario: es, en o pt. */
   idioma: string;
+  /** Tema guardado del usuario: claro u oscuro; null si todavía no eligió. */
+  tema: string | null;
 };
 
 export type CurrentUser = {

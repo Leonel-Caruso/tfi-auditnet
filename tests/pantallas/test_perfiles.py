@@ -137,5 +137,5 @@ def test_el_alta_de_organizacion_lleva_el_plan_inicial(abrir, entorno):
 
 def test_el_panel_de_administracion_avisa_las_solicitudes_pendientes(abrir):
     pagina = abrir("/admin", perfil="ADMINISTRADOR_SISTEMA")
-    pagina.wait_for_function("!document.querySelector('#admin-plan-requests').textContent.includes('…')")
+    pagina.esperar("!document.querySelector('#admin-plan-requests').textContent.includes('…')")
     assert "1 solicitud de cambio de plan por resolver" in pagina.locator("#admin-plan-requests").inner_text()

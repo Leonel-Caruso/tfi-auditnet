@@ -7,6 +7,7 @@ import {
   type LoginResponse,
 } from './api';
 import { esIdioma, idiomaActual, recordarIdioma, t, type Idioma } from './i18n';
+import { esTema, recordarTema, temaDelNavegador, type Tema } from './tema';
 
 const TOKEN_KEY = 'tfi.auth.token';
 const USER_KEY = 'tfi.auth.user';
@@ -35,6 +36,11 @@ export async function login(identidad: string, password: string): Promise<LoginR
 
   const result = (await response.json()) as LoginResponse;
   saveSession(result);
+  // Si la cuenta todavía no tiene tema, se le guarda el que se eligió en la pantalla de acceso.
+  const elegido = temaDelNavegador();
+  if (!esTema(result.tema) && elegido) {
+    await saveTheme(elegido).catch(() => undefined);
+  }
   return result;
 }
 
@@ -53,8 +59,9 @@ export function saveSession(result: LoginResponse): void {
   sessionStorage.setItem(TOKEN_KEY, result.accessToken);
   sessionStorage.setItem(USER_KEY, JSON.stringify(user));
   sessionStorage.setItem(EXPIRES_KEY, String(Date.now() + result.expiresIn * 1000));
-  // El idioma guardado del usuario manda; también queda para la pantalla de acceso de este navegador.
+  // El idioma y el tema guardados del usuario mandan; también quedan para la pantalla de acceso de este navegador.
   recordarIdioma(idioma);
+  if (esTema(result.tema)) recordarTema(result.tema);
 }
 
 export function getToken(): string | null {
@@ -151,6 +158,12 @@ export async function verifySession(): Promise<CurrentUser> {
 /** Guarda el idioma en la cuenta: lo usan la consola en cualquier navegador y los correos. */
 export async function saveLanguage(idioma: Idioma): Promise<void> {
   const response = await authFetch('/api/auth/me/language', jsonRequest('PUT', { idioma }));
+  if (!response.ok) throw new Error(await readApiError(response));
+}
+
+/** Guarda el tema en la cuenta: lo usa la consola en cualquier navegador. */
+export async function saveTheme(tema: Tema): Promise<void> {
+  const response = await authFetch('/api/auth/me/theme', jsonRequest('PUT', { tema }));
   if (!response.ok) throw new Error(await readApiError(response));
 }
 

@@ -7,6 +7,7 @@ import ar.edu.uai.tfi.management.api.rest.dto.auth.LoginRequest;
 import ar.edu.uai.tfi.management.api.rest.dto.auth.LoginResponse;
 import ar.edu.uai.tfi.management.api.rest.dto.auth.RecuperarPasswordRequest;
 import ar.edu.uai.tfi.management.api.rest.dto.auth.RestablecerConEnlaceRequest;
+import ar.edu.uai.tfi.management.api.rest.dto.auth.TemaDto;
 import ar.edu.uai.tfi.management.api.rest.dto.auth.UsuarioActualResponse;
 import ar.edu.uai.tfi.management.application.auth.AuthResult;
 import ar.edu.uai.tfi.management.application.auth.AuthService;
@@ -64,7 +65,8 @@ public class AuthResource {
                 usuario.nombreUsuario(),
                 usuario.email(),
                 usuario.roles(),
-                result.idioma().codigo());
+                result.idioma().codigo(),
+                result.tema() == null ? null : result.tema().codigo());
     }
 
     /** El usuario cambia su contraseña. Responde un token nuevo: las demás sesiones abiertas quedan sin efecto. */
@@ -126,6 +128,13 @@ public class AuthResource {
     public IdiomaDto guardarIdioma(IdiomaDto request) {
         return new IdiomaDto(authService.guardarIdioma(usuarioActual(), request == null ? null : request.idioma())
                 .codigo());
+    }
+
+    @PUT
+    @Path("/me/theme")
+    @Authenticated
+    public TemaDto guardarTema(TemaDto request) {
+        return new TemaDto(authService.guardarTema(usuarioActual(), request == null ? null : request.tema()).codigo());
     }
 
     @GET

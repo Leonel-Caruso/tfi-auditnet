@@ -10,6 +10,8 @@ on:
       - "backend/**"
       - "frontend/**"
       - "tests/pantallas/**"
+      - "tests/datos_demo/**"
+      - "scripts/datos-demo/**"
       - ".github/workflows/imagenes.yml"
   workflow_dispatch:
 
@@ -80,6 +82,8 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: pytest
         run: python -m pytest tests/pantallas
+      - name: Datos de demostración
+        run: python -m pytest tests/datos_demo
 
   imagenes:
     name: Imagen ${{ matrix.imagen }}

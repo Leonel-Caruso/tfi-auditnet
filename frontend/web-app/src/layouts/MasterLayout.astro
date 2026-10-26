@@ -1,6 +1,7 @@
 ---
 import Sidebar from '../components/Sidebar.astro';
 import Topbar from '../components/Topbar.astro';
+import ConfirmDialog from '../components/ConfirmDialog.astro';
 import HeadMeta from '../components/HeadMeta.astro';
 import { es } from '../i18n';
 import '../styles/global.css';
@@ -51,14 +52,16 @@ const clave = (campo: string) => (i18n ? `${i18n}.${campo}` : undefined);
           </div>
           <slot />
         </main>
+        <ConfirmDialog />
       </div>
     </div>
 
     <script>
-      import { getStoredUser, logout, saveLanguage, verifySession } from '../lib/auth';
+      import { getStoredUser, logout, saveLanguage, saveTheme, verifySession } from '../lib/auth';
       import { PROFILE_ORDER, ROLE_LABEL } from '../lib/api';
       import { enhanceDateInputs } from '../lib/datepicker';
       import { conectarSelectorIdioma, mostrarTraducida, t } from '../lib/i18n';
+      import { conectarSelectorTema } from '../lib/tema';
 
       mostrarTraducida();
 
@@ -112,6 +115,7 @@ const clave = (campo: string) => (i18n ? `${i18n}.${campo}` : undefined);
       }
 
       conectarSelectorIdioma(document.querySelector('#user-popover') ?? document, saveLanguage);
+      conectarSelectorTema(saveTheme);
 
       const userMenuButton = document.querySelector<HTMLButtonElement>('#user-menu-button');
       const userPopover = document.querySelector<HTMLElement>('#user-popover');

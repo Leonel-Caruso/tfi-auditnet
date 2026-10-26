@@ -7,6 +7,7 @@ import ar.edu.uai.tfi.auditcore.api.rest.dto.report.GenerarReporteRequest;
 import ar.edu.uai.tfi.auditcore.api.rest.dto.report.ReporteResponse;
 import ar.edu.uai.tfi.auditcore.api.rest.dto.report.ReporteResumenResponse;
 import ar.edu.uai.tfi.auditcore.application.report.ExportadorCsv;
+import ar.edu.uai.tfi.auditcore.application.report.IdiomaReporte;
 import ar.edu.uai.tfi.auditcore.application.report.ReporteService;
 import ar.edu.uai.tfi.auditcore.domain.model.CriteriosReporte;
 import ar.edu.uai.tfi.auditcore.domain.model.EstadoHallazgo;
@@ -57,7 +58,7 @@ public class ReporteResource {
     @POST
     @Path("/audits")
     @RolesAllowed({"ADMINISTRADOR_SISTEMA", "ANALISTA_RED", "AUDITOR_TECNICO"})
-    public Response generar(GenerarReporteRequest request) {
+    public Response generar(GenerarReporteRequest request, @HeaderParam(HttpHeaders.ACCEPT_LANGUAGE) String idioma) {
         if (request == null) {
             throw error(Response.Status.BAD_REQUEST, "El cuerpo de la solicitud es obligatorio.");
         }
@@ -70,7 +71,8 @@ public class ReporteResource {
                     enumerados(SeveridadRegla.class, request.severidades(), "severidades"),
                     enumerados(EstadoHallazgo.class, request.estados(), "estados"),
                     request.auditoriaIds());
-            Optional<ReporteAuditoria> reporte = service.generar(criterios, jwt.getName(), Instant.now());
+            Optional<ReporteAuditoria> reporte = service.generar(criterios, jwt.getName(), Instant.now(),
+                    IdiomaReporte.de(idioma));
             if (reporte.isEmpty()) {
                 return Response.ok(Map.of("message",
                         "No hay auditorías que cumplan los criterios: no se generó ningún reporte.")).build();

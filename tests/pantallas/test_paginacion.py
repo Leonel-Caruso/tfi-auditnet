@@ -46,7 +46,7 @@ def test_historial_pide_cada_pagina_al_servidor(abrir, entorno):
     assert pagina.locator("#history-count").inner_text() == "42"
 
     pagina.click("#history-pager [data-pager=siguiente]")
-    pagina.wait_for_function("document.querySelectorAll('#history-body tr').length === 17")
+    pagina.esperar("document.querySelectorAll('#history-body tr').length === 17")
     pedidos = [r["consulta"] for r in entorno["registro"] if r["ruta"] == "/api/audits/history"]
     assert pedidos[-1].get("pagina") == "2" and pedidos[-1].get("porPagina") == "25"
 

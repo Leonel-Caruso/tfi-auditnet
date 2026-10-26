@@ -1,0 +1,19 @@
+---
+import { es } from '../i18n';
+---
+
+<dialog id="confirm-dialog" class="technical-dialog confirm-dialog">
+  <form method="dialog" class="device-form">
+    <div class="dialog-header">
+      <div>
+        <span class="eyebrow" data-i18n="general.confirmar">{es['general.confirmar']}</span>
+        <h2 id="confirm-title" data-i18n="general.confirmasOperacion">{es['general.confirmasOperacion']}</h2>
+        <p id="confirm-text"></p>
+      </div>
+    </div>
+    <div class="dialog-actions">
+      <button class="button button-ghost" value="cancel" data-i18n="general.cancelar">{es['general.cancelar']}</button>
+      <button id="confirm-accept" class="button button-primary" value="ok" data-i18n="general.confirmar">{es['general.confirmar']}</button>
+    </div>
+  </form>
+</dialog>

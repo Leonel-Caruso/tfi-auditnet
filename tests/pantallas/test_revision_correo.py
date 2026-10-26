@@ -59,7 +59,7 @@ def test_un_enlace_vencido_o_incompleto_avisa(abrir):
 
 def test_cada_perfil_elige_solo_los_avisos_que_le_llegan(abrir, entorno):
     analista = abrir("/account", perfil="ANALISTA_RED")
-    analista.wait_for_function("document.querySelector('#notifications-form input[name=alertas]').checked")
+    analista.esperar("document.querySelector('#notifications-form input[name=alertas]').checked")
     assert analista.locator("[data-notice=alertas]").is_visible()
     assert analista.locator("[data-notice=vencimientos]").is_visible()
     assert not analista.locator("[data-notice=resumen]").is_visible(), "el resumen es para el responsable"
@@ -107,7 +107,7 @@ def test_los_hallazgos_vencidos_se_marcan_y_se_filtran(abrir, entorno):
     pagina.wait_for_load_state("networkidle")
     pagina.click("#finding-table-body tr[data-finding-id='4']")
     # El detalle se carga después del clic: se espera a que aparezca.
-    pagina.wait_for_function(
+    pagina.esperar(
         "document.querySelector('#finding-inspector-content').textContent.includes('vencido hace')")
 
     filtrado = abrir("/results?estado=VENCIDOS", perfil="ANALISTA_RED")
@@ -141,7 +141,7 @@ def test_el_panel_de_administracion_muestra_el_correo_y_ejecuta_la_revision(abri
     assert "HTTP 503" in pagina.locator("#mail-list").inner_text()
 
     pagina.click("#mail-dispatch")
-    pagina.wait_for_function("document.querySelector('#mail-note').textContent.startsWith('Enviados: 1')")
+    pagina.esperar("document.querySelector('#mail-note').textContent.startsWith('Enviados: 1')")
     assert _pedidos(entorno, "POST", "/api/admin/mail/dispatch")
 
     pagina.click("#review-run")

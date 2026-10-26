@@ -12,7 +12,7 @@ PREFIJOS = ("acceso|admin|alerta|alertaTexto|alertas|archivo|auditorias|baseline
             "condicion|consola|contrasena|correo|cuenta|dispositivos|error|estadoCorreo|general|hallazgo|hallazgoTexto|"
             "hallazgos|historial|idioma|informe|informeEstado|informeResultado|informeSeveridad|login|menu|modalidad|"
             "organizaciones|paginador|perfil|permiso|plan|planes|recuperar|registro|regla|reglas|reportes|restablecer|"
-            "resultado|riesgo|riesgoAyuda|ruta|severidad|solicitud|tablero|usuarios")
+            "resultado|riesgo|riesgoAyuda|ruta|severidad|solicitud|tablero|tema|usuarios")
 CLAVE_SUELTA = re.compile(r"\b(" + PREFIJOS + r")\.[a-zA-Z][\w-]*\b")
 # Textos en español que no deberían quedar en inglés o portugués (los que se escriben igual en portugués no sirven).
 ESPANOL = re.compile(r"\b(Guardar cambios|Seleccioná|Todavía no|No se pudo|Ver hallazgos|hallazgos pendientes|"
@@ -45,7 +45,7 @@ def test_el_acceso_se_muestra_en_el_idioma_elegido(abrir):
     assert pagina.locator(".language-switch [data-idioma=en]").get_attribute("aria-pressed") == "true"
 
     pagina.click(".language-switch [data-idioma=pt]")
-    pagina.wait_for_function("document.documentElement.lang === 'pt'")
+    pagina.esperar("document.documentElement.lang === 'pt'")
     assert pagina.locator("label:has(#password) span").inner_text() == "senha"
     assert pagina.evaluate("localStorage.getItem('auditnet.idioma')") == "pt"
     assert not pagina.errores
@@ -83,7 +83,7 @@ def test_el_menu_del_usuario_cambia_el_idioma_y_lo_guarda(abrir, entorno):
 
     pagina.click("#user-menu-button")
     pagina.click("#user-popover [data-idioma=en]")
-    pagina.wait_for_function("document.documentElement.lang === 'en'")
+    pagina.esperar("document.documentElement.lang === 'en'")
     pagina.wait_for_selector("#protected-shell:not(.is-hidden)")
 
     assert _pedidos(entorno, "PUT", "/api/auth/me/language")[-1]["cuerpo"] == {"idioma": "en"}
@@ -106,7 +106,7 @@ def test_mi_cuenta_traducida_con_el_panel_de_idioma(abrir, entorno):
     assert pagina.locator("#account-error").inner_text() == "Enter your current password."
 
     pagina.click("#account-language [data-idioma=pt]")
-    pagina.wait_for_function("document.querySelector('h1').textContent === 'Minha conta'")
+    pagina.esperar("document.querySelector('h1').textContent === 'Minha conta'")
     assert _pedidos(entorno, "PUT", "/api/auth/me/language")[-1]["cuerpo"] == {"idioma": "pt"}
     assert not pagina.errores
 
@@ -146,7 +146,7 @@ def test_los_textos_que_arman_los_scripts_salen_traducidos(abrir):
     assert pagina.locator("#finding-table-body .severity-badge").first.inner_text() in ("CRITICAL", "HIGH", "MEDIUM", "LOW")
     pagina.wait_for_load_state("networkidle")
     pagina.click("#finding-table-body tr[data-finding-id='4']")
-    pagina.wait_for_function("document.querySelector('#finding-inspector-content').textContent.includes('overdue by')")
+    pagina.esperar("document.querySelector('#finding-inspector-content').textContent.includes('overdue by')")
     assert "Update status" in pagina.locator("#finding-inspector-content").inner_text()
 
     tablero = abrir("/dashboard", perfil="RESPONSABLE_GESTION_IT", idioma="pt")
@@ -175,3 +175,20 @@ def test_el_calendario_y_el_paginador_se_traducen(abrir):
     pagina.locator(".dp-trigger").first.click()
     assert "seg" in pagina.locator(".dp-popover").first.text_content()
     assert pagina.locator(".dp-popover [data-action=today]").first.inner_text() == "hoje"
+
+
+def test_la_evidencia_del_motor_se_traduce_y_no_se_interpreta_como_html(abrir):
+    pagina = abrir("/results", perfil="ANALISTA_RED", idioma="en")
+    pagina.wait_for_selector("#finding-table-body tr")
+    pagina.wait_for_load_state("networkidle")
+    pagina.click("#finding-table-body tr[data-finding-id='4']")
+    pagina.esperar("document.querySelector('#finding-inspector-content').textContent.includes('Required pattern')")
+    texto = pagina.locator("#finding-inspector-content").text_content()
+    assert "Required pattern not found: <script>alert(1)</script>" in texto
+    assert pagina.locator("#finding-inspector-content script").count() == 0
+
+    espanol = abrir("/results", perfil="ANALISTA_RED")
+    espanol.wait_for_selector("#finding-table-body tr")
+    espanol.wait_for_load_state("networkidle")
+    espanol.click("#finding-table-body tr[data-finding-id='4']")
+    espanol.esperar("document.querySelector('#finding-inspector-content').textContent.includes('No se encontró el patrón')")

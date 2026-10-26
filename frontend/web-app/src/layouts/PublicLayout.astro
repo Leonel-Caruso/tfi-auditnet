@@ -1,6 +1,7 @@
 ---
 import HeadMeta from '../components/HeadMeta.astro';
 import SelectorIdioma from '../components/SelectorIdioma.astro';
+import SelectorTema from '../components/SelectorTema.astro';
 import '../styles/global.css';
 
 interface Props {
@@ -29,14 +30,19 @@ const {
       tituloClave={tituloClave} />
   </head>
   <body class="public-body">
-    <SelectorIdioma class="language-switch-public" />
+    <div class="public-switches">
+      <SelectorTema />
+      <SelectorIdioma class="language-switch-public" />
+    </div>
     <slot />
 
     <script>
       import { conectarSelectorIdioma, mostrarTraducida } from '../lib/i18n';
+      import { conectarSelectorTema } from '../lib/tema';
 
       mostrarTraducida();
       conectarSelectorIdioma(document.querySelector('.language-switch-public') ?? document);
+      conectarSelectorTema();
     </script>
   </body>
 </html>

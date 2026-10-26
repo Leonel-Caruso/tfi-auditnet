@@ -67,6 +67,10 @@ public class UsuarioEntity {
     @Column(name = "idioma", nullable = false, length = 2)
     public String idioma = Idioma.ES.codigo();
 
+    /** claro u oscuro; null mientras el usuario no elija. */
+    @Column(name = "tema", length = 6)
+    public String tema;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "usuarios_roles",
             joinColumns = @JoinColumn(name = "id_usuario"),

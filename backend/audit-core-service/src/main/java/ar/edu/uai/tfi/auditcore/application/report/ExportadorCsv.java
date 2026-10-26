@@ -7,7 +7,6 @@ import ar.edu.uai.tfi.auditcore.domain.model.ReporteAuditoria;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -59,13 +58,8 @@ public final class ExportadorCsv {
             this.codigos = codigos;
         }
 
-        /** Primer idioma de un encabezado Accept-Language ("pt-BR,pt;q=0.9" → PT); si no es en ni pt, español. */
         static Formato de(String idioma) {
-            String codigo = idioma == null ? "" : idioma.trim().toLowerCase(Locale.ROOT);
-            if (codigo.startsWith("en")) {
-                return EN;
-            }
-            return codigo.startsWith("pt") ? PT : ES;
+            return valueOf(IdiomaReporte.de(idioma).name());
         }
 
         String codigo(String valor) {

@@ -121,6 +121,15 @@ export const es = {
   'resultado.CUMPLE': 'CUMPLE',
   'resultado.CON_HALLAZGOS': 'CON_HALLAZGOS',
   'severidad.NINGUNA': 'NINGUNA',
+  'evidencia.requeridoEncontrado': 'Patrón requerido encontrado: {linea}',
+  'evidencia.prohibidoDetectado': 'Patrón no permitido detectado: {linea}',
+  'evidencia.requeridoAusente': 'No se encontró el patrón requerido: {patron}',
+  'evidencia.prohibidoAusente': 'No se detectó el patrón no permitido: {patron}',
+  'evidencia.parametroAusente': 'No se encontró el parámetro {parametro} (valor esperado: {esperado}).',
+  'evidencia.parametroCorrecto': 'Parámetro {parametro} con el valor esperado: {esperado}.',
+  'evidencia.parametroDistinto': 'Parámetro {parametro} con valor {encontrados}{resto}; se esperaba: {esperado}.',
+  'evidencia.sinValor': '(sin valor)',
+  'evidencia.yMas': 'y {n} más',
 };
 
 export const en: Textos<typeof es> = {
@@ -209,8 +218,8 @@ export const en: Textos<typeof es> = {
   'calendario.dias': 'Mo,Tu,We,Th,Fr,Sa,Su',
   'calendario.fecha': 'date',
   'calendario.elegir': 'Choose {campo}',
-  'calendario.formato': 'dd/mm/yyyy',
-  'calendario.formatoHora': 'dd/mm/yyyy --:--',
+  'calendario.formato': 'mm/dd/yyyy',
+  'calendario.formatoHora': 'mm/dd/yyyy --:--',
   'calendario.sinFecha': 'no date',
   'calendario.dia': '{mes} {dia}, {anio}',
   'calendario.mesAnterior': 'Previous month',
@@ -243,6 +252,15 @@ export const en: Textos<typeof es> = {
   'resultado.CUMPLE': 'COMPLIANT',
   'resultado.CON_HALLAZGOS': 'WITH_FINDINGS',
   'severidad.NINGUNA': 'NONE',
+  'evidencia.requeridoEncontrado': 'Required pattern found: {linea}',
+  'evidencia.prohibidoDetectado': 'Forbidden pattern detected: {linea}',
+  'evidencia.requeridoAusente': 'Required pattern not found: {patron}',
+  'evidencia.prohibidoAusente': 'Forbidden pattern not detected: {patron}',
+  'evidencia.parametroAusente': 'Parameter {parametro} not found (expected value: {esperado}).',
+  'evidencia.parametroCorrecto': 'Parameter {parametro} with the expected value: {esperado}.',
+  'evidencia.parametroDistinto': 'Parameter {parametro} with value {encontrados}{resto}; expected: {esperado}.',
+  'evidencia.sinValor': '(no value)',
+  'evidencia.yMas': 'and {n} more',
 };
 
 export const pt: Textos<typeof es> = {
@@ -365,4 +383,13 @@ export const pt: Textos<typeof es> = {
   'resultado.CUMPLE': 'CONFORME',
   'resultado.CON_HALLAZGOS': 'COM_ACHADOS',
   'severidad.NINGUNA': 'NENHUMA',
+  'evidencia.requeridoEncontrado': 'Padrão obrigatório encontrado: {linea}',
+  'evidencia.prohibidoDetectado': 'Padrão não permitido detectado: {linea}',
+  'evidencia.requeridoAusente': 'Padrão obrigatório não encontrado: {patron}',
+  'evidencia.prohibidoAusente': 'Padrão não permitido não detectado: {patron}',
+  'evidencia.parametroAusente': 'Parâmetro {parametro} não encontrado (valor esperado: {esperado}).',
+  'evidencia.parametroCorrecto': 'Parâmetro {parametro} com o valor esperado: {esperado}.',
+  'evidencia.parametroDistinto': 'Parâmetro {parametro} com valor {encontrados}{resto}; esperado: {esperado}.',
+  'evidencia.sinValor': '(sem valor)',
+  'evidencia.yMas': 'e mais {n}',
 };

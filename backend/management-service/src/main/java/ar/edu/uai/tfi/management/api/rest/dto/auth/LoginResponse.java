@@ -12,6 +12,7 @@ public record LoginResponse(
         String username,
         String email,
         Set<String> roles,
-        String idioma
+        String idioma,
+        String tema
 ) {
 }

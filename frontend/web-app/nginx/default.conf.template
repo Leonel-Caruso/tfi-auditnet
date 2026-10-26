@@ -49,6 +49,9 @@ server {
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-Frame-Options "DENY" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    # Solo scripts propios en archivos aparte; los estilos admiten atributos style. La API va al mismo origen.
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), bluetooth=()" always;
     add_header Cache-Control $auditnet_cache_control always;
 
     # X-Request-ID ($request_id) permite seguir una operación en las bitácoras de ambos servicios.
@@ -103,7 +106,7 @@ server {
     # Solo se indexa la pantalla de acceso; sus estilos, scripts e íconos quedan permitidos para renderizarla.
     location = /robots.txt {
         default_type text/plain;
-        return 200 "User-agent: *\nAllow: /login\nAllow: /${auditnet_dolar}\nAllow: /_astro/\nAllow: /fonts/\nAllow: /icons/\nAllow: /favicon\nAllow: /manifest.webmanifest\nDisallow: /\n\nSitemap: https://$host/sitemap.xml\n";
+        return 200 "User-agent: *\nAllow: /login\nAllow: /${auditnet_dolar}\nAllow: /_astro/\nAllow: /fonts/\nAllow: /icons/\nAllow: /favicon\nAllow: /inicio.js\nAllow: /manifest.webmanifest\nDisallow: /\n\nSitemap: https://$host/sitemap.xml\n";
     }
     location = /sitemap.xml {
         default_type application/xml;

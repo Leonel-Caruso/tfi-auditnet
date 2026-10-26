@@ -5,6 +5,9 @@ const es = {
   'idioma.en': 'English',
   'idioma.pt': 'Português',
   'idioma.elegir': 'Idioma',
+  'tema.elegir': 'Tema',
+  'tema.claro': 'Claro',
+  'tema.oscuro': 'Oscuro',
 
   'perfil.ADMINISTRADOR_SISTEMA': 'Administrador del sistema',
   'perfil.ADMINISTRADOR_ORGANIZACION': 'Administrador de organización',
@@ -127,7 +130,7 @@ const es = {
 
   'cuenta.titulo': 'Mi cuenta',
   'cuenta.seccion': 'Cuenta',
-  'cuenta.descripcion': 'Consultá tus datos de acceso, cambiá tu contraseña y elegí el idioma y los avisos por correo.',
+  'cuenta.descripcion': 'Consultá tus datos de acceso, cambiá tu contraseña y elegí el idioma, el tema y los avisos por correo.',
   'cuenta.identidad': 'Identidad',
   'cuenta.usuario': 'usuario',
   'cuenta.correo': 'correo',
@@ -149,6 +152,9 @@ const es = {
   'cuenta.idiomaSeccion': 'Idioma',
   'cuenta.idiomaTitulo': 'Idioma de la consola y los correos',
   'cuenta.idiomaAyuda': 'Se aplica en esta consola y en los correos que te envía AuditNet.',
+  'cuenta.temaSeccion': 'Apariencia',
+  'cuenta.temaTitulo': 'Tema de la consola',
+  'cuenta.temaAyuda': 'Se guarda en tu cuenta: la consola lo usa en cualquier navegador.',
   'cuenta.correoSeccion': 'Correo',
   'cuenta.avisos': 'Avisos por correo',
   'cuenta.avisoAlertas': 'Alertas críticas nuevas',

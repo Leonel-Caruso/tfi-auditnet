@@ -14,6 +14,11 @@ from urllib.parse import parse_qs, urlparse
 
 import datos
 
+# Las mismas políticas que publica nginx, así las pruebas fallan si una pantalla usa algo que el navegador bloquearía.
+_NGINX = (Path(__file__).resolve().parents[2] / "frontend/web-app/nginx/default.conf.template").read_text()
+POLITICAS = {nombre: re.search(r'add_header %s "([^"]+)"' % nombre, _NGINX).group(1)
+             for nombre in ("Content-Security-Policy", "Permissions-Policy")}
+
 
 def _pagina(lista, consulta):
     """Aplica pagina/porPagina como la API real y devuelve (elementos, total)."""
@@ -54,6 +59,11 @@ class ManejadorAuditNet(SimpleHTTPRequestHandler):
 
     def log_message(self, *args):
         pass
+
+    def end_headers(self):
+        for nombre, valor in POLITICAS.items():
+            self.send_header(nombre, valor)
+        super().end_headers()
 
     def do_GET(self):
         if self.path.startswith("/api/"):
@@ -154,18 +164,32 @@ def _por_id(coleccion, armar=lambda elemento: elemento):
     return responder
 
 
+# Cuentas para el login: "ana" (analista) eligió portugués y no eligió tema; "beto" (auditor) eligió el oscuro.
+CUENTAS = {
+    "ana": {"accessToken": "ANALISTA_RED", "userId": 1, "nombre": "Ana", "email": "ana@acme.test",
+            "roles": ["ANALISTA_RED"], "idioma": "pt", "tema": None},
+    "beto": {"accessToken": "AUDITOR_TECNICO", "userId": 2, "nombre": "Beto", "email": "beto@acme.test",
+             "roles": ["AUDITOR_TECNICO"], "idioma": "es", "tema": "oscuro"},
+}
+
+
 def _ingresar(manejador, _m, _c, cuerpo):
-    """Solo existe la cuenta "ana" (analista), que eligió portugués."""
-    if cuerpo.get("identidad") != "ana" or cuerpo.get("password") != "Clave correcta 2026":
+    cuenta = CUENTAS.get(cuerpo.get("identidad"))
+    if not cuenta or cuerpo.get("password") != "Clave correcta 2026":
         return manejador._json(401, {"message": "Usuario o contraseña incorrectos."})
-    manejador._json(200, {"accessToken": "ANALISTA_RED", "tokenType": "Bearer", "expiresIn": 3600, "userId": 1,
-                          "organizationId": 2, "nombre": "Ana", "username": "ana", "email": "ana@acme.test",
-                          "roles": ["ANALISTA_RED"], "idioma": "pt"})
+    manejador._json(200, cuenta | {"tokenType": "Bearer", "expiresIn": 3600, "organizationId": 2,
+                                   "username": cuerpo["identidad"]})
 
 
 def _idioma(manejador, _m, _c, cuerpo):
     if cuerpo.get("idioma") not in ("es", "en", "pt"):
         return manejador._json(400, {"message": "El idioma debe ser es, en o pt."})
+    manejador._json(200, cuerpo)
+
+
+def _tema(manejador, _m, _c, cuerpo):
+    if cuerpo.get("tema") not in ("claro", "oscuro"):
+        return manejador._json(400, {"message": "El tema debe ser claro u oscuro."})
     manejador._json(200, cuerpo)
 
 
@@ -178,6 +202,7 @@ def _restablecer(manejador, _m, _c, cuerpo):
 RUTAS = [
     (r"/api/auth/login", {"POST"}, _ingresar),
     (r"/api/auth/me/language", {"PUT"}, _idioma),
+    (r"/api/auth/me/theme", {"PUT"}, _tema),
     (r"/api/auth/password-recovery", {"POST"},
      lambda h, m, c, b: h._json(202, {"mensaje": "Si los datos corresponden a una cuenta activa, en unos minutos vas "
                                                   "a recibir un correo con el enlace."})),

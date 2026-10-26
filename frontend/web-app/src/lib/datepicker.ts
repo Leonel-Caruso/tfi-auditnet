@@ -2,7 +2,7 @@
 // nombre y formato (date: AAAA-MM-DD, datetime-local: AAAA-MM-DDTHH:mm).
 // Con data-time="end" (campo "hasta"), un día sin hora toma 23:59 en lugar de 00:00.
 
-import { t } from './i18n';
+import { localeActual, t } from './i18n';
 
 const MONTHS = t('calendario.meses').split(',');
 const WEEKDAYS = t('calendario.dias').split(',');
@@ -28,10 +28,16 @@ function serialize(parts: Parts, mode: Mode): string {
   return mode === 'date' ? date : `${date}T${pad(parts.hour)}:${pad(parts.minute)}`;
 }
 
+/** En el formato del idioma: 23/10/2026 en español y portugués, 10/23/2026 en inglés. */
 function display(parts: Parts | null, mode: Mode): string {
   if (!parts) return '';
-  const date = `${pad(parts.day)}/${pad(parts.month + 1)}/${parts.year}`;
-  return mode === 'date' ? date : `${date} ${pad(parts.hour)}:${pad(parts.minute)}`;
+  const date = new Date(parts.year, parts.month, parts.day, parts.hour, parts.minute);
+  return new Intl.DateTimeFormat(localeActual(), {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    ...(mode === 'datetime' ? { hour: '2-digit', minute: '2-digit' } : {}),
+  }).format(date);
 }
 
 const sameDay = (a: Parts | null, year: number, month: number, day: number) =>

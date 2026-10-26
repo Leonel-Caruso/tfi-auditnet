@@ -11,10 +11,12 @@ export const escapeHtml = (value: unknown) =>
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;');
 
-export const formatDate = (value: string | null | undefined) => {
+/** Fecha y hora en el formato del idioma; con seconds, también los segundos (bitácoras). */
+export const formatDate = (value: string | null | undefined, seconds = false) => {
   if (!value) return '—';
   try {
-    return new Intl.DateTimeFormat(localeActual(), { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value));
+    return new Intl.DateTimeFormat(localeActual(), { dateStyle: 'short', timeStyle: seconds ? 'medium' : 'short' })
+      .format(new Date(value));
   } catch {
     return value;
   }
@@ -32,8 +34,9 @@ export const localToIso = (value: string, endOfMinute = false) => {
   return date.toISOString();
 };
 
-export const code = (prefix: string, id: number | null | undefined) =>
-  id == null ? '—' : `${prefix}-${String(id).padStart(3, '0')}`;
+/** Código visible de un registro: code('AUD', 7) → AUD-007. */
+export const code = (prefix: string, id: number | null | undefined, digits = 3) =>
+  id == null ? '—' : `${prefix}-${String(id).padStart(digits, '0')}`;
 
 export const severityClass = (value: string | null | undefined) => ({
   CRITICA: 'severity-critical',

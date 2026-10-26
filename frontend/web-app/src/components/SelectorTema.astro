@@ -1,0 +1,15 @@
+---
+import { es } from '../i18n';
+
+interface Props {
+  /** Se agrega a la clase base; el comportamiento lo conecta lib/tema.ts. */
+  class?: string;
+}
+
+const { class: clase = '' } = Astro.props;
+---
+
+<div class={`language-switch theme-switch ${clase}`} role="group" aria-label={es['tema.elegir']} data-i18n-aria-label="tema.elegir">
+  <button type="button" data-opcion-tema="claro" data-i18n="tema.claro">{es['tema.claro']}</button>
+  <button type="button" data-opcion-tema="oscuro" data-i18n="tema.oscuro">{es['tema.oscuro']}</button>
+</div>

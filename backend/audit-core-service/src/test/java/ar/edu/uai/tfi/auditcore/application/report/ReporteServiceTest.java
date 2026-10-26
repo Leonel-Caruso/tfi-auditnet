@@ -111,6 +111,17 @@ class ReporteServiceTest {
     }
 
     @Test
+    void elTituloSaleEnElIdiomaDeQuienGeneraElReporte() {
+        assertEquals("Audit report from 10/01/2026 to 10/08/2026", service.generar(criterios(2L, List.of(), List.of(),
+                DESDE, HASTA), "auditor", AHORA, IdiomaReporte.EN).orElseThrow().titulo());
+        assertEquals("Relatório de auditorias de 01/10/2026 a 08/10/2026", service.generar(criterios(2L, List.of(),
+                List.of(), DESDE, HASTA), "auditor", AHORA, IdiomaReporte.PT).orElseThrow().titulo());
+        assertEquals("Audit report AUD-001", service.generar(criterios(2L, List.of(), List.of(1L), null, null),
+                "auditor", AHORA, IdiomaReporte.de("en-US,en;q=0.9")).orElseThrow().titulo());
+        assertEquals(IdiomaReporte.ES, IdiomaReporte.de("fr"));
+    }
+
+    @Test
     void sinAuditoriasNoGeneraNadaYNoSeVenReportesDeOtraOrganizacion() {
         assertTrue(service.generar(criterios(2L, List.of(), List.of(), Instant.parse("2025-01-01T00:00:00Z"),
                 Instant.parse("2025-02-01T00:00:00Z")), "auditor", AHORA).isEmpty());

@@ -1,6 +1,7 @@
 ---
 import { es, type Clave } from '../i18n';
 import SelectorIdioma from './SelectorIdioma.astro';
+import SelectorTema from './SelectorTema.astro';
 
 // En el build estático la ruta termina en '/' (ej. /logs/): se normaliza para comparar.
 const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
@@ -53,6 +54,7 @@ const claveRuta = (rutas.includes(slug) ? `ruta.${slug}` : 'ruta.consola') as Cl
         </div>
         <div class="user-popover-divider"></div>
         <SelectorIdioma class="language-switch-menu" />
+        <SelectorTema class="language-switch-menu" />
         <div class="user-popover-divider"></div>
         <a class="user-popover-action" href="/account" data-i18n="consola.miCuenta">{es['consola.miCuenta']}</a>
         <button id="logout-button" class="user-popover-action" type="button" data-i18n="consola.salir">{es['consola.salir']}</button>

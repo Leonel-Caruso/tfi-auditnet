@@ -52,6 +52,7 @@ public class ReporteService {
     static final String ENTIDAD = "REPORTE";
     static final ZoneId ZONA = ZoneId.of("America/Argentina/Buenos_Aires");
     private static final DateTimeFormatter FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter FECHA_EN = DateTimeFormatter.ofPattern("MM/dd/yyyy");
     private static final int MAXIMO_AUDITORIAS = 500;
 
     private final AuditoriaRepository auditoriaRepository;
@@ -92,6 +93,13 @@ public class ReporteService {
      */
     @Transactional
     public Optional<ReporteAuditoria> generar(CriteriosReporte criterios, String actor, Instant ahora) {
+        return generar(criterios, actor, ahora, IdiomaReporte.ES);
+    }
+
+    /** Igual, con el título en el idioma de quien lo genera. */
+    @Transactional
+    public Optional<ReporteAuditoria> generar(CriteriosReporte criterios, String actor, Instant ahora,
+                                              IdiomaReporte idioma) {
         validar(criterios);
         List<AuditoriaConfiguracion> auditorias = seleccionarAuditorias(criterios);
         if (auditorias.isEmpty()) {
@@ -107,7 +115,7 @@ public class ReporteService {
         ReporteAuditoria reporte = reporteRepository.guardar(new ReporteAuditoria(
                 null,
                 criterios.organizacionId(),
-                titulo(criterios, auditorias),
+                titulo(criterios, auditorias, idioma),
                 criterios,
                 contenido,
                 contenido.auditorias().size(),
@@ -292,14 +300,26 @@ public class ReporteService {
         return new ContenidoReporte(resumen, incluidas, hallazgos, inconsistencias);
     }
 
-    private static String titulo(CriteriosReporte criterios, List<AuditoriaConfiguracion> auditorias) {
+    private static String titulo(CriteriosReporte criterios, List<AuditoriaConfiguracion> auditorias,
+                                 IdiomaReporte idioma) {
         if (!criterios.auditoriaIds().isEmpty()) {
             String lista = auditorias.stream().map(a -> String.format("AUD-%03d", a.id()))
                     .collect(Collectors.joining(", "));
-            return recortar("Reporte de auditoría " + lista, 160);
+            String inicio = switch (idioma) {
+                case EN -> "Audit report ";
+                case PT -> "Relatório de auditoria ";
+                case ES -> "Reporte de auditoría ";
+            };
+            return recortar(inicio + lista, 160);
         }
-        return "Reporte de auditorías del " + FECHA.format(LocalDate.ofInstant(criterios.desde(), ZONA))
-                + " al " + FECHA.format(LocalDate.ofInstant(criterios.hasta(), ZONA));
+        DateTimeFormatter formato = idioma == IdiomaReporte.EN ? FECHA_EN : FECHA;
+        String desde = formato.format(LocalDate.ofInstant(criterios.desde(), ZONA));
+        String hasta = formato.format(LocalDate.ofInstant(criterios.hasta(), ZONA));
+        return switch (idioma) {
+            case EN -> "Audit report from " + desde + " to " + hasta;
+            case PT -> "Relatório de auditorias de " + desde + " a " + hasta;
+            case ES -> "Reporte de auditorías del " + desde + " al " + hasta;
+        };
     }
 
     private static int valor(Integer numero) {

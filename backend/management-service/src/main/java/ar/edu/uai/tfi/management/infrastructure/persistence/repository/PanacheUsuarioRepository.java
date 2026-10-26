@@ -4,6 +4,7 @@ import ar.edu.uai.tfi.management.domain.model.EstadoAcceso;
 import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
 import ar.edu.uai.tfi.management.domain.model.Idioma;
 import ar.edu.uai.tfi.management.domain.model.PreferenciasAviso;
+import ar.edu.uai.tfi.management.domain.model.Tema;
 import ar.edu.uai.tfi.management.domain.model.Usuario;
 import ar.edu.uai.tfi.management.domain.repository.UsuarioRepository;
 import ar.edu.uai.tfi.management.infrastructure.persistence.entity.OrganizacionClienteEntity;
@@ -195,6 +196,17 @@ public class PanacheUsuarioRepository implements PanacheRepository<UsuarioEntity
                 .getResultStream()
                 .findFirst()
                 .flatMap(Idioma::desde);
+    }
+
+    @Override
+    public Optional<Tema> tema(Long id) {
+        return Tema.desde(obtener(id).tema);
+    }
+
+    @Override
+    public void guardarTema(Long id, Tema tema) {
+        obtener(id).tema = tema.codigo();
+        flush();
     }
 
     private UsuarioEntity obtener(Long id) {

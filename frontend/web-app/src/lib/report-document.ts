@@ -3,7 +3,8 @@
 // evidencia, recomendaciones) quedan como se registraron.
 import type { AuditReport, FindingStatus } from './api';
 import { code, escapeHtml, plural } from './format';
-import { etiqueta, t } from './i18n';
+import { etiqueta, localeActual, t } from './i18n';
+import { evidencia } from './evidencia';
 
 export type ReportContext = {
   orgName: (id: number | null) => string;
@@ -17,16 +18,12 @@ const statusLabel = (status: string) => etiqueta('informeEstado', status);
 const resultLabel = (result: string) => etiqueta('informeResultado', result);
 const PENDING: FindingStatus[] = ['ABIERTO', 'EN_REVISION'];
 
-// Fechas del documento siempre como dd/mm/aaaa y hh:mm (24 h), sin depender del formato regional del navegador.
-const pad = (value: number) => String(value).padStart(2, '0');
-const dayOnly = (value: string) => {
-  const date = new Date(value);
-  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`;
-};
-const dateTime = (value: string) => {
-  const date = new Date(value);
-  return `${dayOnly(value)} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
-};
+// Fechas en el formato del idioma de la consola (23/10/2026 o 10/23/2026), con el año completo.
+const dayOnly = (value: string) =>
+  new Intl.DateTimeFormat(localeActual(), { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(value));
+const dateTime = (value: string) => new Intl.DateTimeFormat(localeActual(), {
+  day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+}).format(new Date(value));
 const joinList = (items: string[]) => (items.length <= 1
   ? items.join('')
   : `${items.slice(0, -1).join(', ')} ${t('informe.y')} ${items[items.length - 1]}`);
@@ -148,7 +145,7 @@ export function reportDocumentHtml(report: AuditReport, context: ReportContext):
         <dl>
           <dt>${t('informe.estado')}</dt><dd>${escapeHtml(statusLabel(finding.estado))}</dd>
           ${finding.impacto ? `<dt>${t('informe.impacto')}</dt><dd>${escapeHtml(finding.impacto)}</dd>` : ''}
-          <dt>${t('informe.evidencia')}</dt><dd><pre>${escapeHtml(finding.evidencia)}</pre></dd>
+          <dt>${t('informe.evidencia')}</dt><dd><pre>${escapeHtml(evidencia(finding.evidencia))}</pre></dd>
           <dt>${t('informe.recomendacion')}</dt><dd>${escapeHtml(finding.recomendacion)}</dd>
         </dl>
       </article>`).join('');

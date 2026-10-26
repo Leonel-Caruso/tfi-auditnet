@@ -7,6 +7,9 @@ const pt: Textos<typeof es> = {
   'idioma.en': 'English',
   'idioma.pt': 'Português',
   'idioma.elegir': 'Idioma',
+  'tema.elegir': 'Tema',
+  'tema.claro': 'Claro',
+  'tema.oscuro': 'Escuro',
 
   'perfil.ADMINISTRADOR_SISTEMA': 'Administrador do sistema',
   'perfil.ADMINISTRADOR_ORGANIZACION': 'Administrador da organização',
@@ -129,7 +132,7 @@ const pt: Textos<typeof es> = {
 
   'cuenta.titulo': 'Minha conta',
   'cuenta.seccion': 'Conta',
-  'cuenta.descripcion': 'Consulte seus dados de acesso, altere sua senha e escolha o idioma e os avisos por e-mail.',
+  'cuenta.descripcion': 'Consulte seus dados de acesso, altere sua senha e escolha o idioma, o tema e os avisos por e-mail.',
   'cuenta.identidad': 'Identidade',
   'cuenta.usuario': 'usuário',
   'cuenta.correo': 'e-mail',
@@ -151,6 +154,9 @@ const pt: Textos<typeof es> = {
   'cuenta.idiomaSeccion': 'Idioma',
   'cuenta.idiomaTitulo': 'Idioma do console e dos e-mails',
   'cuenta.idiomaAyuda': 'Vale para este console e para os e-mails que o AuditNet envia para você.',
+  'cuenta.temaSeccion': 'Aparência',
+  'cuenta.temaTitulo': 'Tema do console',
+  'cuenta.temaAyuda': 'Fica salvo na sua conta: o console o usa em qualquer navegador.',
   'cuenta.correoSeccion': 'E-mail',
   'cuenta.avisos': 'Avisos por e-mail',
   'cuenta.avisoAlertas': 'Novos alertas críticos',

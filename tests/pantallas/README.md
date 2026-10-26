@@ -19,3 +19,7 @@ python -m pytest tests\pantallas
 
 Para agregar una pantalla nueva: sumar su ruta en `test_pantallas.py` y, si llama a endpoints nuevos, su respuesta
 en `RUTAS` de `servidor.py`.
+
+El servidor envía la misma política de seguridad de contenido que nginx: si una pantalla usa un script escrito dentro
+del HTML, la prueba falla. Por esa política, para esperar una condición se usa `pagina.esperar("<expresión>")` en lugar
+de `wait_for_function`. Con `abrir(..., sistema_oscuro=True)` la página se abre con el sistema en modo oscuro.

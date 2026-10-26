@@ -817,6 +817,53 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
   códigos y el separador: `;` en español y portugués, `,` en inglés, que es el que espera Excel en cada caso.
 - **Prueba:** `ReporteServiceTest`, `test_idiomas.py`, CP-B14-12 y CP-B14-13.
 
+## D-63 · Título del reporte y evidencia en el idioma del usuario (Bloque 14c)
+
+- **Decisión:** el título del reporte se arma al generarlo en el idioma de quien lo pide (`Accept-Language`):
+  "Reporte de auditorías del 01/10/2026 al 08/10/2026", "Audit report from 10/01/2026 to 10/08/2026" o "Relatório de
+  auditorias de 01/10/2026 a 08/10/2026". Queda guardado así, porque el reporte es una foto fija (D-27). La evidencia
+  la escribe el motor en español y se guarda tal cual (es parte del registro de la auditoría); la consola reconoce sus
+  siete frases y las muestra traducidas, sin tocar las líneas de configuración que incluyen. Las fechas de tablas,
+  calendario y PDF siguen el idioma: día/mes en español y portugués, mes/día en inglés.
+- **Prueba:** `ReporteServiceTest`, `test_idiomas.py` (evidencia traducida y sin interpretar HTML).
+
+## D-64 · Política de seguridad de contenido (Bloque 14c)
+
+- **Decisión:** nginx publica `Content-Security-Policy` con `script-src 'self'` (ningún script escrito dentro del
+  HTML), `connect-src 'self'` (la API está en el mismo origen), `frame-ancestors 'none'` y `object-src 'none'`, y
+  `Permissions-Policy` sin cámara, micrófono, ubicación, pagos ni USB. Para eso el script que fija idioma y tema antes
+  de mostrar la página y el registro del service worker pasaron a archivos (`/inicio.js`, `/registro-sw.js`), Astro
+  ya no incrusta scripts chicos (`assetsInlineLimit: 0`) y la página sin conexión dejó de usar `onclick`. Los estilos
+  admiten `'unsafe-inline'`: hay atributos `style` y el PDF agrega su hoja de impresión al imprimir; el riesgo de
+  inyectar estilos es bajo frente al de scripts.
+- **Prueba:** el servidor de las pruebas de pantalla envía las mismas políticas que nginx (las lee de la plantilla) y
+  cualquier violación hace fallar la prueba; `test_acceso.py` comprueba que un script agregado a la página no corre.
+
+## D-65 · Tema oscuro (Bloque 14c)
+
+- **Decisión:** Claro u Oscuro desde la pantalla de acceso, el menú del usuario y Mi cuenta. Igual que el idioma,
+  se guarda en la cuenta (management V8, `usuarios.tema`, `PUT /api/auth/me/theme`) y en el navegador
+  (`auditnet.tema`): al ingresar manda el de la cuenta; si la cuenta todavía no tiene, se le guarda el elegido en la
+  pantalla de acceso. Mientras nadie elige se usa la preferencia del sistema operativo; no hay una opción "Sistema"
+  aparte porque en la práctica coincidía con una de las dos y sumaba un botón sin aportar. Los colores de
+  `global.css` pasaron a variables con un juego para cada tema. El documento del reporte se ve siempre como hoja clara y el PDF sale en blanco aunque se imprima desde el
+  tema oscuro.
+- **Prueba:** `AuthServiceTest` (tema guardado y devuelto en el login); `test_tema.py` (elección en el acceso y con
+  sesión, el de la cuenta manda, traducciones y todas las pantallas en oscuro sin fondos claros).
+
+## D-66 · Datos de demostración (Bloque 14c)
+
+- **Decisión:** `scripts/datos-demo/cargar.py` carga seis organizaciones ficticias con sus sedes, usuarios, equipos,
+  baselines y reglas por la API, como un administrador, y audita varias versiones de configuración por equipo. No
+  tiene contraseñas ni correos escritos: pide las contraseñas al ejecutarse y arma los correos como alias de una
+  casilla que se indica (`casilla+usuario@dominio`); apaga los avisos de cada usuario antes de auditar. Como todo
+  queda con la fecha de la carga, `historia.sql` reparte las auditorías en las últimas 8 semanas y mueve con ellas los
+  hallazgos, sus cambios de estado y las alertas. Para el historial de cada hallazgo, que es de solo inserción,
+  deshabilita su trigger solo dentro de esa transacción. Las bitácoras y el catálogo de archivos conservan la fecha
+  real de la carga. Los reportes se generan después, para que su contenido tenga las fechas ya repartidas.
+- **Prueba:** `tests/datos_demo` (cada configuración cumple exactamente los controles de su versión, límites de
+  planes, códigos únicos).
+
 ## Pendientes detectados (para migraciones futuras)
 
 - `auditorias_configuracion.estado` solo admite `FINALIZADA` (CHECK de Hibernate). Alcanza mientras la auditoría sea

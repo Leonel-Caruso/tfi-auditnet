@@ -1,7 +1,9 @@
 import sys
+import time
 from pathlib import Path
 
 import pytest
+from playwright.sync_api import Error as ErrorPlaywright
 from playwright.sync_api import sync_playwright
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -32,14 +34,29 @@ def navegador():
         chromium.close()
 
 
+def _esperar(pagina, expresion, ms):
+    """Como wait_for_function, que la política de seguridad de la página no deja usar (evalúa texto como código)."""
+    limite = time.monotonic() + ms / 1000
+    while True:
+        try:
+            if pagina.evaluate(expresion):
+                return
+        except ErrorPlaywright:
+            pass
+        if time.monotonic() > limite:
+            raise AssertionError(f"No se cumplió a tiempo: {expresion}")
+        pagina.wait_for_timeout(50)
+
+
 @pytest.fixture
 def abrir(entorno, navegador):
     """Abre una página con sesión iniciada (o sin sesión si perfil es None) y junta los errores de JavaScript."""
     contextos = []
 
-    def _abrir(ruta, perfil=None, tamanio=ESCRITORIO, idioma=None):
-        """idioma: el elegido en el navegador (sin sesión) o el guardado en la cuenta (con sesión)."""
-        contexto = navegador.new_context(viewport=tamanio)
+    def _abrir(ruta, perfil=None, tamanio=ESCRITORIO, idioma=None, sistema_oscuro=False):
+        """idioma: el elegido en el navegador (sin sesión) o el guardado en la cuenta (con sesión).
+        sistema_oscuro: el sistema operativo pide colores oscuros."""
+        contexto = navegador.new_context(viewport=tamanio, color_scheme="dark" if sistema_oscuro else "light")
         contextos.append(contexto)
         if idioma and not perfil:
             contexto.add_init_script(f"localStorage.getItem('auditnet.idioma') || "
@@ -58,7 +75,10 @@ def abrir(entorno, navegador):
             """)
         pagina = contexto.new_page()
         pagina.errores = []
+        pagina.esperar = lambda expresion, ms=5000: _esperar(pagina, expresion, ms)
         pagina.on("pageerror", lambda error: pagina.errores.append(str(error)))
+        pagina.on("console", lambda mensaje: "Content Security Policy" in mensaje.text
+                  and pagina.errores.append(mensaje.text))
         pagina.on("dialog", lambda dialogo: (pagina.errores.append("diálogo inesperado: " + dialogo.message),
                                              dialogo.dismiss()))
         pagina.goto(entorno["url"] + ruta)

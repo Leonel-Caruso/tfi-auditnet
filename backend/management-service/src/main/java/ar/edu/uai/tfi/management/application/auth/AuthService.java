@@ -11,6 +11,7 @@ import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
 import ar.edu.uai.tfi.management.domain.model.EventoSistema;
 import ar.edu.uai.tfi.management.domain.model.Idioma;
 import ar.edu.uai.tfi.management.domain.model.PreferenciasAviso;
+import ar.edu.uai.tfi.management.domain.model.Tema;
 import ar.edu.uai.tfi.management.domain.model.TipoEventoSistema;
 import ar.edu.uai.tfi.management.domain.model.Usuario;
 import ar.edu.uai.tfi.management.domain.repository.OrganizacionClienteRepository;
@@ -100,7 +101,8 @@ public class AuthService {
         String token = jwtPort.generar(usuario);
         bitacora.registrar(EventoSistema.exito(TipoEventoSistema.LOGIN_EXITOSO, usuario.nombreUsuario(),
                 usuario.id(), usuario.organizacionId(), "roles=" + String.join(",", usuario.roles())));
-        return new AuthResult(token, jwtPort.duracionSegundos(), usuario, usuarioRepository.idioma(usuario.id()));
+        return new AuthResult(token, jwtPort.duracionSegundos(), usuario, usuarioRepository.idioma(usuario.id()),
+                usuarioRepository.tema(usuario.id()).orElse(null));
     }
 
     /** Las demás sesiones abiertas quedan sin efecto; se devuelve un token nuevo para seguir en esta. */
@@ -138,7 +140,7 @@ public class AuthService {
         bitacora.registrar(EventoSistema.exito(TipoEventoSistema.CONTRASENA_CAMBIADA, usuario.nombreUsuario(),
                 usuario.id(), usuario.organizacionId(), "origen=propio usuario"));
         return new AuthResult(jwtPort.generar(usuario), jwtPort.duracionSegundos(), usuario,
-                usuarioRepository.idioma(usuario.id()));
+                usuarioRepository.idioma(usuario.id()), usuarioRepository.tema(usuario.id()).orElse(null));
     }
 
     public PreferenciasAviso preferencias(Long usuarioId) {
@@ -168,6 +170,19 @@ public class AuthService {
         bitacora.registrar(EventoSistema.exito(TipoEventoSistema.USUARIO_MODIFICADO, usuario.nombreUsuario(),
                 usuario.id(), usuario.organizacionId(), "idioma=" + idioma.codigo()));
         return idioma;
+    }
+
+    /** Tema de la consola del usuario. */
+    @Transactional
+    public Tema guardarTema(Long usuarioId, String codigo) {
+        Tema tema = Tema.desde(codigo).orElseThrow(() -> new ExcepcionAplicacion(
+                ErrorAplicacion.SOLICITUD_INVALIDA, "El tema debe ser claro u oscuro."));
+        Usuario usuario = usuarioRepository.buscarPorId(usuarioId)
+                .orElseThrow(() -> new ExcepcionAplicacion(ErrorAplicacion.NO_AUTORIZADO, "La sesión no es válida."));
+        usuarioRepository.guardarTema(usuario.id(), tema);
+        bitacora.registrar(EventoSistema.exito(TipoEventoSistema.USUARIO_MODIFICADO, usuario.nombreUsuario(),
+                usuario.id(), usuario.organizacionId(), "tema=" + tema.codigo()));
+        return tema;
     }
 
     private boolean organizacionActiva(Long organizacionId) {

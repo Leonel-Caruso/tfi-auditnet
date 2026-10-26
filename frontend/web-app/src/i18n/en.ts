@@ -7,6 +7,9 @@ const en: Textos<typeof es> = {
   'idioma.en': 'English',
   'idioma.pt': 'Português',
   'idioma.elegir': 'Language',
+  'tema.elegir': 'Theme',
+  'tema.claro': 'Light',
+  'tema.oscuro': 'Dark',
 
   'perfil.ADMINISTRADOR_SISTEMA': 'System administrator',
   'perfil.ADMINISTRADOR_ORGANIZACION': 'Organization administrator',
@@ -129,7 +132,7 @@ const en: Textos<typeof es> = {
 
   'cuenta.titulo': 'My account',
   'cuenta.seccion': 'Account',
-  'cuenta.descripcion': 'Check your access details, change your password and choose the language and email notices.',
+  'cuenta.descripcion': 'Check your access details, change your password and choose the language, theme and email notices.',
   'cuenta.identidad': 'Identity',
   'cuenta.usuario': 'username',
   'cuenta.correo': 'email',
@@ -151,6 +154,9 @@ const en: Textos<typeof es> = {
   'cuenta.idiomaSeccion': 'Language',
   'cuenta.idiomaTitulo': 'Console and email language',
   'cuenta.idiomaAyuda': 'It applies to this console and to the emails AuditNet sends you.',
+  'cuenta.temaSeccion': 'Appearance',
+  'cuenta.temaTitulo': 'Console theme',
+  'cuenta.temaAyuda': 'Saved in your account: the console uses it in any browser.',
   'cuenta.correoSeccion': 'Email',
   'cuenta.avisos': 'Email notices',
   'cuenta.avisoAlertas': 'New critical alerts',

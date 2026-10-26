@@ -62,7 +62,7 @@ def _hallazgo(numero):
     return {"id": numero, "auditoriaId": 42, "reglaId": 1, "dispositivoId": 1 + numero % 2, "baselineId": 2,
             "organizacionId": 2, "codigoRegla": "R-%02d" % numero, "nombreRegla": "Regla %d" % numero,
             "tipoRegla": "DEBE_CONTENER", "patron": "p <b>x</b>", "severidad": SEVERIDADES[numero % 4],
-            "evidencia": "No se encontró <script>alert(1)</script>", "recomendacion": "r", "impacto": "i",
+            "evidencia": "No se encontró el patrón requerido: <script>alert(1)</script>", "recomendacion": "r", "impacto": "i",
             "estado": ["ABIERTO", "EN_REVISION", "RESUELTO"][numero % 3], "fechaDeteccion": "2026-10-02T15:00:00Z",
             "fechaEstado": None, "usuarioEstado": None, "criticidadDispositivo": "ALTA",
             # Los críticos pendientes ya vencieron (7 días); el resto vence a fin de 2099.

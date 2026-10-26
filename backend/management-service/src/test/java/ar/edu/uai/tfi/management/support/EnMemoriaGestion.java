@@ -20,6 +20,7 @@ import ar.edu.uai.tfi.management.domain.model.PreferenciasAviso;
 import ar.edu.uai.tfi.management.domain.model.RecuperacionContrasena;
 import ar.edu.uai.tfi.management.domain.model.Rol;
 import ar.edu.uai.tfi.management.domain.model.Sede;
+import ar.edu.uai.tfi.management.domain.model.Tema;
 import ar.edu.uai.tfi.management.domain.model.SolicitudCambioPlan;
 import ar.edu.uai.tfi.management.domain.model.TipoCorreo;
 import ar.edu.uai.tfi.management.domain.model.Usuario;
@@ -62,6 +63,7 @@ public final class EnMemoriaGestion {
         public final Map<Long, EstadoAcceso> accesos = new LinkedHashMap<>();
         public final Map<Long, PreferenciasAviso> preferencias = new HashMap<>();
         public final Map<Long, Idioma> idiomas = new HashMap<>();
+        public final Map<Long, Tema> temas = new HashMap<>();
         private long secuencia = 100;
 
         public Usuario agregar(Usuario usuario) {
@@ -201,6 +203,16 @@ public final class EnMemoriaGestion {
                     .filter(usuario -> usuario.email().equalsIgnoreCase(email == null ? "" : email.trim()))
                     .findFirst()
                     .map(usuario -> idioma(usuario.id()));
+        }
+
+        @Override
+        public Optional<Tema> tema(Long id) {
+            return Optional.ofNullable(temas.get(id));
+        }
+
+        @Override
+        public void guardarTema(Long id, Tema tema) {
+            temas.put(id, tema);
         }
     }
 

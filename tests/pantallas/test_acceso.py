@@ -12,7 +12,7 @@ def test_formulario_en_castellano(abrir):
 
 def test_logo_con_la_tipografia_del_icono(abrir):
     pagina = abrir("/login")
-    pagina.wait_for_function("document.fonts.check('800 16px \"AuditNet Mono\"')")
+    pagina.esperar("document.fonts.check('800 16px \"AuditNet Mono\"')")
     estilo = pagina.evaluate("(() => { const s = getComputedStyle(document.querySelector('#hero-mark'));"
                              " return {fuente: s.fontFamily, color: s.color}; })()")
     assert "AuditNet Mono" in estilo["fuente"]
@@ -49,10 +49,22 @@ def test_manifiesto_de_app_instalable(abrir, entorno):
 
 def test_service_worker_registrado(abrir):
     pagina = abrir("/login")
-    pagina.wait_for_function("navigator.serviceWorker.ready.then(() => true)")
+    pagina.esperar("navigator.serviceWorker.ready.then(() => true)")
     assert pagina.evaluate("navigator.serviceWorker.getRegistrations().then(r => r.length)") == 1
 
 
 def test_sin_sesion_vuelve_al_login(abrir):
     pagina = abrir("/results")
     pagina.wait_for_url("**/login**")
+
+
+def test_la_politica_de_seguridad_bloquea_scripts_escritos_en_la_pagina(abrir):
+    pagina = abrir("/login")
+    respuesta = pagina.request.get(pagina.url)
+    assert "script-src 'self'" in respuesta.headers["content-security-policy"]
+    assert "camera=()" in respuesta.headers["permissions-policy"]
+
+    pagina.evaluate("""() => { const s = document.createElement('script'); s.textContent = 'window.inyectado = 1';
+                               document.body.append(s); }""")
+    assert pagina.evaluate("window.inyectado") is None
+    assert any("Content Security Policy" in error for error in pagina.errores)

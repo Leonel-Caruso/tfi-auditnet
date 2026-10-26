@@ -86,6 +86,10 @@ es: El idioma debe ser es, en o pt.
 en: The language must be es, en or pt.
 pt: O idioma deve ser es, en ou pt.
 
+es: El tema debe ser claro u oscuro.
+en: The theme must be light or dark.
+pt: O tema deve ser claro ou escuro.
+
 es: El cuerpo de la solicitud es obligatorio.
 en: The request body is required.
 pt: O corpo da requisição é obrigatório.

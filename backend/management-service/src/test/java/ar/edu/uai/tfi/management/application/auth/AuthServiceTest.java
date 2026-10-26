@@ -7,6 +7,7 @@ import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
 import ar.edu.uai.tfi.management.domain.model.EventoSistema;
 import ar.edu.uai.tfi.management.domain.model.Idioma;
 import ar.edu.uai.tfi.management.domain.model.ResultadoEvento;
+import ar.edu.uai.tfi.management.domain.model.Tema;
 import ar.edu.uai.tfi.management.domain.model.TipoEventoSistema;
 import ar.edu.uai.tfi.management.domain.model.Usuario;
 import ar.edu.uai.tfi.management.support.EnMemoriaGestion;
@@ -64,6 +65,19 @@ class AuthServiceTest {
         assertTrue(eventos.stream().anyMatch(evento -> "idioma=pt".equals(evento.detalle())));
 
         ExcepcionAplicacion error = assertThrows(ExcepcionAplicacion.class, () -> service.guardarIdioma(7L, "fr"));
+        assertEquals(ErrorAplicacion.SOLICITUD_INVALIDA, error.tipo());
+    }
+
+    @Test
+    void elTemaElegidoSeGuardaYVuelveEnElLogin() {
+        AuthService service = servicio(usuario(EstadoRegistro.ACTIVO, Set.of("ANALISTA_RED")));
+        assertNull(service.login("ana", "clave-correcta-1").tema(), "sin elegir, la consola usa el del navegador");
+
+        assertEquals(Tema.OSCURO, service.guardarTema(7L, "oscuro"));
+        assertEquals(Tema.OSCURO, service.login("ana", "clave-correcta-1").tema());
+        assertTrue(eventos.stream().anyMatch(evento -> "tema=oscuro".equals(evento.detalle())));
+
+        ExcepcionAplicacion error = assertThrows(ExcepcionAplicacion.class, () -> service.guardarTema(7L, "sistema"));
         assertEquals(ErrorAplicacion.SOLICITUD_INVALIDA, error.tipo());
     }
 

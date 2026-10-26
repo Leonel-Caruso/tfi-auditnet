@@ -4,6 +4,7 @@ import ar.edu.uai.tfi.management.domain.model.EstadoAcceso;
 import ar.edu.uai.tfi.management.domain.model.EstadoRegistro;
 import ar.edu.uai.tfi.management.domain.model.Idioma;
 import ar.edu.uai.tfi.management.domain.model.PreferenciasAviso;
+import ar.edu.uai.tfi.management.domain.model.Tema;
 import ar.edu.uai.tfi.management.domain.model.Usuario;
 
 import java.time.Duration;
@@ -67,4 +68,9 @@ public interface UsuarioRepository {
 
     /** Idioma del usuario con ese correo; vacío si ningún usuario lo tiene. */
     Optional<Idioma> idiomaPorEmail(String email);
+
+    /** Vacío si el usuario todavía no eligió un tema. */
+    Optional<Tema> tema(Long id);
+
+    void guardarTema(Long id, Tema tema);
 }
