@@ -174,7 +174,9 @@ jobs:
             echo "$app -> $revision ($estado)"
             [ "$estado" = "Provisioned" ] || { echo "::error::$app: la revisión $revision quedó en $estado"; exit 1; }
           done
-          URL="https://$(consultar containerapp show -n "$APP_WEB" -g "$RG" --query properties.configuration.ingress.fqdn -o tsv)"
+          FQDN=$(consultar containerapp show -n "$APP_WEB" -g "$RG" --query properties.configuration.ingress.fqdn -o tsv)
+          [ -n "$FQDN" ] || { echo "::error::$APP_WEB quedó sin ingreso externo"; exit 1; }
+          URL="https://$FQDN"
           echo "url=$URL" >> "$GITHUB_OUTPUT"
           # Las apps arrancan desde cero réplicas: hasta ~10 minutos por ruta.
           for ruta in /login /api/management/status /api/audit-core/status; do
