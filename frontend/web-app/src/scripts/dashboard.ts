@@ -12,6 +12,7 @@ import {
   severityChartHtml,
   wireTooltips,
 } from '../lib/dashboard-view';
+import { enlacesManual } from '../lib/manual';
 import { loadVisibleSites } from '../lib/sites';
 import { setHtml, show } from '../lib/ui';
 
@@ -111,3 +112,27 @@ loadReferences()
   .catch(() => {})
   .then(load)
   .catch((error) => showError(error instanceof Error ? error.message : t('tablero.errorResumen')));
+
+// Manual de uso arriba del tablero hasta que se oculta (sigue en el menú del usuario).
+const MANUAL_OCULTO = 'auditnet.manual.oculto';
+const manual = document.querySelector<HTMLElement>('#dash-manual');
+const manualOculto = () => {
+  try {
+    return localStorage.getItem(MANUAL_OCULTO) === '1';
+  } catch {
+    return false;
+  }
+};
+const enlaces = enlacesManual('button button-primary button-small', 'manual.descargar');
+if (manual && enlaces && !manualOculto()) {
+  setHtml('#dash-manual-links', enlaces);
+  manual.hidden = false;
+}
+document.querySelector('#dash-manual-hide')?.addEventListener('click', () => {
+  try {
+    localStorage.setItem(MANUAL_OCULTO, '1');
+  } catch {
+    // Sin almacenamiento se oculta solo en esta visita.
+  }
+  if (manual) manual.hidden = true;
+});

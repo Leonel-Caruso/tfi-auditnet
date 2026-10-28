@@ -864,6 +864,31 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
 - **Prueba:** `tests/datos_demo` (cada configuración cumple exactamente los controles de su versión, límites de
   planes, códigos únicos).
 
+## D-67 · Manuales generados desde Markdown con capturas automáticas (Bloque 15)
+
+- **Decisión:** los manuales se escriben en Markdown (`docs/manuales/<idioma>/usuario` y `.../desarrollo`) y
+  `docs/manuales/generar.py` arma los PDF con Chromium (el mismo que usan las pruebas de pantalla), con portada,
+  índice, figuras numeradas y la identidad de la consola. Hay un manual de usuario por perfil, armado con capítulos
+  comunes (acceso, consola, Mi cuenta, tablero, avisos, problemas) y los de lo que ese perfil puede hacer, y un manual
+  de instalación y desarrollo; los dos en español, inglés y portugués. Las capturas no se sacan a mano:
+  `capturas.py` recorre el sitio de pruebas contra la API simulada, con datos ficticios realistas
+  (`datos_manual.py`), en cada idioma y con el tema claro, así que se regeneran iguales cuando cambia una pantalla.
+  Los PDF de usuario se guardan en `frontend/web-app/public/manuales` (los publica el sitio) y el de desarrollo en
+  `docs/manuales/pdf`. **Alternativas:** escribirlos en Word (no se pueden regenerar ni revisar en Git), una ayuda en
+  línea por pantalla (más código para mantener en tres idiomas que lo que aporta).
+- **Prueba:** `test_manual.py` (los 15 PDF publicados y servidos); revisión visual de los PDF generados.
+
+## D-68 · Descarga del manual desde la consola (Bloque 15)
+
+- **Decisión:** el tablero muestra arriba una tarjeta *Manual de uso* con un botón por cada perfil del usuario (un
+  usuario puede tener varios) y el menú del usuario tiene los mismos enlaces. El PDF es el del idioma de la cuenta:
+  `/manuales/manual-<perfil>-<idioma>.pdf`; al cambiar el idioma la página se recarga y los enlaces cambian. *Ocultar*
+  saca la tarjeta del tablero en ese navegador (`auditnet.manual.oculto`); el menú la conserva. Reemplaza al botón
+  "Ayuda" por pantalla que figuraba en el plan: un solo punto de acceso visible al entrar es más fácil de encontrar y
+  no agrega un botón a cada pantalla.
+- **Prueba:** `test_manual.py` (un botón por perfil, idioma de la cuenta, cambio de idioma, ocultar y menú, usuario
+  con dos perfiles).
+
 ## Pendientes detectados (para migraciones futuras)
 
 - `auditorias_configuracion.estado` solo admite `FINALIZADA` (CHECK de Hibernate). Alcanza mientras la auditoría sea

@@ -61,6 +61,7 @@ const clave = (campo: string) => (i18n ? `${i18n}.${campo}` : undefined);
       import { PROFILE_ORDER, ROLE_LABEL } from '../lib/api';
       import { enhanceDateInputs } from '../lib/datepicker';
       import { conectarSelectorIdioma, mostrarTraducida, t } from '../lib/i18n';
+      import { enlacesManual } from '../lib/manual';
       import { conectarSelectorTema } from '../lib/tema';
 
       mostrarTraducida();
@@ -106,6 +107,9 @@ const clave = (campo: string) => (i18n ? `${i18n}.${campo}` : undefined);
             connectionNode.textContent = t('consola.enLinea');
             connectionNode.classList.add('is-online');
           }
+
+          const manuales = document.querySelector('#user-manuals');
+          if (manuales) manuales.innerHTML = enlacesManual('user-popover-action', 'manual.enlace');
 
           document.querySelector('#session-loading')?.classList.add('is-hidden');
           document.querySelector('#protected-shell')?.classList.remove('is-hidden');

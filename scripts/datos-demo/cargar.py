@@ -244,13 +244,25 @@ def derivar_alertas(responsable, semilla):
                 "comentario": "Derivada a redes para corregir en el equipo."})
 
 
-def reportes(admin, password):
-    """Un reporte de las últimas 8 semanas y otro del mes anterior por organización, generados por su auditor."""
-    hoy = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+HORA_ARGENTINA = timezone(timedelta(hours=-3))
+
+
+def periodos_reportes(ahora):
+    """Últimas 8 semanas y mes anterior, por días completos en hora de Argentina (como los arma la consola)."""
+    hoy = ahora.astimezone(HORA_ARGENTINA).replace(hour=0, minute=0, second=0, microsecond=0)
     inicio_mes = hoy.replace(day=1)
     mes_anterior = (inicio_mes - timedelta(days=1)).replace(day=1)
-    periodos = [(hoy - timedelta(weeks=8), hoy + timedelta(days=1) - timedelta(seconds=1)),
-                (mes_anterior, inicio_mes - timedelta(seconds=1))]
+    return [(hoy - timedelta(weeks=8), hoy + timedelta(days=1) - timedelta(seconds=1)),
+            (mes_anterior, inicio_mes - timedelta(seconds=1))]
+
+
+def _utc(momento):
+    return momento.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def reportes(admin, password):
+    """Un reporte de las últimas 8 semanas y otro del mes anterior por organización, generados por su auditor."""
+    periodos = periodos_reportes(datetime.now(timezone.utc))
     for org in catalogo.ORGANIZACIONES:
         usuario, _, _, idioma = next(u for u in org["usuarios"] if "AUDITOR_TECNICO" in u[2])
         auditor = admin.como(idioma)
@@ -261,7 +273,7 @@ def reportes(admin, password):
             continue
         for desde, hasta in periodos:
             respuesta = auditor.pedir("POST", "/api/reports/audits", {
-                "desde": desde.strftime("%Y-%m-%dT%H:%M:%SZ"), "hasta": hasta.strftime("%Y-%m-%dT%H:%M:%SZ")})
+                "desde": _utc(desde), "hasta": _utc(hasta)})
             if respuesta and respuesta.get("titulo"):
                 aviso(f"{org['identificador']}: {respuesta['titulo']}")
 

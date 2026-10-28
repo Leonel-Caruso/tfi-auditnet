@@ -216,8 +216,9 @@ tres idiomas sin claves faltantes ni desbordes.
 - Un capítulo por perfil (administrador del sistema, administrador de organización, analista, auditor, responsable de
   gestión IT) con tareas paso a paso y capturas.
 - Identidad visual: logo "A_", naranja `#f57c00`, gris oscuro `#171a1f`, tipografías JetBrains Mono e Inter.
-- Fuente en Markdown en el repo y PDF generado con un script (reproducible); botón "Ayuda" en cada pantalla que abre
-  la sección correspondiente.
+- Fuente en Markdown en el repo y PDF generado con un script (reproducible). En lugar del botón "Ayuda" por
+  pantalla, el manual de cada perfil se descarga desde el tablero y el menú del usuario, en el idioma de la cuenta
+  (D-68). Detalle en `BLOQUE-15.md`.
 
 **Manual de desarrollador e instalación**
 

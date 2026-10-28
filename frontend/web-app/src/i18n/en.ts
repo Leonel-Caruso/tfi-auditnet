@@ -168,6 +168,14 @@ const en: Textos<typeof es> = {
   'cuenta.sinAvisos': 'Your profile does not receive audit notices. Your account emails (sign-up and password recovery) are always sent.',
   'cuenta.guardarAvisos': 'Save notices',
   'cuenta.avisosGuardados': 'Notice preferences saved.',
+
+  'manual.seccion': 'Help',
+  'manual.titulo': 'User guide',
+  'manual.texto': 'Step-by-step guide to what you can do with your profile, in your account language.',
+  'manual.descargar': 'Download guide · {perfil} (PDF)',
+  'manual.enlace': 'Guide · {perfil}',
+  'manual.ocultar': 'Hide',
+  'manual.ocultarAyuda': 'Hide the guide from the dashboard (it stays in the user menu)',
 };
 
 export default en;

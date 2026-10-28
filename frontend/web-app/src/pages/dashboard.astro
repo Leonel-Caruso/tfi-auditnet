@@ -9,6 +9,19 @@ import MasterLayout from '../layouts/MasterLayout.astro';
 >
   <div id="dash-error" class="alert alert-error is-hidden" role="alert"></div>
 
+  <section id="dash-manual" class="panel compact-panel manual-card" hidden>
+    <div>
+      <span class="eyebrow" data-i18n="manual.seccion">{es['manual.seccion']}</span>
+      <h2 data-i18n="manual.titulo">{es['manual.titulo']}</h2>
+      <p data-i18n="manual.texto">{es['manual.texto']}</p>
+    </div>
+    <div class="manual-actions">
+      <div id="dash-manual-links" class="manual-links"></div>
+      <button id="dash-manual-hide" class="button button-ghost button-small" type="button" data-i18n="manual.ocultar"
+        data-i18n-title="manual.ocultarAyuda" title={es['manual.ocultarAyuda']}>{es['manual.ocultar']}</button>
+    </div>
+  </section>
+
   <section class="panel compact-panel dashboard-scope">
     <div>
       <span class="eyebrow" data-i18n="tablero.tableroControl">{es['tablero.tableroControl']}</span>

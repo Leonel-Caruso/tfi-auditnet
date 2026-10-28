@@ -1,0 +1,143 @@
+/* Manuales de AuditNet: misma identidad que la consola (naranja #f57c00, gris #171a1f, JetBrains Mono e Inter). */
+@font-face {
+  font-family: "AuditNet Mono";
+  src: url("FUENTE_MARCA") format("woff2");
+  font-weight: 800;
+}
+/* Inter incluida con el generador (licencia OFL, plantilla/fuentes): el PDF sale igual en cualquier equipo. */
+@font-face { font-family: "Inter Manual"; src: url("FUENTES/inter-latin-400-normal.woff2") format("woff2"); font-weight: 400; }
+@font-face { font-family: "Inter Manual"; src: url("FUENTES/inter-latin-600-normal.woff2") format("woff2"); font-weight: 600; }
+@font-face { font-family: "Inter Manual"; src: url("FUENTES/inter-latin-700-normal.woff2") format("woff2"); font-weight: 700 800; }
+
+@page {
+  size: A4;
+  margin: 20mm 18mm 20mm;
+  @bottom-left { content: "PIE_IZQUIERDA"; font: 7.5pt "Inter Manual", "Segoe UI", sans-serif; color: #697078; }
+  @bottom-right { content: "PIE_PAGINA " counter(page); font: 7.5pt "Inter Manual", "Segoe UI", sans-serif; color: #697078; }
+}
+@page :first {
+  margin: 0;
+  @bottom-left { content: none; }
+  @bottom-right { content: none; }
+}
+
+:root {
+  --naranja: #f57c00;
+  --naranja-oscuro: #c45f00;
+  --gris: #171a1f;
+  --texto: #20242a;
+  --suave: #697078;
+  --borde: #d7dbdf;
+  --fondo: #f6f7f8;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { margin: 0; color: var(--texto); font: 10pt/1.55 "Inter Manual", "Segoe UI", system-ui, sans-serif; }
+code, pre, .mono { font-family: "Cascadia Code", Consolas, "Liberation Mono", monospace; }
+
+/* Portada */
+.portada {
+  position: relative;
+  height: 297mm;
+  padding: 34mm 22mm 24mm;
+  overflow: hidden;
+  color: #f2f3f4;
+  background:
+    radial-gradient(circle at 15% 18%, rgba(245, 124, 0, .22), transparent 32%),
+    linear-gradient(rgba(255, 255, 255, .03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, .03) 1px, transparent 1px),
+    var(--gris);
+  background-size: auto, 9mm 9mm, 9mm 9mm, auto;
+  break-after: page;
+}
+.portada::after {
+  content: "";
+  position: absolute;
+  right: -40mm;
+  bottom: -50mm;
+  width: 130mm;
+  height: 130mm;
+  border: 1px solid rgba(245, 124, 0, .3);
+  transform: rotate(12deg);
+}
+.logo {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20mm;
+  height: 20mm;
+  padding: 0 5mm;
+  border-radius: 4mm;
+  color: #fff;
+  background: var(--naranja);
+  font: 800 22pt "AuditNet Mono", Consolas, monospace;
+}
+.portada .eyebrow { margin: 14mm 0 4mm; color: #ffb36b; font: 700 9pt "Cascadia Code", Consolas, monospace; letter-spacing: .08em; text-transform: uppercase; }
+.portada .eyebrow::before { content: "// "; color: var(--naranja); }
+.portada h1 { margin: 0 0 6mm; font-size: 34pt; line-height: 1.05; letter-spacing: -.03em; }
+.portada .perfil { margin: 0 0 4mm; color: var(--naranja); font-size: 18pt; font-weight: 700; }
+.portada .bajada { max-width: 140mm; margin: 0; color: #c4c9cf; font-size: 11pt; }
+.portada .datos { position: absolute; left: 22mm; bottom: 22mm; color: #9aa2aa; font: 9pt "Cascadia Code", Consolas, monospace; }
+.portada .datos span { display: block; }
+
+/* Índice */
+.indice { break-after: page; }
+.indice h2 { margin-top: 0; }
+.indice ul { margin: 0; padding: 0; list-style: none; }
+.indice > ul > li { margin: 0 0 2.5mm; font-weight: 700; }
+.indice ul ul { margin: 1.5mm 0 0 6mm; font-weight: 400; color: var(--suave); }
+.indice a { color: inherit; text-decoration: none; }
+
+/* Contenido */
+.capitulo { break-before: page; }
+.capitulo:first-child { break-before: auto; }
+h2 {
+  margin: 0 0 5mm;
+  padding-bottom: 2.5mm;
+  border-bottom: 2.5px solid var(--naranja);
+  color: var(--gris);
+  font-size: 17pt;
+  letter-spacing: -.02em;
+}
+h3 { margin: 6mm 0 2mm; color: var(--gris); font-size: 12pt; break-after: avoid; }
+h3::before { content: "› "; color: var(--naranja); }
+h4 { margin: 4mm 0 1.5mm; font-size: 10.5pt; break-after: avoid; }
+p { margin: 0 0 2.6mm; }
+ul, ol { margin: 0 0 3mm; padding-left: 6mm; }
+li { margin-bottom: 1.2mm; }
+strong { color: var(--gris); }
+a { color: var(--naranja-oscuro); }
+code { padding: .2mm 1.2mm; border-radius: 1mm; background: #eef0f1; font-size: 8.8pt; }
+pre {
+  margin: 0 0 3.5mm;
+  padding: 3mm 4mm;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  border-left: 2.5px solid var(--naranja);
+  border-radius: 1.5mm;
+  color: #e6e9ec;
+  background: #20242a;
+  font-size: 8.6pt;
+  line-height: 1.5;
+  break-inside: avoid;
+}
+pre code { padding: 0; color: inherit; background: none; font-size: inherit; }
+/* Diagramas y árboles: sin cortar líneas. */
+pre:has(code.language-text) { white-space: pre; overflow-wrap: normal; font-size: 7.8pt; }
+blockquote {
+  margin: 0 0 3.5mm;
+  padding: 2.5mm 4mm;
+  border-left: 3px solid var(--naranja);
+  border-radius: 0 1.5mm 1.5mm 0;
+  background: #fff6ec;
+  break-inside: avoid;
+}
+blockquote p:last-child { margin-bottom: 0; }
+table { width: 100%; margin: 0 0 4mm; border-collapse: collapse; font-size: 9pt; break-inside: auto; }
+th { padding: 1.8mm 2.5mm; border-bottom: 1.5px solid #c9ced3; color: var(--suave); background: var(--fondo); font-size: 8pt; text-align: left; text-transform: uppercase; letter-spacing: .03em; }
+td { padding: 1.8mm 2.5mm; border-bottom: 1px solid #e5e8ea; vertical-align: top; }
+tr { break-inside: avoid; }
+figure { margin: 2mm 0 5mm; break-inside: avoid; }
+figure img { display: block; max-width: 100%; max-height: 118mm; margin: 0 auto; border: 1px solid var(--borde); border-radius: 1.5mm; }
+figcaption { margin-top: 1.8mm; color: var(--suave); font-size: 8.5pt; text-align: center; }
+figcaption b { color: var(--texto); }

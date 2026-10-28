@@ -159,9 +159,9 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         <label class="field">
           <span data-i18n="reglas.condicionObligatorio">{es['reglas.condicionObligatorio']}</span>
           <select id="rule-type" class="form-select" required>
-            <option value="DEBE_CONTENER">DEBE_CONTENER</option>
-            <option value="NO_DEBE_CONTENER">NO_DEBE_CONTENER</option>
-            <option value="VALOR_ESPERADO">VALOR_ESPERADO</option>
+            <option value="DEBE_CONTENER" data-i18n="condicion.DEBE_CONTENER">{es['condicion.DEBE_CONTENER']}</option>
+            <option value="NO_DEBE_CONTENER" data-i18n="condicion.NO_DEBE_CONTENER">{es['condicion.NO_DEBE_CONTENER']}</option>
+            <option value="VALOR_ESPERADO" data-i18n="condicion.VALOR_ESPERADO">{es['condicion.VALOR_ESPERADO']}</option>
           </select>
         </label>
         <label class="field">
@@ -195,9 +195,9 @@ import MasterLayout from '../layouts/MasterLayout.astro';
         </label>
       </div>
       <div class="rule-help">
-        <code>DEBE_CONTENER</code><span data-i18n="reglas.cumpleSiPatronAparece">{es['reglas.cumpleSiPatronAparece']}</span>
-        <code>NO_DEBE_CONTENER</code><span data-i18n="reglas.cumpleSiNoAparece">{es['reglas.cumpleSiNoAparece']}</span>
-        <code>VALOR_ESPERADO</code><span><span data-i18n="reglas.cumpleSiValor">{es['reglas.cumpleSiValor']}</span> (<span data-i18n="reglas.ejemplo">{es['reglas.ejemplo']}</span> <em>logging buffered</em> = <em>16384</em>)</span>
+        <code data-i18n="condicion.DEBE_CONTENER">{es['condicion.DEBE_CONTENER']}</code><span data-i18n="reglas.cumpleSiPatronAparece">{es['reglas.cumpleSiPatronAparece']}</span>
+        <code data-i18n="condicion.NO_DEBE_CONTENER">{es['condicion.NO_DEBE_CONTENER']}</code><span data-i18n="reglas.cumpleSiNoAparece">{es['reglas.cumpleSiNoAparece']}</span>
+        <code data-i18n="condicion.VALOR_ESPERADO">{es['condicion.VALOR_ESPERADO']}</code><span><span data-i18n="reglas.cumpleSiValor">{es['reglas.cumpleSiValor']}</span> (<span data-i18n="reglas.ejemplo">{es['reglas.ejemplo']}</span> <em>logging buffered</em> = <em>16384</em>)</span>
       </div>
       <div id="rule-form-error" class="alert alert-error is-hidden"></div>
       <div class="dialog-actions">

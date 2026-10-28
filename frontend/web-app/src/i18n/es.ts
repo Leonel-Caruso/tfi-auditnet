@@ -166,6 +166,14 @@ const es = {
   'cuenta.sinAvisos': 'Tu perfil no recibe avisos de auditoría. Los correos de tu cuenta (alta y recuperación de contraseña) llegan siempre.',
   'cuenta.guardarAvisos': 'Guardar avisos',
   'cuenta.avisosGuardados': 'Preferencias de aviso guardadas.',
+
+  'manual.seccion': 'Ayuda',
+  'manual.titulo': 'Manual de uso',
+  'manual.texto': 'Guía paso a paso de lo que podés hacer con tu perfil, en el idioma de tu cuenta.',
+  'manual.descargar': 'Descargar manual · {perfil} (PDF)',
+  'manual.enlace': 'Manual · {perfil}',
+  'manual.ocultar': 'Ocultar',
+  'manual.ocultarAyuda': 'Ocultar el manual del tablero (sigue en el menú del usuario)',
 };
 
 export default es;

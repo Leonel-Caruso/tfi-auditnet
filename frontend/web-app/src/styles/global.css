@@ -1191,6 +1191,10 @@ a.user-popover-action { display: block; }
 .account-form { max-width: 460px; }
 .account-wide { grid-column: 1 / -1; }
 .confirm-dialog { width: min(480px, calc(100vw - 32px)); }
+.manual-card { display: flex; align-items: center; justify-content: space-between; gap: 18px; flex-wrap: wrap; box-shadow: none; border-left: 3px solid var(--accent); }
+.manual-card h2 { margin: 2px 0 4px; font-size: 1.05rem; }
+.manual-card p { margin: 0; color: var(--muted); font-size: .84rem; }
+.manual-actions, .manual-links { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .language-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0 0 12px; }
 .language-options.theme-options { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .language-option { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border: 1px solid var(--border); border-radius: 7px; color: var(--text-strong); background: var(--surface-strong); font: inherit; text-align: left; cursor: pointer; }

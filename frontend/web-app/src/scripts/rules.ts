@@ -154,7 +154,7 @@ function showRule(rule: BaselineRule): void {
   setText('#rule-inspector-status', ruleStatus(rule.estado));
   setText('#rule-inspector-description', rule.descripcion);
   setText('#rule-inspector-baseline', baseline ? baselineLabel(baseline) : `#${rule.baselineId}`);
-  setText('#rule-inspector-type', rule.tipo);
+  setText('#rule-inspector-type', conditionLabel(rule.tipo));
   setText('#rule-inspector-severity', severityCode(rule.severidad));
   setText('#rule-inspector-id', String(rule.id));
   setText('#rule-inspector-pattern-label', t(expected ? 'reglas.parametro' : 'reglas.patron'));

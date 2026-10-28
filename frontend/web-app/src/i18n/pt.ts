@@ -168,6 +168,14 @@ const pt: Textos<typeof es> = {
   'cuenta.sinAvisos': 'Seu perfil não recebe avisos de auditoria. Os e-mails da sua conta (cadastro e recuperação de senha) chegam sempre.',
   'cuenta.guardarAvisos': 'Salvar avisos',
   'cuenta.avisosGuardados': 'Preferências de aviso salvas.',
+
+  'manual.seccion': 'Ajuda',
+  'manual.titulo': 'Manual de uso',
+  'manual.texto': 'Guia passo a passo do que você pode fazer com o seu perfil, no idioma da sua conta.',
+  'manual.descargar': 'Baixar manual · {perfil} (PDF)',
+  'manual.enlace': 'Manual · {perfil}',
+  'manual.ocultar': 'Ocultar',
+  'manual.ocultarAyuda': 'Ocultar o manual do painel (continua no menu do usuário)',
 };
 
 export default pt;

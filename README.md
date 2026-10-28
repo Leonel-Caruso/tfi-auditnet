@@ -97,6 +97,7 @@ Creación de la infraestructura y operación: `docs/deploy/AZURE.md`.
 | Decisiones de diseño | `docs/entrega-2/REGISTRO-DECISIONES.md` |
 | Detalle por bloque y casos de prueba | `docs/entrega-2/BLOQUE-*.md` |
 | Plan de los próximos bloques | `docs/entrega-3/PLAN-BLOQUES.md` |
+| Manuales de usuario (uno por perfil) y de instalación y desarrollo, en tres idiomas | `docs/manuales/README.md` |
 | Migraciones y respaldos | `docs/database/` |
 | Despliegue en Azure | `docs/deploy/AZURE.md` |
 | Entrega 1 (Render, histórico) | `docs/ENTREGA-1-CHECKLIST.md`, `docs/deploy/RENDER.md` |

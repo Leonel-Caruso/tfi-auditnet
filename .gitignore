@@ -30,3 +30,6 @@ resultado-carga*.json
 # Python (pruebas de pantalla)
 __pycache__/
 .pytest_cache/
+
+# Manuales: las capturas se regeneran con docs/manuales/generar.py
+docs/manuales/.capturas/
