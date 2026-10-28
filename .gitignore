@@ -33,3 +33,6 @@ __pycache__/
 
 # Manuales: las capturas se regeneran con docs/manuales/generar.py
 docs/manuales/.capturas/
+
+# Patches aplicados localmente
+*.patch
