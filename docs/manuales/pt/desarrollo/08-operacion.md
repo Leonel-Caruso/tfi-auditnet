@@ -46,7 +46,7 @@ muitos cadastros seguidos, os e-mails saem aos poucos. Localmente, são lidos no
 No Cloud Shell (o diretório não é mantido entre sessões: clonar ou atualizar o repositório a cada vez):
 
 ```bash
-cd ~ && git clone -b entrega-2 https://github.com/Leonel-Caruso/tfi-auditnet.git; cd ~/tfi-auditnet && git pull
+cd ~ && git clone -b main https://github.com/Leonel-Caruso/tfi-auditnet.git; cd ~/tfi-auditnet && git pull
 SITIO=https://$(az containerapp show -g rg-auditnet -n ca-auditnet-web --query properties.configuration.ingress.fqdn -o tsv)
 python3 scripts/datos-demo/cargar.py --url $SITIO --admin <usuario_admin> --correo <caixa>@gmail.com
 export PGPASSWORD=$(az containerapp secret show -g rg-auditnet -n ca-auditnet-management --secret-name db-password --query value -o tsv)

@@ -8,7 +8,7 @@ desvíos, los prioriza por severidad y criticidad del dispositivo, genera alerta
 de cada auditoría. Es multi organización: cada cliente ve solo sus datos.
 
 - Sitio: https://ca-auditnet-web.niceflower-73585a17.brazilsouth.azurecontainerapps.io
-- Rama de trabajo: `entrega-2`
+- Ramas: `main` (versión vigente, se despliega en Azure) y `test` (pruebas). `entrega-2` queda como historial.
 
 ## Arquitectura
 
@@ -87,7 +87,8 @@ Prueba de carga con k6: `docs/entrega-2/CARGA.md`.
 
 ## Despliegue
 
-Cada push a `entrega-2` corre el CI; el despliegue a Azure espera la aprobación del entorno `azure` en GitHub Actions.
+Cada push a `main` o `test` corre el CI; solo `main` se despliega en Azure, con la aprobación del entorno `azure` en
+GitHub Actions.
 Creación de la infraestructura y operación: `docs/deploy/AZURE.md`.
 
 ## Documentación
@@ -95,8 +96,8 @@ Creación de la infraestructura y operación: `docs/deploy/AZURE.md`.
 | Tema | Ubicación |
 |---|---|
 | Decisiones de diseño | `docs/entrega-2/REGISTRO-DECISIONES.md` |
-| Detalle por bloque y casos de prueba | `docs/entrega-2/BLOQUE-*.md` |
-| Plan de los próximos bloques | `docs/entrega-3/PLAN-BLOQUES.md` |
+| Detalle por bloque y casos de prueba | `docs/entrega-2/BLOQUE-*.md` y `docs/entrega-3/BLOQUE-*.md` |
+| Plan de los bloques 9 a 16 | `docs/entrega-3/PLAN-BLOQUES.md` |
 | Manuales de usuario (uno por perfil) y de instalación y desarrollo, en tres idiomas | `docs/manuales/README.md` |
 | Migraciones y respaldos | `docs/database/` |
 | Despliegue en Azure | `docs/deploy/AZURE.md` |

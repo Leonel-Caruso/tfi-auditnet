@@ -38,5 +38,5 @@ python -m pytest tests\pantallas
 
 ### In CI
 
-Every push to `entrega-2` or `main` runs, on GitHub Actions, the tests of both services, the frontend check and build,
+Every push to `main` or `test` runs, on GitHub Actions, the tests of both services, the frontend check and build,
 the screen tests and the demo data tests. If anything fails, no images are published.

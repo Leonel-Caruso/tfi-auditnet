@@ -39,5 +39,5 @@ python -m pytest tests\pantallas
 
 ### En el CI
 
-Cada push a `entrega-2` o `main` corre, en GitHub Actions, los tests de los dos servicios, el chequeo y build del
+Cada push a `main` o `test` corre, en GitHub Actions, los tests de los dos servicios, el chequeo y build del
 frontend, las pruebas de pantalla y las de datos de demostración. Si algo falla no se publican imágenes.

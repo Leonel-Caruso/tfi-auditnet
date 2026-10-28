@@ -55,7 +55,7 @@ Los scripts están en `infra/azure/` y se ejecutan en **Azure Cloud Shell (Bash)
 las contraseñas se piden al ejecutarlos y se guardan como *secrets* de Container Apps.
 
 ```bash
-git clone -b entrega-2 https://github.com/Leonel-Caruso/tfi-auditnet.git
+git clone -b main https://github.com/Leonel-Caruso/tfi-auditnet.git
 cd tfi-auditnet/infra/azure
 bash 01-crear-base.sh      # grupo de recursos, PostgreSQL, base y entorno de Container Apps
 bash 02-crear-apps.sh      # las 3 Container Apps a partir de las imágenes de GHCR
@@ -73,10 +73,10 @@ versiones menores). Si Azure la crea con otra versión, el script se detiene e i
 
 ### Despliegue de una versión nueva
 
-Desde el Bloque 8, después de un push a `entrega-2` el workflow queda esperando en **Desplegar en Azure (con
-aprobación)**: en *Actions → la ejecución → Review deployments → azure → Approve and deploy*. Despliega
+Después de un push a `main` el workflow queda esperando en **Desplegar en Azure (con aprobación)**: en *Actions → la ejecución → Review deployments → azure → Approve and deploy*. Despliega
 `sha-<commit>` y hace una prueba de humo. La configuración de GitHub (entorno `azure` con revisor obligatorio y
-variables `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`) está en `docs/entrega-2/BLOQUE-8.md`.
+variables `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`) está en `docs/entrega-2/BLOQUE-8.md`; desde el
+Bloque 16, en *Deployment branches and tags* del entorno la rama permitida es `main`.
 
 A mano, desde Cloud Shell (sigue disponible):
 

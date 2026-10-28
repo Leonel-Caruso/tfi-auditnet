@@ -4,9 +4,9 @@ Requisito: Puntos Mandatorios de Carpeta 2026 (cátedra) y RF-014 / RNF-003 / RN
 
 | Bitácora | Qué registra | Almacenamiento | Estado |
 |---|---|---|---|
-| Auditoría de sistema | Inicios de sesión (exitosos y rechazados), creación de usuarios, asignación de roles, creación de roles | PostgreSQL · `bitacora_sistema` | ✅ Bloque 2.3a |
-| Transacciones | Altas, modificaciones y cambios de estado de entidades críticas (valor anterior y nuevo), ejecución de auditorías | PostgreSQL · `bitacora_transacciones` | ✅ Bloque 2.3b |
-| Excepciones | Errores inesperados, con nivel de log configurable | MongoDB (Cosmos DB para MongoDB) | ✅ Bloque 2.3c |
+| Auditoría de sistema | Inicios de sesión (exitosos y rechazados), creación de usuarios, asignación de roles, creación de roles | PostgreSQL · `bitacora_sistema` | Implementada (Bloque 2.3a) |
+| Transacciones | Altas, modificaciones y cambios de estado de entidades críticas (valor anterior y nuevo), ejecución de auditorías | PostgreSQL · `bitacora_transacciones` | Implementada (Bloque 2.3b) |
+| Excepciones | Errores inesperados, con nivel de log configurable | MongoDB (Cosmos DB para MongoDB) | Implementada (Bloque 2.3c) |
 
 ## Bitácora de auditoría de sistema
 

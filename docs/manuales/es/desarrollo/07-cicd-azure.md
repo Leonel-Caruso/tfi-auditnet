@@ -2,7 +2,7 @@
 
 ### GitHub Actions
 
-`.github/workflows/imagenes.yml` corre en cada push a `entrega-2` o `main` que toque código, pruebas o el workflow:
+`.github/workflows/imagenes.yml` corre en cada push a `main` o `test` que toque código, pruebas o el workflow:
 
 | Trabajo | Qué hace |
 |---|---|
@@ -10,7 +10,7 @@
 | Frontend | `npm ci`, `npm run check` y build |
 | Pruebas de pantalla | Playwright contra el sitio compilado, y las de datos de demostración |
 | Imágenes | Publica las 3 imágenes en GitHub Container Registry con las etiquetas `sha-<commit>` y la rama |
-| Desplegar en Azure | Solo desde `entrega-2`: espera la **aprobación** del entorno `azure`, entra a Azure por OIDC (sin contraseñas), actualiza las 3 Container Apps a `sha-<commit>` y hace una prueba de humo |
+| Desplegar en Azure | Solo desde `main`: espera la **aprobación** del entorno `azure`, entra a Azure por OIDC (sin contraseñas), actualiza las 3 Container Apps a `sha-<commit>` y hace una prueba de humo |
 
 Para aprobar: *Actions → la ejecución → Review deployments → azure → Approve and deploy*.
 
@@ -31,7 +31,7 @@ Para aprobar: *Actions → la ejecución → Review deployments → azure → Ap
 En **Azure Cloud Shell (Bash)**, con el repositorio clonado:
 
 ```bash
-git clone -b entrega-2 https://github.com/Leonel-Caruso/tfi-auditnet.git
+git clone -b main https://github.com/Leonel-Caruso/tfi-auditnet.git
 cd tfi-auditnet/infra/azure
 bash 01-crear-base.sh            # grupo, PostgreSQL, base y entorno de Container Apps
 bash 02-crear-apps.sh            # las 3 Container Apps desde las imágenes publicadas

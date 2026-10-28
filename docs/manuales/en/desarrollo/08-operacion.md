@@ -45,7 +45,7 @@ row, emails go out gradually. Locally they are read in Mailpit (`http://localhos
 From Cloud Shell (the directory is not kept between sessions: clone or update the repository every time):
 
 ```bash
-cd ~ && git clone -b entrega-2 https://github.com/Leonel-Caruso/tfi-auditnet.git; cd ~/tfi-auditnet && git pull
+cd ~ && git clone -b main https://github.com/Leonel-Caruso/tfi-auditnet.git; cd ~/tfi-auditnet && git pull
 SITIO=https://$(az containerapp show -g rg-auditnet -n ca-auditnet-web --query properties.configuration.ingress.fqdn -o tsv)
 python3 scripts/datos-demo/cargar.py --url $SITIO --admin <admin_user> --correo <mailbox>@gmail.com
 export PGPASSWORD=$(az containerapp secret show -g rg-auditnet -n ca-auditnet-management --secret-name db-password --query value -o tsv)

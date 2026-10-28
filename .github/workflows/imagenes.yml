@@ -1,17 +1,18 @@
 # Tests de backend, frontend y pantallas; si pasan, publica las 3 imágenes en ghcr.io y las
 # despliega en Azure Container Apps tras aprobar el entorno "azure" (login por OIDC,
-# ver infra/azure/06-configurar-github-oidc.sh).
+# ver infra/azure/06-configurar-github-oidc.sh). Solo main se despliega; test corre las pruebas.
 name: CI e imagenes
 
 on:
   push:
-    branches: [entrega-2, main]
+    branches: [main, test]
     paths:
       - "backend/**"
       - "frontend/**"
       - "tests/pantallas/**"
       - "tests/datos_demo/**"
       - "scripts/datos-demo/**"
+      - "infra/azure/**"
       - ".github/workflows/imagenes.yml"
   workflow_dispatch:
 
@@ -124,8 +125,8 @@ jobs:
   desplegar:
     name: Desplegar en Azure (con aprobación)
     needs: [imagenes]
-    # Solo desde entrega-2 y con las variables de Azure cargadas; si no, se omite y el CI sigue en verde.
-    if: ${{ vars.AZURE_CLIENT_ID != '' && github.ref_name == 'entrega-2' }}
+    # Solo desde main y con las variables de Azure cargadas; si no, se omite y el CI sigue en verde.
+    if: ${{ vars.AZURE_CLIENT_ID != '' && github.ref_name == 'main' }}
     runs-on: ubuntu-latest
     # El entorno "azure" tiene revisores obligatorios.
     environment:

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Despliega otra versión de las imágenes; Flyway migra al arrancar cada servicio.
-# Uso: bash 03-actualizar-imagenes.sh [etiqueta]   (entrega-2 o sha-<commit>, preferible)
+# Uso: bash 03-actualizar-imagenes.sh [etiqueta]   (main o sha-<commit>, preferible)
 # APP_VERSION muestra la etiqueta desplegada en el panel de administración.
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -16,7 +16,7 @@ asegurar_ingreso() {
   fi
 }
 
-ETIQUETA="${1:-entrega-2}"
+ETIQUETA="${1:-main}"
 az containerapp update -n "$APP_MANAGEMENT" -g "$RG" --image "$REGISTRO/auditnet-management:$ETIQUETA" \
   --set-env-vars "APP_VERSION=$ETIQUETA" -o none
 asegurar_ingreso "$APP_MANAGEMENT" internal

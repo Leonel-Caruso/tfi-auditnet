@@ -20,7 +20,7 @@ quem a implanta no Azure. Ele cobre:
 | Dado | Valor |
 |---|---|
 | Repositório | `github.com/Leonel-Caruso/tfi-auditnet` |
-| Branch de trabalho | `entrega-2` (é unida à `main` ao fechar a entrega) |
+| Branches | `main` (versão vigente, implantada no Azure) e `test` (testes, não é implantada); `entrega-2` fica como histórico |
 | Decisões de projeto | `docs/entrega-2/REGISTRO-DECISIONES.md` (D-01 em diante) |
 | Migrações | `docs/database/MIGRACIONES.md` |
 | Implantação | `docs/deploy/AZURE.md` |

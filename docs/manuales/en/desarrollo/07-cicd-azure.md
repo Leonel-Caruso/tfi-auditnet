@@ -2,7 +2,7 @@
 
 ### GitHub Actions
 
-`.github/workflows/imagenes.yml` runs on every push to `entrega-2` or `main` that touches code, tests or the
+`.github/workflows/imagenes.yml` runs on every push to `main` or `test` that touches code, tests or the
 workflow:
 
 | Job | What it does |
@@ -11,7 +11,7 @@ workflow:
 | Frontend | `npm ci`, `npm run check` and build |
 | Screen tests | Playwright against the compiled site, and the demo data tests |
 | Images | Publishes the 3 images to GitHub Container Registry with the `sha-<commit>` and branch tags |
-| Deploy to Azure | Only from `entrega-2`: waits for the **approval** of the `azure` environment, signs in to Azure with OIDC (no passwords), updates the 3 Container Apps to `sha-<commit>` and runs a smoke test |
+| Deploy to Azure | Only from `main`: waits for the **approval** of the `azure` environment, signs in to Azure with OIDC (no passwords), updates the 3 Container Apps to `sha-<commit>` and runs a smoke test |
 
 To approve: *Actions → the run → Review deployments → azure → Approve and deploy*.
 
@@ -32,7 +32,7 @@ To approve: *Actions → the run → Review deployments → azure → Approve an
 In **Azure Cloud Shell (Bash)**, with the repository cloned:
 
 ```bash
-git clone -b entrega-2 https://github.com/Leonel-Caruso/tfi-auditnet.git
+git clone -b main https://github.com/Leonel-Caruso/tfi-auditnet.git
 cd tfi-auditnet/infra/azure
 bash 01-crear-base.sh            # group, PostgreSQL, database and Container Apps environment
 bash 02-crear-apps.sh            # the 3 Container Apps from the published images

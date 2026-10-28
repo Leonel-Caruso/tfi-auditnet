@@ -2,13 +2,13 @@
 # Crea las 3 Container Apps desde GHCR: los dos servicios con ingress interno y
 # web (nginx + Astro) con ingress externo, que enruta /api/... a ambos.
 # Requiere 01-crear-base.sh y las imágenes ya publicadas.
-# Uso: bash 02-crear-apps.sh [etiqueta]   (por defecto: entrega-2)
+# Uso: bash 02-crear-apps.sh [etiqueta]   (por defecto: main)
 set -euo pipefail
 cd "$(dirname "$0")"
 source ./variables.sh
 az config set extension.use_dynamic_install=yes_without_prompt --only-show-errors >/dev/null
 
-ETIQUETA="${1:-entrega-2}"
+ETIQUETA="${1:-main}"
 PG_HOST=$(az postgres flexible-server show -g "$RG" -n "$PG_SERVIDOR" --query fullyQualifiedDomainName -o tsv)
 DOMINIO=$(az containerapp env show -n "$ENTORNO" -g "$RG" --query properties.defaultDomain -o tsv)
 

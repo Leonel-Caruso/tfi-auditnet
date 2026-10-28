@@ -20,7 +20,7 @@ whoever deploys it on Azure. It covers:
 | Item | Value |
 |---|---|
 | Repository | `github.com/Leonel-Caruso/tfi-auditnet` |
-| Working branch | `entrega-2` (merged into `main` when the delivery closes) |
+| Branches | `main` (current version, deployed to Azure) and `test` (testing, not deployed); `entrega-2` is kept as history |
 | Design decisions | `docs/entrega-2/REGISTRO-DECISIONES.md` (D-01 onwards) |
 | Migrations | `docs/database/MIGRACIONES.md` |
 | Deployment | `docs/deploy/AZURE.md` |

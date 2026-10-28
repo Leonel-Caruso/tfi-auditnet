@@ -7,6 +7,7 @@
 | El driver de MongoDB rechaza Cosmos DB | Azure creó la cuenta con la API 3.6 y el driver exige 4.2 | Subirla desde el portal (*Upgrade MongoDB server version*); `04-crear-cosmos.sh` lo verifica. |
 | `SubscriptionNotFound` al crear un recurso | El proveedor de ese tipo de recurso no estaba registrado en la suscripción | `variables.sh` los registra antes (`registrar_proveedores`). |
 | `ExpressEnvironmentResourceNotSupported` | El entorno de Container Apps quedó en modo *express*, que no admite trabajos programados | La revisión periódica se programa con una Logic App (`09-crear-revision.sh`). |
+| La prueba de humo da `HTTP 000` y la web no tiene dirección | En el entorno rápido de Container Apps, actualizar la imagen dejó la app web sin ingreso | `03-actualizar-imagenes.sh` comprueba el ingreso de cada app y lo vuelve a habilitar. A mano: `az containerapp ingress enable -n ca-auditnet-web -g rg-auditnet --type external --target-port 8080`. |
 | La primera pantalla tarda varios segundos | Las apps escalaron a cero o PostgreSQL está detenido | `07-modo-demo.sh on` antes de presentar. |
 | Cloud Shell no encuentra el repositorio ni las variables | La sesión de Cloud Shell es efímera | Clonar o `git pull` y volver a definir las variables en cada sesión. |
 | `unrecognized arguments` en `az postgres flexible-server firewall-rule` | La CLI cambió la sintaxis | Usar `--server-name <servidor> --name <regla>`. Desde Cloud Shell no hace falta regla: entra por la de servicios de Azure. |

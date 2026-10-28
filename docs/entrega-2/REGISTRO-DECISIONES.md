@@ -889,6 +889,23 @@ Formato: **DECISIÓN → CÓDIGO → DOCUMENTACIÓN (carpeta de tesis) → PRUEB
 - **Prueba:** `test_manual.py` (un botón por perfil, idioma de la cuenta, cambio de idioma, ocultar y menú, usuario
   con dos perfiles).
 
+## D-69 · Ramas y despliegue al cierre (Bloque 16)
+
+- **Decisión:** `entrega-2` se une a `main` y `main` pasa a ser la única rama que se despliega en Azure (con la misma
+  aprobación del entorno `azure`). Se crea `test` para probar cambios futuros: corre todas las pruebas y publica sus
+  imágenes con la etiqueta `test`, pero no despliega. `entrega-2` no se borra y queda como historial; los tags
+  `entrega-1-stable` y `entrega-2-stable` se conservan y el cierre se marca con `entrega-3-stable`. El workflow
+  también corre cuando cambian los scripts de `infra/azure`, porque el despliegue los usa.
+- **Prueba:** ejecución del workflow en `test` (sin despliegue) y en `main` (con aprobación y prueba de humo).
+
+## D-70 · Ingreso de la app web después de actualizar la imagen (Bloque 16)
+
+- **Decisión:** en el entorno rápido de Container Apps, `az containerapp update` dejó `ca-auditnet-web` sin ingreso
+  (sin dirección pública) y la prueba de humo falló con `HTTP 000`. `03-actualizar-imagenes.sh` comprueba después de
+  cada actualización que la app tenga ingreso y, si no, lo vuelve a habilitar con su tipo (externo para la web,
+  interno para los servicios) y el puerto 8080. La prueba de humo informa el caso con un mensaje propio.
+- **Prueba:** despliegue posterior con el script corregido: las tres apps con ingreso y la prueba de humo en verde.
+
 ## Pendientes detectados (para migraciones futuras)
 
 - `auditorias_configuracion.estado` solo admite `FINALIZADA` (CHECK de Hibernate). Alcanza mientras la auditoría sea

@@ -39,5 +39,5 @@ python -m pytest tests\pantallas
 
 ### No CI
 
-Cada push para `entrega-2` ou `main` executa, no GitHub Actions, os testes dos dois serviços, a verificação e o build
+Cada push para `main` ou `test` executa, no GitHub Actions, os testes dos dois serviços, a verificação e o build
 do frontend, os testes de tela e os dos dados de demonstração. Se algo falhar, as imagens não são publicadas.

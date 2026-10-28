@@ -20,7 +20,7 @@ proyecto y quien la despliega en Azure. Cubre:
 | Dato | Valor |
 |---|---|
 | Repositorio | `github.com/Leonel-Caruso/tfi-auditnet` |
-| Rama de trabajo | `entrega-2` (se une a `main` al cerrar la entrega) |
+| Ramas | `main` (versión vigente, se despliega en Azure) y `test` (pruebas, no se despliega); `entrega-2` queda como historial |
 | Decisiones de diseño | `docs/entrega-2/REGISTRO-DECISIONES.md` (D-01 en adelante) |
 | Migraciones | `docs/database/MIGRACIONES.md` |
 | Despliegue | `docs/deploy/AZURE.md` |
